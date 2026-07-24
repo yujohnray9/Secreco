@@ -1,0 +1,101 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\ActivityLogService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Throwable;
+
+class UserApprovalController extends Controller
+{
+    public function approveUser(Request $request): JsonResponse
+    {
+        $userId  = (int) $request->input('user_id', 0);
+        $action  = trim($request->input('action', ''));
+        $adminId = Auth::id() ?? session('user_id');
+
+        if ($userId <= 0 || !in_array($action, ['approve', 'reject', 'activate', 'deactivate'], true)) {
+            return response()->json(['success' => false, 'message' => 'Invalid request parameters.']);
+        }
+
+        $user = User::where('id', $userId)->whereIn('role', ['cmi', 'viewer'])->first();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found.']);
+        }
+
+        $name = $user->name;
+
+        try {
+            return DB::transaction(function () use ($action, $user, $adminId, $name) {
+                switch ($action) {
+                    case 'approve':
+                        if ($user->status !== 'pending') {
+                            return response()->json(['success' => false, 'message' => 'Account is no longer pending.']);
+                        }
+                        $user->update([
+                            'status'      => 'active',
+                            'approved_at' => now(),
+                            'approved_by' => $adminId,
+                        ]);
+                        ActivityLogService::log($adminId, "Approved account for {$name} ({$user->email})");
+                        return response()->json(['success' => true, 'message' => "Account approved — {$name} can now log in."]);
+
+                    case 'reject':
+                        if ($user->status !== 'pending') {
+                            return response()->json(['success' => false, 'message' => 'Account is no longer pending.']);
+                        }
+                        $user->update(['status' => 'inactive']);
+                        ActivityLogService::log($adminId, "Rejected registration for {$name} ({$user->email})");
+                        return response()->json(['success' => true, 'message' => "Registration rejected — {$name} will not be able to log in."]);
+
+                    case 'deactivate':
+                        if ($user->status !== 'active') {
+                            return response()->json(['success' => false, 'message' => 'Account is not currently active.']);
+                        }
+                        $user->update(['status' => 'inactive']);
+                        ActivityLogService::log($adminId, "Deactivated account for {$name}");
+                        return response()->json(['success' => true, 'message' => "{$name}'s account has been deactivated."]);
+
+                    case 'activate':
+                        if ($user->status !== 'inactive') {
+                            return response()->json(['success' => false, 'message' => 'Account is not currently inactive.']);
+                        }
+                        $user->update(['status' => 'active']);
+                        ActivityLogService::log($adminId, "Reactivated account for {$name}");
+                        return response()->json(['success' => true, 'message' => "{$name}'s account has been reactivated."]);
+                }
+            });
+        } catch (Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Database error. Please try again.']);
+        }
+    }
+
+    public function toggleUserStatus(Request $request): JsonResponse
+    {
+        $targetId  = intval($request->input('user_id', 0));
+        $newStatus = trim($request->input('new_status', ''));
+
+        if (!$targetId || !in_array($newStatus, ['active', 'inactive'], true)) {
+            return response()->json(['success' => false, 'message' => 'Invalid request.']);
+        }
+
+        $target = User::find($targetId);
+        if (!$target) {
+            return response()->json(['success' => false, 'message' => 'User not found.']);
+        }
+
+        if (!in_array($target->role, ['cmi', 'viewer'], true)) {
+            return response()->json(['success' => false, 'message' => 'You cannot manage this account.']);
+        }
+
+        $target->update(['status' => $newStatus]);
+        $label = $newStatus === 'active' ? 'reactivated' : 'deactivated';
+
+        return response()->json(['success' => true, 'message' => "Account {$label} successfully."]);
+    }
+}

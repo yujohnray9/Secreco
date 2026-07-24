@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ReportTableDoc extends Model
+{
+    public $timestamps = false;
+
+    protected $fillable = [
+        'user_id',
+        'reporting_year',
+        'table_no',
+        'file_path',
+        'caption',
+        'sort_order',
+        'uploaded_at',
+    ];
+
+    protected $casts = [
+        'uploaded_at' => 'datetime',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+}

@@ -1,0 +1,155 @@
+<?php
+
+namespace App\Http\Controllers\Cmi;
+
+use App\Http\Controllers\Controller;
+use App\Models\ReportTable;
+use App\Models\Submission;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class DashboardController extends Controller
+{
+    public function getData(Request $request): JsonResponse
+    {
+        $userId        = Auth::id() ?? session('user_id');
+        $reportingYear = (int) date('Y');
+
+        $sections = config('secreco.sections');
+        $tableLabels = config('secreco.table_labels');
+        $totalRequired = 20;
+
+        $rows = ReportTable::where('user_id', $userId)
+            ->where('reporting_year', $reportingYear)
+            ->get(['table_no', 'status', 'updated_at']);
+
+        $tableMap = [];
+        foreach ($rows as $row) {
+            $tableMap[strtoupper($row->table_no)] = $row->toArray();
+        }
+
+        $complete   = 0;
+        $draft      = 0;
+        $notStarted = 0;
+
+        $allTableKeys = [];
+        foreach ($sections as $tables) {
+            foreach ($tables as $t) {
+                $allTableKeys[] = strtoupper($t);
+            }
+        }
+        $allTableKeys = array_unique($allTableKeys);
+
+        foreach ($allTableKeys as $t) {
+            $status = $tableMap[$t]['status'] ?? 'not-started';
+            if ($status === 'done') {
+                $complete++;
+            } elseif ($status === 'draft') {
+                $draft++;
+            } else {
+                $notStarted++;
+            }
+        }
+
+        $correction = Submission::where('user_id', $userId)->where('status', 'returned')->count();
+        $corrMeta = 'Check remarks';
+        if ($correction > 0) {
+            $latestCorr = Submission::where('user_id', $userId)->where('status', 'returned')->orderByDesc('submitted_at')->value('id');
+            if ($latestCorr) {
+                $corrMeta = 'Submission #' . $latestCorr . ' flagged';
+            }
+        }
+
+        $sectionProgress = [];
+        foreach ($sections as $sectionName => $tables) {
+            $total    = count($tables);
+            $done     = 0;
+            $hasDraft = false;
+            foreach ($tables as $t) {
+                $status = $tableMap[strtoupper($t)]['status'] ?? 'not-started';
+                if ($status === 'done') {
+                    $done++;
+                } elseif ($status === 'draft') {
+                    $hasDraft = true;
+                }
+            }
+            $pct = $total > 0 ? (int) round(($done / $total) * 100) : 0;
+            $sectionProgress[] = [
+                'section'  => $sectionName,
+                'done'     => $done,
+                'total'    => $total,
+                'pct'      => $pct,
+                'hasDraft' => $hasDraft,
+            ];
+        }
+
+        $recentActivity = [];
+        $actRows = ReportTable::where('user_id', $userId)->orderByDesc('updated_at')->take(10)->get();
+
+        foreach ($actRows as $act) {
+            $key   = strtoupper($act->table_no);
+            $label = $tableLabels[$key] ?? ('Table ' . $act->table_no);
+            $ts    = $act->updated_at ? $act->updated_at->toDateTimeString() : null;
+
+            switch ($act->status) {
+                case 'done':
+                    $desc = 'You submitted <strong>' . $label . '</strong>';
+                    $icon = 'submitted';
+                    break;
+                case 'draft':
+                    $desc = 'You saved <strong>' . $label . '</strong> as draft';
+                    $icon = 'draft';
+                    break;
+                case 'error':
+                    $desc = '<strong>' . $label . '</strong> flagged for correction — review remarks';
+                    $icon = 'flagged';
+                    break;
+                default:
+                    $desc = 'You started filling up <strong>' . $label . '</strong>';
+                    $icon = 'started';
+            }
+
+            $recentActivity[] = [
+                'icon'      => $icon,
+                'desc'      => $desc,
+                'timestamp' => $ts,
+            ];
+        }
+
+        $retSubs = Submission::where('user_id', $userId)->where('status', 'returned')->orderByDesc('submitted_at')->take(3)->get();
+        foreach ($retSubs as $ret) {
+            $recentActivity[] = [
+                'icon'      => 'flagged',
+                'desc'      => 'PTA returned <strong>Submission #' . $ret->id . '</strong> for correction — review remarks',
+                'timestamp' => $ret->submitted_at ? $ret->submitted_at->toDateTimeString() : null,
+            ];
+        }
+
+        usort($recentActivity, fn($a, $b) => strcmp($b['timestamp'] ?? '', $a['timestamp'] ?? ''));
+        $recentActivity = array_slice($recentActivity, 0, 10);
+
+        $deadline    = '2026-06-30';
+        $deadlineTs  = strtotime($deadline);
+        $todayTs     = strtotime(date('Y-m-d'));
+        $daysLeft    = max(0, (int) ceil(($deadlineTs - $todayTs) / 86400));
+        $deadlineFmt = date('M j, Y', $deadlineTs);
+
+        return response()->json([
+            'stats' => [
+                'complete'       => $complete,
+                'totalRequired'  => $totalRequired,
+                'draft'          => $draft,
+                'notStarted'     => $notStarted,
+                'correction'     => $correction,
+                'correctionMeta' => $corrMeta,
+            ],
+            'deadline' => [
+                'date'     => $deadlineFmt,
+                'daysLeft' => $daysLeft,
+            ],
+            'sectionProgress' => $sectionProgress,
+            'recentActivity'  => $recentActivity,
+        ]);
+    }
+}
