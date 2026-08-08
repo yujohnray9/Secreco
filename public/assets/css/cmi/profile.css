@@ -1,0 +1,74 @@
+/* ═══════════════════════════════════════════
+   NOTE: Header rules (.app-header, .hdr-left, .logo-group,
+   .hdr-logo, .brand-name, .signout-btn, .user-chip, etc.) were
+   REMOVED from this file on purpose.
+
+   The header is shared by every CMI page and is owned ONLY by
+   /secreco/assets/css/cmi/header.css (loaded once in c_header.php).
+   This file used to keep a second, slightly different copy of
+   those same rules. Since profile.php loads profile.css AFTER
+   header.css, this duplicate silently won the cascade and made
+   profile.php's header render at a different size/spacing than
+   every other page (e.g. dashboard.php).
+
+   Going forward: header look/spacing changes belong in header.css
+   only. Do not re-add header selectors here.
+
+   Everything below is specific to the "My Profile" page only, and
+   builds on top of shared primitives already defined in base.css
+   (.page, .page-hdr, .card, .form-group, .btn, .badge, etc.) rather
+   than redefining them.
+════════════════════════════════════════════ */
+
+/* ── Identity card (avatar + name + role + member-since) ── */
+.prof-id-card{margin-bottom:0}
+.prof-id-body{
+  display:flex;align-items:center;gap:16px;padding:20px 22px;
+}
+.prof-avatar-circle{
+  width:60px;height:60px;border-radius:50%;
+  background:var(--green);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Poppins',sans-serif;font-weight:700;font-size:20px;
+  flex-shrink:0;overflow:hidden;line-height:1;cursor:pointer;
+  border:2px solid var(--green-light);
+  transition:box-shadow .2s;
+}
+.prof-avatar-circle:hover{box-shadow:0 0 0 3px var(--green-light)}
+.prof-id-info{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.prof-id-name{
+  font-family:'Poppins',sans-serif;font-size:16px;font-weight:700;
+  color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.prof-id-role{font-size:12px;color:var(--text-light);margin-top:2px}
+.prof-id-since{
+  margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;
+  gap:4px;flex-shrink:0;padding-left:16px;
+}
+.prof-id-since-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+#profHeaderSince{white-space:nowrap}
+
+/* ── Form polish specific to this page ── */
+.prof-card-actions{margin-top:6px;text-align:right}
+.form-input.readonly{background:var(--bg);color:var(--text-light);cursor:not-allowed}
+
+/* ── Inline status messages (success/error) ── */
+.prof-msg{
+  padding:9px 12px;border-radius:var(--radius-sm);font-size:12px;
+  margin-bottom:14px;
+}
+.prof-msg.success{background:var(--success-light);color:var(--success);border:1px solid #86c9a0}
+.prof-msg.error{background:var(--danger-light);color:var(--danger);border:1px solid #f5a3a3}
+
+/* ── Password strength meter ── */
+.pw-strength{font-size:10.5px;font-weight:700;margin-top:4px;height:14px;text-transform:uppercase;letter-spacing:.04em}
+.pw-strength.weak{color:var(--danger)}
+.pw-strength.medium{color:var(--warning)}
+.pw-strength.strong{color:var(--success)}
+
+/* ── Responsive: stack the two cards and identity row on narrow screens ── */
+@media (max-width:860px){
+  .two-col{grid-template-columns:1fr}
+  .prof-id-body{flex-wrap:wrap}
+  .prof-id-since{margin-left:0;align-items:flex-start;padding-left:0;padding-top:8px;width:100%}
+}

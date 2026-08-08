@@ -66,7 +66,8 @@ class InstitutionController extends Controller
             }
 
             $logoId  = $meta['logo'] ?? $idx;
-            $logoUrl = "/secreco/assets/img/logo{$logoId}.jpg";
+            $ext     = in_array((int)$logoId, [25, 26], true) ? 'png' : 'jpg';
+            $logoUrl = "/assets/img/logo{$logoId}.{$ext}";
             $idx++;
 
             $institutions[] = [

@@ -52,6 +52,8 @@ Route::prefix('cmi')->middleware(['auth.custom', 'role:cmi'])->group(function ()
     Route::get('/profile', [CmiProfileController::class, 'get']);
     Route::post('/profile/save', [CmiProfileController::class, 'save']);
     Route::post('/profile/change-password', [CmiProfileController::class, 'changePassword']);
+    Route::post('/profile/upload-photo', [CmiProfileController::class, 'uploadPhoto']);
+    Route::post('/profile/remove-photo', [CmiProfileController::class, 'removePhoto']);
 });
 
 /*

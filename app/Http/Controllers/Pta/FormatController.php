@@ -173,7 +173,7 @@ class FormatController extends Controller
                         'icon'         => '🎉',
                         'color'        => 'green',
                         'message'      => "CY {$year} is now active! You may now start filling up and submitting your annual accomplishment report.",
-                        'action_url'   => '/secreco/dashboards/cmi/fillup.php',
+                        'action_url'   => '/dashboard/cmi/fillup',
                         'action_label' => 'Start Filling Up',
                         'is_read'      => false,
                         'created_at'   => now(),

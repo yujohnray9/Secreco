@@ -1,0 +1,66 @@
+/* =====================================================
+   assets/css/pta/users.css
+   User Management styles — depends on base.css
+===================================================== */
+
+/* ── USER AVATAR (small, inside table) ── */
+.user-av-sm {
+  width: 28px;
+  height: 28px;
+  background: var(--green);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* ── NAME CELL ── */
+.user-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── ACTION BUTTONS INSIDE TABLE ── */
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* ── EMPTY STATE ROW ── */
+.tbl-empty {
+  text-align: center;
+  padding: 28px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ── MODAL WIDER for user forms ── */
+#modalAddUser .modal,
+#modalEditUser .modal {
+  width: 540px;
+}
+
+/* ── PENDING ALERT spacing ── */
+#pendingAlert {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  #modalAddUser .modal,
+  #modalEditUser .modal {
+    width: 95vw;
+  }
+}

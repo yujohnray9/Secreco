@@ -1,0 +1,75 @@
+/* ═══════════════════════════════════════════
+   HEADER — c_header.php
+════════════════════════════════════════════ */
+.app-header{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 28px;height:76px;display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0;z-index:100;
+}
+.hdr-left{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:20px;min-width:0}
+.logo-group{
+  display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;
+  background:transparent;border:none;
+  border-radius:8px;padding:5px 0;flex-shrink:0;white-space:nowrap
+}
+.logo-group>.hdr-logo{display:inline-flex;flex-shrink:0}
+.logo-group>.logo-group-sep{display:none}
+.hdr-logo{
+  width:56px;height:56px;min-width:56px;max-width:56px;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:#fff;border-radius:50%;border:none;
+  padding:3px;box-sizing:border-box;
+}
+.hdr-logo img{
+  height:100% !important;width:100% !important;
+  max-height:100% !important;max-width:100% !important;
+  object-fit:contain;display:block
+}
+.logo-group-sep{display:none}
+.logo-circle{
+  width:56px;height:56px;background:var(--green);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Poppins',sans-serif;font-weight:700;font-size:11px;color:#fff;flex-shrink:0
+}
+.logo-circle.inst{background:var(--yellow);color:var(--green-dark)}
+.logo-sep{width:1px;height:22px;background:var(--border);margin:0 2px}
+.brand-name{font-family:'Poppins',sans-serif;font-size:13px !important;font-weight:700;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-sub{font-size:11px !important;color:var(--text-light) !important;font-weight:400 !important;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-center{flex:1;padding:0 28px}
+.hdr-meta{font-size:11px;color:var(--text-light);display:flex;align-items:center;gap:12px}
+.hdr-cy{display:inline-flex;align-items:center;padding:3px 10px;background:var(--green-light);color:var(--green-dark);font-size:11px;font-weight:700;border-radius:10px;letter-spacing:.04em;border:1px solid rgba(61,122,63,.2)}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.notif-btn{
+  position:relative;width:34px;height:34px;border:1px solid var(--border);
+  background:var(--white);border-radius:var(--radius-sm);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+  transition:border-color .2s
+}
+.notif-btn:hover{border-color:var(--green)}
+.signout-btn{
+  display:flex;align-items:center;gap:6px;padding:6px 14px 6px 10px;
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--white);color:var(--text-light);font-size:11.5px;
+  font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;
+  transition:background .2s,border-color .2s,color .2s;
+}
+.signout-btn:hover{background:var(--danger-light);border-color:#e8a09a;color:var(--danger)}
+.signout-btn svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.notif-dot{
+  position:absolute;top:5px;right:5px;width:8px;height:8px;
+  background:var(--danger);border-radius:50%;border:1.5px solid #fff;
+  display:none;
+}
+.user-chip{
+  display:flex;align-items:center;gap:8px;padding:5px 6px;
+  border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;
+  transition:border-color .2s;background:var(--white)
+}
+.user-chip:hover{border-color:var(--green)}
+.user-av{
+  width:28px;height:28px;background:var(--green);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff
+}
+.user-info-hdr{display:none}
+.user-name-hdr{font-size:12px;font-weight:600;color:var(--text)}
+.user-role-hdr{font-size:10px;color:var(--text-light)}

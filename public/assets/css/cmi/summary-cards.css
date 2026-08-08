@@ -1,0 +1,104 @@
+/**
+ * summary-cards.css — Shared styles for the status-summary cards
+ * and progress bar used at the top of My Drafts and My Submissions.
+ *
+ * Loaded by: dashboards/cmi/drafts.php, dashboards/cmi/submissions.php
+ */
+
+.summary-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+
+.s-card {
+  flex: 1 1 140px;
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+  transition: opacity .2s ease;
+}
+
+.s-num {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.s-lbl {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted, #777);
+  margin-top: 4px;
+}
+
+.s-card-green  { background: #eef7ee; border-color: #cde6cd; }
+.s-card-green  .s-num { color: var(--green, #2e7d32); }
+
+.s-card-yellow { background: #fdf6e8; border-color: #f3e3bd; }
+.s-card-yellow .s-num { color: #b8860b; }
+
+.s-card-red    { background: #fdecec; border-color: #f3c6c6; }
+.s-card-red    .s-num { color: #c62828; }
+
+.s-card-gray   { background: #f4f4f4; border-color: #e0e0e0; }
+.s-card-gray   .s-num { color: #757575; }
+
+/* ── Progress bar ── */
+.progress-wrap {
+  margin: 4px 0 20px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--text-muted, #777);
+  margin-bottom: 6px;
+}
+
+.progress-label strong {
+  color: var(--text, #333);
+}
+
+.progress-bar-bg {
+  background: #e6e6e6;
+  border-radius: 8px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #2e7d32, #66bb6a);
+  transition: width .4s ease;
+}
+
+/* ── Skeleton loading rows ── */
+.skel-line {
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skelShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (max-width: 640px) {
+  .summary-cards { gap: 8px; }
+  .s-card { min-width: 120px; padding: 10px 12px; }
+  .s-num { font-size: 22px; }
+}

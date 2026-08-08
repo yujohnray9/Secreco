@@ -1,0 +1,199 @@
+/* ════════════════════════════════════════════
+   FRESHCART MODERN MODAL & TOAST DIALOG SYSTEM
+   Replaces default browser confirm() & alert()
+   with custom SVG modals
+ ════════════════════════════════════════════ */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9990;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: modalBackdropFade .2s ease forwards;
+}
+.modal-overlay.open {
+  display: flex;
+}
+
+@keyframes modalBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-fc-box {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px 28px 28px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(16, 185, 129, 0.06);
+  position: relative;
+  text-align: center;
+  transform: scale(0.95);
+  animation: modalPopUp .22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalPopUp {
+  to { transform: scale(1); }
+}
+
+/* ── Modal Icon Badges ── */
+.modal-fc-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-fc-icon-wrap.type-green {
+  background: #ecfdf5;
+  border: 2px solid #a7f3d0;
+  color: #059669;
+}
+.modal-fc-icon-wrap.type-red {
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  color: #dc2626;
+}
+.modal-fc-icon-wrap.type-orange {
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  color: #d97706;
+}
+.modal-fc-icon-wrap.type-blue {
+  background: #eff6ff;
+  border: 2px solid #bfdbfe;
+  color: #2563eb;
+}
+
+.modal-fc-title {
+  font-family: 'Poppins', 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+
+.modal-fc-desc {
+  font-size: 13.5px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.modal-fc-input {
+  width: 100%;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #111827;
+  background: #fafafa;
+  outline: none;
+  font-family: inherit;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+  transition: all .15s;
+}
+.modal-fc-input:focus {
+  border-color: #10b981;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.modal-fc-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.modal-fc-btn {
+  flex: 1;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.modal-fc-btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+.modal-fc-btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.modal-fc-btn-green {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+.modal-fc-btn-green:hover {
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  transform: translateY(-1px);
+}
+
+.modal-fc-btn-red {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}
+.modal-fc-btn-red:hover {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+  transform: translateY(-1px);
+}
+
+.modal-fc-btn-orange {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+.modal-fc-btn-orange:hover {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  transform: translateY(-1px);
+}
+
+/* ── TOAST STYLES ── */
+.toast-wrap {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 30px;
+  font-size: 13.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+  animation: toastSlideIn .25s ease, toastFadeOut .3s ease 2.7s forwards;
+  max-width: 380px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+@keyframes toastSlideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes toastFadeOut { to { opacity: 0; transform: translateY(-10px); } }

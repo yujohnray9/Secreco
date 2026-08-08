@@ -85,38 +85,56 @@ class SubmissionController extends Controller
     public function accept(Request $request): JsonResponse
     {
         $submissionId = (int) $request->input('submission_id', 0);
-        if ($submissionId <= 0) {
-            return response()->json(['ok' => false, 'message' => 'Invalid submission ID.']);
+        $id           = (int) $request->input('id', 0);
+        $cmiUserId    = (int) $request->input('cmi_user_id', 0);
+        $tableNo      = strtoupper(trim($request->input('table_no', '')));
+        $year         = (int) ($request->input('year') ?? date('Y'));
+
+        $sub = null;
+
+        if ($submissionId > 0 || $id > 0) {
+            $targetId = $submissionId ?: $id;
+            $sub = ReportSubmission::find($targetId);
         }
 
-        $sub = ReportSubmission::where('id', $submissionId)
-            ->whereIn('status', ['pending', 'returned', 'in-progress'])
-            ->first();
+        if ($cmiUserId > 0) {
+            ReportTable::where('user_id', $cmiUserId)
+                ->where('reporting_year', $year)
+                ->where('table_no', $tableNo)
+                ->update(['status' => 'done']);
 
-        if (!$sub) {
-            return response()->json(['ok' => false, 'message' => 'Submission not found or already accepted.']);
+            if (!$sub) {
+                $sub = ReportSubmission::where('user_id', $cmiUserId)
+                    ->where('reporting_year', $year)
+                    ->first();
+            }
         }
 
-        $sub->update(['status' => 'accepted', 'remarks' => null]);
+        if ($sub) {
+            $sub->update(['status' => 'accepted', 'remarks' => null]);
+            $cmiUserId = $cmiUserId ?: $sub->user_id;
+        }
 
-        $cmiUser = User::find($sub->user_id);
-        $inst = $cmiUser?->institution ?: $cmiUser?->name;
+        $cmiUser = User::find($cmiUserId);
+        $inst = $cmiUser?->institution ?: ($cmiUser?->name ?? 'CMI User');
 
-        Notification::create([
-            'user_id'      => $sub->user_id,
-            'role'         => 'cmi',
-            'type'         => 'submitted',
-            'icon'         => '✅',
-            'color'        => 'green',
-            'message'      => "Your CY {$sub->reporting_year} report submission has been accepted by PTA. Great work!",
-            'action_url'   => '/secreco/dashboards/cmi/submissions.php',
-            'action_label' => 'View',
-            'is_read'      => false,
-            'created_at'   => now(),
-        ]);
+        if ($cmiUser) {
+            Notification::create([
+                'user_id'      => $cmiUser->id,
+                'role'         => 'cmi',
+                'type'         => 'submitted',
+                'icon'         => '✅',
+                'color'        => 'green',
+                'message'      => "Your CY {$year} report submission has been accepted by PTA. Great work!",
+                'action_url'   => '/dashboard/cmi/submissions',
+                'action_label' => 'View',
+                'is_read'      => false,
+                'created_at'   => now(),
+            ]);
+        }
 
         $ptaId = Auth::id() ?? session('user_id');
-        ActivityLogService::log($ptaId, "Accepted submission #{$submissionId} from {$inst} (CY {$sub->reporting_year})");
+        ActivityLogService::log($ptaId, "Accepted submission from {$inst} (CY {$year})");
 
         return response()->json(['ok' => true, 'message' => "Submission from {$inst} accepted successfully."]);
     }
@@ -162,7 +180,7 @@ class SubmissionController extends Controller
             'icon'         => '🔴',
             'color'        => 'red',
             'message'      => $notifMsg,
-            'action_url'   => '/secreco/dashboards/cmi/fillup.php',
+            'action_url'   => '/dashboard/cmi/fillup',
             'action_label' => "Fix {$tableNo}",
             'is_read'      => false,
             'created_at'   => now(),

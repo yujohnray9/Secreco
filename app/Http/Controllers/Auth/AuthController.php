@@ -98,10 +98,10 @@ class AuthController extends Controller
         ]);
 
         $redirect = match ($user->role) {
-            'pta'    => 'dashboards/pta/index.php',
-            'cmi'    => 'dashboards/cmi/index.php',
-            'viewer' => 'dashboards/viewer/index.php',
-            default  => 'login.php',
+            'pta'    => '/dashboard/pta',
+            'cmi'    => '/dashboard/cmi',
+            'viewer' => '/dashboard/viewer',
+            default  => '/login',
         };
 
         return response()->json(['success' => true, 'redirect' => $redirect]);
@@ -312,10 +312,10 @@ class AuthController extends Controller
 
             if ($role === 'pta') {
                 $message = 'Account created successfully! You may now sign in.';
-                $redirect = 'login.php';
+                $redirect = '/login';
             } else {
                 $message = 'Account created! Please wait for PTA approval before signing in.';
-                $redirect = 'login.php?pending=1';
+                $redirect = '/login?registered=1';
             }
 
             return response()->json(['success' => true, 'message' => $message, 'redirect' => $redirect]);

@@ -124,6 +124,14 @@ class UserController extends Controller
 
                 ActivityLogService::log($adminId, "Approved: {$pending->first_name} {$pending->last_name} ({$pending->email})");
 
+                try {
+                    \Illuminate\Support\Facades\Mail::to($pending->email)->send(
+                        new \App\Mail\ApprovalMail($pending->first_name . ' ' . $pending->last_name, 'approved')
+                    );
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Could not send approval email to {$pending->email}: " . $e->getMessage());
+                }
+
                 return response()->json(['success' => true, 'new_user_id' => (int) $pendingId]);
             });
         } catch (Throwable $e) {

@@ -1,0 +1,135 @@
+/* ══════════════════════════════════════════════
+   CMI DASHBOARD — dashboard.css
+   Scoped to #page-dashboard only.
+   Base variables, layout, header, sidebar,
+   modals, buttons, cards, and tables are
+   already defined in base.css / shared files.
+══════════════════════════════════════════════ */
+
+/* ── DEADLINE / WELCOME BANNER ── */
+.welcome-banner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ctx-deadline {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--danger-light);
+  border: 1px solid #f5b8b8;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+}
+.ctx-deadline-label { color: var(--text-light); }
+.ctx-deadline-date  { font-weight: 700; color: var(--danger); }
+
+.ctx-days {
+  background: var(--green);
+  color: #fff;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ctx-days span {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ── STAT CARDS ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px 16px;
+  position: relative;
+  overflow: hidden;
+  border-left: 4px solid transparent;
+  transition: box-shadow .2s;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); }
+
+.stat-card.sc-green  { border-left-color: var(--green);   background: linear-gradient(135deg, #f3fbf3 0%, #fff 55%); }
+.stat-card.sc-blue   { border-left-color: #2471a3;        background: linear-gradient(135deg, #eaf2fa 0%, #fff 55%); }
+.stat-card.sc-orange { border-left-color: var(--warning); background: linear-gradient(135deg, #fff8ed 0%, #fff 55%); }
+.stat-card.sc-red    { border-left-color: var(--danger);  background: linear-gradient(135deg, #fdecea 0%, #fff 55%); }
+
+.sc-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.sc-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sc-green  .sc-icon-wrap { background: rgba(61,122,63,.13); }
+.sc-blue   .sc-icon-wrap { background: rgba(36,113,163,.13); }
+.sc-orange .sc-icon-wrap { background: rgba(212,135,10,.13); }
+.sc-red    .sc-icon-wrap { background: rgba(192,57,43,.13); }
+
+.sc-icon-wrap svg {
+  width: 18px; height: 18px;
+  stroke-width: 2; fill: none;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.sc-green  .sc-icon-wrap svg { stroke: var(--green); }
+.sc-blue   .sc-icon-wrap svg { stroke: #2471a3; }
+.sc-orange .sc-icon-wrap svg { stroke: var(--warning); }
+.sc-red    .sc-icon-wrap svg { stroke: var(--danger); }
+
+.sc-label { font-size: 10px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+.sc-val   { font-family: 'Poppins', sans-serif; font-size: 30px; font-weight: 700; color: var(--text); line-height: 1; }
+.sc-meta  { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* ── TWO-COLUMN GRID ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── SECTION PROGRESS ── */
+.prog-bar   { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; width: 110px; flex-shrink: 0; }
+.prog-fill  { height: 100%; border-radius: 4px; transition: width .5s ease; }
+
+.prog-fill.pf-red    { background: #E24B4A; }
+.prog-fill.pf-orange { background: #EF9F27; }
+.prog-fill.pf-green  { background: #3d7a3f; }
+
+/* ── RECENT ACTIVITY FEED ── */
+.feed-item {
+  display: flex;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.feed-item:last-child { border-bottom: none; }
+.feed-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.feed-content { font-size: 12px; color: var(--text); line-height: 1.45; }
+.feed-time    { font-size: 10px; color: var(--text-muted); margin-top: 2px; }

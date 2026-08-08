@@ -1,0 +1,41 @@
+/* ══════════════════════════════════════════════
+   ADDITIONS to fillup.css for the dynamic
+   24-table renderer + documentation modal.
+   Append to existing fillup.css.
+══════════════════════════════════════════════ */
+
+.fill-nav-sub.active-table {
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--white);
+}
+
+.fill-body select,
+.fill-body textarea {
+  border: 1px solid var(--border);
+  padding: 4px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+}
+
+.fill-body textarea {
+  min-height: 34px;
+  resize: vertical;
+}
+
+.fill-body input[type="date"] {
+  border: 1px solid var(--border);
+  padding: 3px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Documentation modal */
+#fillupDocsModal .modal-box img {
+  background: #eee;
+}
+
+#fillupDocsModal input[type="file"] {
+  font-size: 11px;
+}

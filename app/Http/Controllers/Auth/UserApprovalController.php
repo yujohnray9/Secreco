@@ -43,6 +43,15 @@ class UserApprovalController extends Controller
                             'approved_by' => $adminId,
                         ]);
                         ActivityLogService::log($adminId, "Approved account for {$name} ({$user->email})");
+
+                        try {
+                            \Illuminate\Support\Facades\Mail::to($user->email)->send(
+                                new \App\Mail\ApprovalMail($user->first_name . ' ' . $user->last_name, 'approved')
+                            );
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning("Could not send approval email to {$user->email}: " . $e->getMessage());
+                        }
+
                         return response()->json(['success' => true, 'message' => "Account approved — {$name} can now log in."]);
 
                     case 'reject':
@@ -51,6 +60,15 @@ class UserApprovalController extends Controller
                         }
                         $user->update(['status' => 'inactive']);
                         ActivityLogService::log($adminId, "Rejected registration for {$name} ({$user->email})");
+
+                        try {
+                            \Illuminate\Support\Facades\Mail::to($user->email)->send(
+                                new \App\Mail\ApprovalMail($user->first_name . ' ' . $user->last_name, 'rejected')
+                            );
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning("Could not send rejection email to {$user->email}: " . $e->getMessage());
+                        }
+
                         return response()->json(['success' => true, 'message' => "Registration rejected — {$name} will not be able to log in."]);
 
                     case 'deactivate':

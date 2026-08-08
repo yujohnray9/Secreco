@@ -1,0 +1,197 @@
+/* ════════════════════════════════════════════
+   HEADER — FreshCart / SecReCo Topbar
+════════════════════════════════════════════ */
+
+.app-header {
+  background: #ffffff;
+  border-bottom: 1px solid #f0f3f6;
+  padding: 16px 32px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 100;
+  gap: 20px;
+}
+
+/* ── Left: Page Title & Description ── */
+.hdr-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.hdr-page-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.hdr-page-sub {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* ── Center: Search Input Pill ── */
+.hdr-search-wrap {
+  flex: 1;
+  max-width: 420px;
+  position: relative;
+  margin: 0 20px;
+}
+
+.hdr-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.hdr-search-input {
+  width: 100%;
+  padding: 10px 18px 10px 42px;
+  border-radius: 30px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #111827;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s ease;
+}
+
+.hdr-search-input:focus {
+  background: #ffffff;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.hdr-search-input::placeholder {
+  color: #9ca3af;
+}
+
+/* ── Right Actions ── */
+.hdr-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Notification Bell Circle */
+.notif-btn {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #4b5563;
+  transition: all 0.15s ease;
+}
+
+.notif-btn:hover {
+  background: #ecfdf5;
+  border-color: #10b981;
+  color: #059669;
+}
+
+.notif-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+/* User Profile Badge */
+.hdr-user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 30px;
+  transition: background 0.15s ease;
+}
+
+.hdr-user-profile:hover {
+  background: #f9fafb;
+}
+
+.hdr-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #10b981;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.hdr-user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.hdr-user-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.hdr-user-email {
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.2;
+}
+
+/* Sign out button */
+.signout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.signout-btn:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #ef4444;
+}
+
+.signout-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Backward compatibility for legacy header structures */
+.hdr-left, .logo-circle, .brand-name, .brand-sub, .hdr-center, .hdr-meta, .hdr-cy {
+  display: flex;
+}

@@ -1,0 +1,30 @@
+/* ═══════════════════════════════════════════
+   MODALS & TOAST — shared modal overlays
+   and toast notifications used in c_header.php
+════════════════════════════════════════════ */
+/* ── MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:500;align-items:center;justify-content:center
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--white);border-radius:var(--radius);padding:28px;
+  width:480px;max-width:90vw;box-shadow:var(--shadow-md);
+  animation:fadeUp .2s ease
+}
+.modal-title{font-family:'Poppins',sans-serif;font-size:16px;font-weight:700;margin-bottom:8px}
+.modal-desc{font-size:13px;color:var(--text-light);margin-bottom:20px;line-height:1.5}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;top:80px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:600}
+.toast{
+  background:var(--green-dark);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);
+  font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px;
+  box-shadow:var(--shadow-md);animation:slideIn .3s ease,fadeOut .3s ease 2.7s forwards;
+  max-width:320px
+}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{to{opacity:0;transform:translateX(100%)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}

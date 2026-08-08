@@ -1,0 +1,18 @@
+/* ═══════════════════════════════════════════
+   UPLOAD PHOTO — profile avatar upload & crop
+   styles used in c_header.php (modalProfile,
+   modalCrop)
+════════════════════════════════════════════ */
+.profile-avatar-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px
+}
+.profile-avatar-circle{
+  width:96px;height:96px;border-radius:50%;overflow:hidden;cursor:pointer;
+  border:2px solid var(--border);transition:border-color .2s;position:relative
+}
+.profile-avatar-circle:hover{border-color:var(--green)}
+.profile-avatar-circle img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-avatar-hint{font-size:11px;color:var(--text-muted)}
+#removePhotoLink{font-size:11px;color:var(--danger);text-decoration:none;cursor:pointer}
+#removePhotoLink:hover{text-decoration:underline}
+#removePhotoLink.hidden{display:none}

@@ -195,7 +195,7 @@ class TableController extends Controller
         $ext      = strtolower($file->getClientOriginalExtension());
         $filename = 'img_' . bin2hex(random_bytes(8)) . '.' . time() . '.' . $ext;
         $path     = $file->storeAs("assets/uploads/cmi/{$tableKey}", $filename, 'public');
-        $webpath  = "/secreco/assets/uploads/cmi/{$tableKey}/{$filename}";
+        $webpath  = "/storage/uploads/cmi/{$tableKey}/{$filename}";
 
         $userId = Auth::id() ?? session('user_id');
         $year   = (int) date('Y');
