@@ -39,7 +39,13 @@ class TableController extends Controller
             ->where('table_no', $tableNo)
             ->orderBy('sort_order', 'asc')
             ->orderBy('uploaded_at', 'asc')
-            ->get(['id', 'file_path', 'caption']);
+            ->get(['id', 'file_path', 'caption'])
+            ->map(function ($img) {
+                if ($img->file_path) {
+                    $img->file_path = '/' . ltrim($img->file_path, '/');
+                }
+                return $img;
+            });
 
         $meta = $row->meta_json ?? [];
         if (is_array($meta)) {
@@ -63,7 +69,7 @@ class TableController extends Controller
         }
 
         $userId        = Auth::id() ?? session('user_id');
-        $reportingYear = (int) date('Y');
+        $reportingYear = (int) ($body['year'] ?? date('Y'));
         $tableNo       = preg_replace('/[^A-Za-z0-9]/', '', $body['table_no'] ?? '');
         $meta          = $body['meta'] ?? new \stdClass();
         $rows          = $body['rows'] ?? [];
@@ -202,11 +208,29 @@ class TableController extends Controller
 
     public function uploadDoc(Request $request): JsonResponse
     {
-        if (!$request->hasFile('file') || !$request->file('file')->isValid()) {
-            return response()->json(['success' => false, 'error' => 'File upload error']);
+        $userId = Auth::id() ?? session('user_id');
+
+        // Case 1: Caption update call (doc_id + caption)
+        if ($request->has('doc_id') && $request->has('caption')) {
+            $docId   = (int) $request->input('doc_id');
+            $caption = trim($request->input('caption', ''));
+            ReportTableDoc::where('id', $docId)->where('user_id', $userId)->update(['caption' => $caption]);
+            return response()->json(['success' => true]);
         }
 
-        $file = $request->file('file');
+        // Case 2: File upload
+        $files = [];
+        if ($request->hasFile('images')) {
+            $uploaded = $request->file('images');
+            $files = is_array($uploaded) ? $uploaded : [$uploaded];
+        } elseif ($request->hasFile('file')) {
+            $files = [$request->file('file')];
+        }
+
+        if (empty($files)) {
+            return response()->json(['success' => false, 'error' => 'No files uploaded.']);
+        }
+
         $rawTable = $request->input('table_no', '');
         $tableKey = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $rawTable));
         $tableDb  = strtoupper($rawTable);
@@ -215,13 +239,7 @@ class TableController extends Controller
             return response()->json(['success' => false, 'error' => 'Missing table_no']);
         }
 
-        $ext      = strtolower($file->getClientOriginalExtension());
-        $filename = 'img_' . bin2hex(random_bytes(8)) . '.' . time() . '.' . $ext;
-        $path     = $file->storeAs("assets/uploads/cmi/{$tableKey}", $filename, 'public');
-        $webpath  = "/storage/uploads/cmi/{$tableKey}/{$filename}";
-
-        $userId = Auth::id() ?? session('user_id');
-        $year   = (int) date('Y');
+        $year = (int) ($request->input('year') ?? date('Y'));
 
         $maxSort = ReportTableDoc::where('user_id', $userId)
             ->where('reporting_year', $year)
@@ -229,22 +247,44 @@ class TableController extends Controller
             ->max('sort_order');
         $sortOrder = ($maxSort !== null ? $maxSort : -1) + 1;
 
-        $doc = ReportTableDoc::create([
-            'user_id'        => $userId,
-            'reporting_year' => $year,
-            'table_no'       => $tableDb,
-            'file_path'      => $webpath,
-            'caption'        => '',
-            'sort_order'     => $sortOrder,
-            'uploaded_at'    => now(),
-        ]);
+        $createdFiles = [];
+        foreach ($files as $file) {
+            if (!$file->isValid()) continue;
 
-        return response()->json(['success' => true, 'doc_id' => $doc->id, 'file_path' => $webpath]);
+            $ext      = strtolower($file->getClientOriginalExtension());
+            $filename = 'img_' . bin2hex(random_bytes(8)) . '.' . time() . '.' . $ext;
+            $path     = $file->storeAs("uploads/cmi/{$tableKey}", $filename, 'public');
+            $webpath  = "/storage/uploads/cmi/{$tableKey}/{$filename}";
+
+            $doc = ReportTableDoc::create([
+                'user_id'        => $userId,
+                'reporting_year' => $year,
+                'table_no'       => $tableDb,
+                'file_path'      => $webpath,
+                'caption'        => '',
+                'sort_order'     => $sortOrder++,
+                'uploaded_at'    => now(),
+            ]);
+
+            $createdFiles[] = [
+                'id'        => (int) $doc->id,
+                'doc_id'    => (int) $doc->id,
+                'file_path' => $webpath,
+                'caption'   => '',
+            ];
+        }
+
+        return response()->json([
+            'success'   => true,
+            'files'     => $createdFiles,
+            'doc_id'    => $createdFiles[0]['id'] ?? 0,
+            'file_path' => $createdFiles[0]['file_path'] ?? '',
+        ]);
     }
 
     public function deleteDoc(Request $request): JsonResponse
     {
-        $docId  = (int) $request->input('doc_id', 0);
+        $docId  = (int) ($request->input('doc_id') ?? $request->input('id') ?? 0);
         $userId = Auth::id() ?? session('user_id');
 
         if ($docId <= 0) {

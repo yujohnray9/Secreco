@@ -160,13 +160,20 @@ document.addEventListener('DOMContentLoaded', async function () {
   try {
     const res = await fetch('/api/cmi/profile');
     const json = await res.json();
-    if (json.success) {
-      document.getElementById('profFirstName').value = json.first_name || '';
-      document.getElementById('profLastName').value = json.last_name || '';
-      document.getElementById('profEmail').value = json.email || '';
-      document.getElementById('profInst').value = json.institution || '';
-      document.getElementById('profDesig').value = json.designation || '';
-    }
+      if (json.success) {
+        document.getElementById('profFirstName').value = json.first_name || '';
+        document.getElementById('profLastName').value = json.last_name || '';
+        document.getElementById('profEmail').value = json.email || '';
+        document.getElementById('profInst').value = json.institution || '';
+        document.getElementById('profDesig').value = json.designation || '';
+
+        // Load profile photo
+        if (json.photo) {
+          const photoUrl = '/' + json.photo.replace(/^\//, '') + '?t=' + Date.now();
+          const preview = document.getElementById('cmiAvatarPreview');
+          if (preview) preview.src = photoUrl;
+        }
+      }
   } catch (e) {
     console.error('Profile load error:', e);
   }

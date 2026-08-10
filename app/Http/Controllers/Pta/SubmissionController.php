@@ -18,15 +18,22 @@ class SubmissionController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $year = (int) ($request->input('year') ?? date('Y'));
+        $year   = (int) ($request->input('year') ?? date('Y'));
+        $status = $request->input('status');
 
-        $tables = ReportTable::where('reporting_year', $year)
-            ->where('status', 'done')
+        $query = ReportTable::where('reporting_year', $year)
             ->whereHas('user', function ($q) {
                 $q->where('role', 'cmi')->where('status', 'active');
             })
-            ->with('user')
-            ->orderBy(User::select('institution')->whereColumn('users.id', 'report_tables.user_id'))
+            ->with('user');
+
+        if ($status) {
+            $query->where('status', $status);
+        } else {
+            $query->whereIn('status', ['done', 'submitted', 'accepted', 'returned', 'deleted']);
+        }
+
+        $tables = $query->orderBy(User::select('institution')->whereColumn('users.id', 'report_tables.user_id'))
             ->orderBy('table_no')
             ->get();
 
@@ -101,7 +108,7 @@ class SubmissionController extends Controller
             ReportTable::where('user_id', $cmiUserId)
                 ->where('reporting_year', $year)
                 ->where('table_no', $tableNo)
-                ->update(['status' => 'done']);
+                ->update(['status' => 'accepted', 'updated_at' => now()]);
 
             if (!$sub) {
                 $sub = ReportSubmission::where('user_id', $cmiUserId)
@@ -125,7 +132,7 @@ class SubmissionController extends Controller
                 'type'         => 'submitted',
                 'icon'         => '✅',
                 'color'        => 'green',
-                'message'      => "Your CY {$year} report submission has been accepted by PTA. Great work!",
+                'message'      => "Your CY {$year} Table {$tableNo} submission has been accepted by PTA. Great work!",
                 'action_url'   => '/dashboard/cmi/submissions',
                 'action_label' => 'View',
                 'is_read'      => false,
@@ -134,9 +141,9 @@ class SubmissionController extends Controller
         }
 
         $ptaId = Auth::id() ?? session('user_id');
-        ActivityLogService::log($ptaId, "Accepted submission from {$inst} (CY {$year})");
+        ActivityLogService::log($ptaId, "Accepted submission Table {$tableNo} from {$inst} (CY {$year})");
 
-        return response()->json(['ok' => true, 'message' => "Submission from {$inst} accepted successfully."]);
+        return response()->json(['ok' => true, 'message' => "Table {$tableNo} submission from {$inst} accepted successfully."]);
     }
 
     public function requestCorrection(Request $request): JsonResponse
@@ -158,6 +165,11 @@ class SubmissionController extends Controller
         if (!$check) {
             return response()->json(['ok' => false, 'error' => 'CMI user not found.']);
         }
+
+        ReportTable::where('user_id', $cmiUserId)
+            ->where('reporting_year', $year)
+            ->where('table_no', $tableNo)
+            ->update(['status' => 'returned', 'updated_at' => now()]);
 
         CorrectionRequest::create([
             'cmi_user_id'    => $cmiUserId,
@@ -196,5 +208,29 @@ class SubmissionController extends Controller
         ActivityLogService::log($ptaUserId, "Correction requested for {$tableNo} — CMI user #{$cmiUserId}: \"{$reason}\"");
 
         return response()->json(['ok' => true]);
+    }
+
+    public function delete(Request $request): JsonResponse
+    {
+        $cmiUserId = (int) $request->input('cmi_user_id', 0);
+        $tableNo   = strtoupper(trim($request->input('table_no', '')));
+        $year      = (int) ($request->input('year') ?? date('Y'));
+        $ptaUserId = (int) (Auth::id() ?? session('user_id'));
+
+        if (!$cmiUserId || !$tableNo) {
+            return response()->json(['ok' => false, 'error' => 'Missing required fields.']);
+        }
+
+        ReportTable::where('user_id', $cmiUserId)
+            ->where('reporting_year', $year)
+            ->where('table_no', $tableNo)
+            ->update(['status' => 'deleted', 'updated_at' => now()]);
+
+        $cmiUser = User::find($cmiUserId);
+        $inst    = $cmiUser?->institution ?: ($cmiUser?->name ?? 'CMI User');
+
+        ActivityLogService::log($ptaUserId, "Deleted submission {$tableNo} from {$inst} (CY {$year})");
+
+        return response()->json(['ok' => true, 'message' => "Submission {$tableNo} from {$inst} deleted."]);
     }
 }

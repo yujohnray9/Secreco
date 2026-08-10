@@ -7,9 +7,11 @@
 // ── DOCS / IMAGES DISPLAY ────────────────────────────────────
 function renderDocsSection(docs) {
   if (!docs?.length) return '';
-  const imgs = docs.map(d =>
-    `<img src="${d.file_path}" onerror="this.style.display='none'" onclick="openLightbox('${d.file_path}', '${esc(d.caption || '')}')" title="${esc(d.caption || 'View image')}" style="height:72px;width:72px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;display:block;"/>`
-  ).join('');
+  const imgs = docs.map(d => {
+    const src = d.file_path ? ('/' + d.file_path.replace(/^\//, '')) : '';
+    if (!src) return '';
+    return `<img src="${src}" onerror="this.style.display='none'" onclick="openLightbox('${src}', '${esc(d.caption || '')}')" title="${esc(d.caption || 'View image')}" style="height:72px;width:72px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;display:block;"/>`;
+  }).join('');
   return `<div class="docs-thumbs" style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0">${imgs}</div>`;
 }
 
@@ -17,9 +19,11 @@ function renderDocsSection(docs) {
 function renderCMIDocsBlock(institution, docs) {
   const thumbsHtml = docs?.length
     ? `<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0;">
-        ${docs.map(d =>
-          `<img src="${d.file_path}" width="72" height="72" onerror="this.style.display='none'" onclick="openLightbox('${d.file_path}', '${esc(d.caption || '')}')" title="${esc(d.caption || 'View image')}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;display:block;"/>`
-        ).join('')}
+        ${docs.map(d => {
+          const src = d.file_path ? ('/' + d.file_path.replace(/^\//, '')) : '';
+          if (!src) return '';
+          return `<img src="${src}" width="72" height="72" onerror="this.style.display='none'" onclick="openLightbox('${src}', '${esc(d.caption || '')}')" title="${esc(d.caption || 'View image')}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;display:block;"/>`;
+        }).join('')}
       </div>
       ${docs[0]?.caption ? `<p style="margin:5px 0 0;font-size:8.5pt;font-style:italic;color:#555;font-family:Calibri,Arial,sans-serif;">"${esc(docs[0].caption)}"</p>` : ''}`
     : `<p style="margin:4px 0 0;font-size:8.5pt;color:#aaa;font-style:italic;font-family:Calibri,Arial,sans-serif;">No attachments submitted.</p>`;

@@ -51,8 +51,8 @@ function renderExportBtns() {
   const wrap = el('rptExportBtns');
   if (!wrap) return;
   wrap.innerHTML = `
-    <button class="btn btn-sm btn-yellow" onclick="showWordPreview()">👁 Preview</button>
-    <button class="btn btn-sm btn-primary" onclick="showExportConfirm()">⬇ Export</button>`;
+    <button class="btn btn-sm btn-yellow" onclick="showWordPreview()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Preview</button>
+    <button class="btn btn-sm btn-primary" onclick="showExportConfirm()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export</button>`;
 }
 
 // ── PREVIEW ───────────────────────────────────────────────────
@@ -94,7 +94,7 @@ async function showExportConfirm() {
       @keyframes ecSlideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
       #ecBox {
         background:#fff;border-radius:14px;padding:32px 36px;
-        max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.22);
+        max-width:400px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.22);
         animation:ecSlideUp .2s ease;font-family:Calibri,Arial,sans-serif;text-align:center;
       }
       #ecBox .ec-logos { display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:14px; }
@@ -103,11 +103,10 @@ async function showExportConfirm() {
       #ecBox p  { margin:0 0 22px;font-size:.88rem;color:#555;line-height:1.55; }
       #ecBox p strong { color:#1b4d2e; }
       #ecBox .ec-actions { display:flex;gap:10px;justify-content:center;margin-top:4px; }
-      #ecBox .ec-btn { padding:9px 22px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:opacity .15s;flex:1; }
+      #ecBox .ec-btn { padding:10px 28px;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;border:none;transition:opacity .15s; }
       #ecBox .ec-btn:hover  { opacity:.82; }
-      #ecBox .ec-cancel  { background:#f0f0f0;color:#555;flex:0 0 auto;padding:9px 18px; }
-      #ecBox .ec-pdf   { background:#1b4d2e;color:#fff; }
-      #ecBox .ec-docx  { background:#2e6da4;color:#fff; }
+      #ecBox .ec-cancel  { background:#f0f0f0;color:#555; }
+      #ecBox .ec-docx  { background:#1b4d2e;color:#fff; }
     </style>
     <div id="ecBox">
       <div class="ec-logos">
@@ -117,12 +116,16 @@ async function showExportConfirm() {
       </div>
       <h3>Export Report</h3>
       <p>
-        <strong>${esc(title)} — CY ${esc(year)}</strong>
+        Are you sure you want to export<br>
+        <strong>${esc(title)} — CY ${esc(year)}</strong><br>
+        as a <strong>DOCX</strong> file? It will be downloaded to your device.
       </p>
       <div class="ec-actions">
-        <button class="ec-btn ec-pdf"  onclick="confirmExportPDF()">PDF</button>
-        <button class="ec-btn ec-docx" onclick="confirmExportDOCX()">DOCX</button>
         <button class="ec-btn ec-cancel" onclick="closeExportConfirm()">Cancel</button>
+        <button class="ec-btn ec-docx"  onclick="confirmExportDOCX()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download DOCX
+        </button>
       </div>
     </div>`;
 

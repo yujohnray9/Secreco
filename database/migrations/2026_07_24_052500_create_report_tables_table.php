@@ -19,7 +19,7 @@ return new class extends Migration
                 $table->string('table_no', 10);
                 $table->longText('meta_json')->nullable();
                 $table->longText('rows_json')->nullable();
-                $table->enum('status', ['not-started', 'draft', 'done', 'error'])->default('not-started');
+                $table->string('status', 30)->default('not-started');
                 $table->dateTime('updated_at')->useCurrent()->useCurrentOnUpdate();
 
                 $table->unique(['user_id', 'reporting_year', 'table_no'], 'uq_user_year_table');

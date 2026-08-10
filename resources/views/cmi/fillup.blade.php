@@ -20,14 +20,30 @@
   <div class="page-hdr" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
     <div>
       <div class="page-title">Fill Up Report</div>
-      <div class="page-sub">CY {{ date('Y') }} Annual Accomplishment Report — All Sections &amp; Tables</div>
+      <div class="page-sub" id="fillupSubtitle">CY {{ date('Y') }} Annual Accomplishment Report &amp; All Sections &amp; Tables</div>
     </div>
-    <div class="page-actions">
+    <div class="page-actions" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:13px;font-weight:600;color:#374151">Year:</label>
+        <select id="fillupYearSel" style="border:1px solid #d1d5db;border-radius:8px;padding:7px 14px;font-size:13px;color:#374151;background:#fff;cursor:pointer;outline:none;">
+          @for($y = date('Y'); $y >= 2020; $y--)
+            <option value="{{ $y }}" {{ date('Y') == $y ? 'selected' : '' }}>CY {{ $y }}</option>
+          @endfor
+        </select>
+      </div>
+      <button class="btn-submit-report" id="btn-save-draft" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Save Draft
+      </button>
       <button class="btn-submit-report" id="btn-submit">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        Submit Report
+        Submit Reports
       </button>
     </div>
   </div>
@@ -43,6 +59,49 @@
 @section('scripts')
 <script>
   window.CMI_AGENCY_NAME = @json(Auth::user()?->institution ?? session('user_inst') ?? '');
+  window.CMI_REPORTING_YEAR = {{ date('Y') }};
+</script>
+
+<script>
+// Year selector logic — runs after fillup-core.js loads
+document.addEventListener('DOMContentLoaded', function() {
+  const yearSel  = document.getElementById('fillupYearSel');
+  const subtitle = document.getElementById('fillupSubtitle');
+  const saveDraftBtn = document.getElementById('btn-save-draft');
+
+  if (yearSel) {
+    yearSel.addEventListener('change', function() {
+      window.CMI_REPORTING_YEAR = parseInt(this.value);
+      if (subtitle) subtitle.textContent = 'CY ' + this.value + ' Annual Accomplishment Report — All Sections & Tables';
+      // Reload statuses for selected year then re-show current table
+      fetch('/api/cmi/tables/statuses?year=' + this.value)
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.statuses) CMI.setStatuses(data.statuses);
+          const active = window._cmiActiveTable || 'T1';
+          CMI.showTable(active);
+        })
+        .catch(() => {});
+    });
+  }
+
+  // Save Draft button — saves the current table with status = draft
+  if (saveDraftBtn) {
+    saveDraftBtn.addEventListener('click', function() {
+      if (typeof CMI !== 'undefined' && typeof CMI.saveDraft === 'function') {
+        CMI.saveDraft();
+      } else {
+        // Trigger save via the active table's save button if exposed
+        const activeBtn = document.querySelector('#fillBody button[data-action="save"]');
+        if (activeBtn) {
+          activeBtn.click();
+        } else {
+          showToast('Use the Save button inside the table to save your draft.');
+        }
+      }
+    });
+  }
+});
 </script>
 
 <!-- Core engine first, then per-table scripts -->

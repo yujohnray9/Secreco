@@ -37,6 +37,7 @@
 .badge-gray   { background:#f3f4f6; color:#6b7280; }
 .badge-blue   { background:#eff6ff; color:#2563eb; }
 .badge-purple { background:#f5f3ff; color:#7c3aed; }
+.badge-teal   { background:#ecfdf5; color:#0d9488; }
 
 /* ── Action Buttons ── */
 .btn-sm-fc { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; border:none; cursor:pointer; transition:all .15s; }
@@ -46,6 +47,9 @@
 .btn-sm-accept:hover { background:#d1fae5; }
 .btn-sm-return  { background:#fff7ed; color:#d97706; border:1px solid #fed7aa; }
 .btn-sm-return:hover { background:#ffedd5; }
+.btn-sm-delete  { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+.btn-sm-delete:hover { background:#fee2e2; }
+.ts-label { display:block; font-size:10.5px; color:#9ca3af; margin-top:2px; }
 
 /* ── Modal Box for View Data ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(17,24,39,0.55); backdrop-filter:blur(6px); z-index:9990; align-items:center; justify-content:center; padding:16px; }
@@ -140,9 +144,21 @@
 let cachedSubRows = [];
 
 const statusBadge = s => {
-  const map = { done:'badge-green', draft:'badge-orange', accepted:'badge-green', returned:'badge-purple' };
-  const label = s === 'done' ? 'Done (Submitted)' : (s === 'draft' ? 'Draft' : s);
-  return `<span class="badge ${map[s] || 'badge-gray'}">${label}</span>`;
+  const map = {
+    done      : 'badge-green',
+    accepted  : 'badge-teal',
+    returned  : 'badge-purple',
+    deleted   : 'badge-red',
+    draft     : 'badge-orange',
+  };
+  const label = {
+    done      : 'Submitted',
+    accepted  : 'Accepted',
+    returned  : 'Returned',
+    deleted   : 'Deleted',
+    draft     : 'Draft',
+  };
+  return `<span class="badge ${map[s] || 'badge-gray'}">${label[s] || s}</span>`;
 };
 
 function renderSubsTable() {
@@ -163,18 +179,23 @@ function renderSubsTable() {
     return;
   }
 
-  tbody.innerHTML = filtered.map((r, idx) => `
+  tbody.innerHTML = filtered.map((r, idx) => {
+    const ts = r.updated_at ? r.updated_at.substring(0,16).replace('T',' ') : '—';
+    const actionTs = r.action_at ? `<span class="ts-label">${r.action_at.substring(0,16).replace('T',' ')}</span>` : '';
+    const isActioned = r.table_status === 'accepted' || r.table_status === 'returned' || r.table_status === 'deleted';
+    return `
     <tr>
       <td><strong>${r.institution}</strong></td>
       <td>${r.encoder}</td>
       <td><span class="badge badge-blue">Table ${r.table_no}</span></td>
-      <td>${statusBadge(r.table_status || 'done')}</td>
-      <td style="color:#6b7280;font-size:12.5px">${r.updated_at ? r.updated_at.substring(0,16).replace('T',' ') : '—'}</td>
-      <td style="display:flex;gap:6px;flex-wrap:wrap">
+      <td>${statusBadge(r.table_status || 'done')}${actionTs}</td>
+      <td style="color:#6b7280;font-size:12.5px">${ts}</td>
+      <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${cachedSubRows.indexOf(r)})">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          View Data
+          View
         </button>
+        ${!isActioned ? `
         <button class="btn-sm-fc btn-sm-accept" onclick="acceptSub(${cachedSubRows.indexOf(r)})">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Accept
@@ -183,9 +204,13 @@ function renderSubsTable() {
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.73"/></svg>
           Return
         </button>
+        <button class="btn-sm-fc btn-sm-delete" onclick="deleteSub(${cachedSubRows.indexOf(r)})">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          Delete
+        </button>` : statusBadge(r.table_status)}
       </td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 async function loadSubs() {
@@ -210,15 +235,38 @@ window.viewDataModal = function(idx) {
   document.getElementById('vdEncoder').textContent = `Encoder: ${r.encoder} • Table ${r.table_no}`;
 
   const wrap = document.getElementById('vdTableWrap');
+  let html = '';
   if (r.rows && r.rows.length > 0) {
     const keys = Object.keys(r.rows[0]);
-    let html = '<table class="fc-table" style="font-size:13px"><thead><tr>' + keys.map(k=>`<th>${k}</th>`).join('') + '</tr></thead><tbody>';
+    html += '<table class="fc-table" style="font-size:13px"><thead><tr>' + keys.map(k=>`<th>${k}</th>`).join('') + '</tr></thead><tbody>';
     html += r.rows.map(row => '<tr>' + keys.map(k=>`<td>${row[k]||'—'}</td>`).join('') + '</tr>').join('');
     html += '</tbody></table>';
-    wrap.innerHTML = html;
   } else {
-    wrap.innerHTML = '<div style="padding:32px;text-align:center;color:#9ca3af;font-size:13.5px;">No row data entered for this table yet.</div>';
+    html += '<div style="padding:24px;text-align:center;color:#9ca3af;font-size:13.5px;">No row data entered for this table yet.</div>';
   }
+
+  // Render Documentation attachments if present
+  if (r.docs && r.docs.length > 0) {
+    html += `
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0">
+        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          Attached Documentation (${r.docs.length})
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          ${r.docs.map(d => {
+            const src = '/' + (d.file_path || '').replace(/^\//, '');
+            return `
+              <div style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:120px">
+                <img src="${src}" style="width:120px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${d.caption||'View photo'}"/>
+                ${d.caption ? `<div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.caption}</div>` : ''}
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
+
+  wrap.innerHTML = html;
   openModal('modalViewData');
 };
 
@@ -259,6 +307,27 @@ window.returnSub = function(idx) {
       });
       const json = await res.json();
       showToast(json.message || 'Correction request sent!');
+      loadSubs();
+    }
+  });
+};
+
+window.deleteSub = function(idx) {
+  const r = cachedSubRows[idx];
+  const year = document.getElementById('subYearSel').value;
+  showConfirmModal({
+    title: 'Delete Submission?',
+    message: `Are you sure you want to delete Table ${r.table_no} submission from ${r.institution}? This action marks the record as deleted.`,
+    confirmText: 'Delete Submission',
+    type: 'red',
+    onConfirm: async function() {
+      const res  = await fetch('/api/pta/submissions/delete', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ cmi_user_id: r.cmi_user_id, table_no: r.table_no, year: year })
+      });
+      const json = await res.json();
+      showToast(json.message || 'Submission deleted.');
       loadSubs();
     }
   });

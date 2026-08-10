@@ -275,6 +275,7 @@ async function submitAddUser() {
       document.getElementById('tempPwBox').style.display = 'block';
       showToast('User created successfully!');
       btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Done`;
+      btn.onclick = function() { closeModal('modalAddUser'); };
       loadUsers();
     } else {
       showToast(json.error || json.message || 'Failed to create user.');

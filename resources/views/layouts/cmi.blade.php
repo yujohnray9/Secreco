@@ -168,7 +168,7 @@ function confirmSignOut() {
 <div class="app-body">
   <aside class="sidebar">
     <div class="sb-brand" onclick="window.location.href='/dashboard/cmi/profile'" style="cursor:pointer">
-      <img id="sidebarAvatarImg" src="{{ $userPhoto ? '/' . e($userPhoto) : '/assets/img/default-avatar.svg' }}" alt="User Profile" style="width:38px;height:38px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid #a5d6a7;flex-shrink:0;"/>
+      <img src="/assets/img/cvaarrd.png" alt="CVAARRD" style="width:40px;height:40px;object-fit:contain;margin-right:10px;flex-shrink:0;border-radius:6px;background:#fff;padding:2px;"/>
       <div>
         <div class="sb-brand-title" style="font-size:13.5px;font-weight:700;line-height:1.2;">{{ $userName }}</div>
         <div class="sb-brand-sub" style="font-size:11px;color:rgba(255,255,255,0.75);">{{ $userDesig ? $userDesig : 'CMI Representative' }}</div>

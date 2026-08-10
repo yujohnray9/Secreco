@@ -28,6 +28,11 @@ class ProfileController extends Controller
             default  => ucfirst($user->role),
         };
 
+        $photo = $user->profile_picture;
+        if ($photo && !str_starts_with($photo, 'storage/') && !str_starts_with($photo, '/storage/') && !str_starts_with($photo, 'assets/')) {
+            $photo = 'storage/' . $photo;
+        }
+
         return response()->json([
             'success'      => true,
             'first_name'   => $user->first_name,
@@ -40,6 +45,7 @@ class ProfileController extends Controller
             'designation'  => $user->designation ?? '',
             'status'       => $user->status,
             'member_since' => $user->created_at ? $user->created_at->format('F j, Y') : '',
+            'photo'        => $photo,
         ]);
     }
 
