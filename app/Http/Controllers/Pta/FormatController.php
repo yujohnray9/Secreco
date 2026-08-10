@@ -61,11 +61,6 @@ class FormatController extends Controller
                     return response()->json(['ok' => false, 'message' => 'Missing required fields.']);
                 }
 
-                $ys = FormatTemplate::where('year', $year)->value('status');
-                if ($ys === 'archived') {
-                    return response()->json(['ok' => false, 'message' => 'Cannot add tables to an archived year.']);
-                }
-
                 $nextSort = (int) FormatTemplate::where('year', $year)->max('sort_order') + 1;
 
                 $colsEncoded = null;
@@ -73,6 +68,8 @@ class FormatController extends Controller
                     $decoded = is_array($colsJson) ? $colsJson : json_decode($colsJson, true);
                     $colsEncoded = ($decoded !== null) ? $decoded : null;
                 }
+
+                $yearStatus = FormatTemplate::where('year', $year)->value('status') ?? 'draft';
 
                 try {
                     FormatTemplate::create([
@@ -82,7 +79,7 @@ class FormatController extends Controller
                         'section'      => $section,
                         'is_required'  => $required,
                         'sort_order'   => $nextSort,
-                        'status'       => 'draft',
+                        'status'       => $yearStatus,
                         'created_by'   => $userId,
                         'columns_json' => $colsEncoded,
                     ]);
@@ -104,8 +101,8 @@ class FormatController extends Controller
                 }
 
                 $ft = FormatTemplate::find($id);
-                if (!$ft || $ft->status === 'archived') {
-                    return response()->json(['ok' => false, 'message' => 'Cannot edit an archived table.']);
+                if (!$ft) {
+                    return response()->json(['ok' => false, 'message' => 'Template not found.']);
                 }
 
                 $colsEncoded = null;
@@ -136,9 +133,6 @@ class FormatController extends Controller
                 $ft = FormatTemplate::find($id);
                 if (!$ft) {
                     return response()->json(['ok' => false, 'message' => 'Template not found.']);
-                }
-                if ($ft->status === 'archived') {
-                    return response()->json(['ok' => false, 'message' => 'Cannot delete archived tables.']);
                 }
 
                 $hasData = ReportTable::where('table_no', $ft->table_no)->where('reporting_year', $ft->year)->count();

@@ -90,7 +90,7 @@ async function uploadCroppedPhoto(blob) {
     const res  = await fetch('/api/pta/profile/upload-photo', { method: 'POST', body: formData });
     const data = await res.json();
     if (data.success) {
-      const fullSrc = '/' + data.photo;
+      const fullSrc = (data.photo.startsWith('/') ? data.photo : '/' + data.photo) + '?t=' + Date.now();
       setAvatarSrc(fullSrc);
       showToast('Profile photo updated!');
     } else {

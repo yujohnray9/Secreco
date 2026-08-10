@@ -77,7 +77,8 @@
         </svg>
         All Submissions
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="text" class="filter-select" id="subSearchInput" placeholder="Search institution, encoder, table..." style="width:240px"/>
         <select class="filter-select" id="subYearSel" style="width:auto">
           @for($y = date('Y'); $y >= 2020; $y--)
             <option value="{{ $y }}" {{ date('Y') == $y ? 'selected' : '' }}>CY {{ $y }}</option>
@@ -144,6 +145,49 @@ const statusBadge = s => {
   return `<span class="badge ${map[s] || 'badge-gray'}">${label}</span>`;
 };
 
+function renderSubsTable() {
+  const query = (document.getElementById('subSearchInput')?.value || '').toLowerCase().trim();
+  const tbody = document.getElementById('subsTbody');
+  
+  const filtered = cachedSubRows.filter(r => {
+    if (!query) return true;
+    return (r.institution || '').toLowerCase().includes(query) ||
+           (r.encoder || '').toLowerCase().includes(query) ||
+           (`table ${r.table_no}` || '').toLowerCase().includes(query);
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#9ca3af">
+      No submissions found matching "${query}".
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((r, idx) => `
+    <tr>
+      <td><strong>${r.institution}</strong></td>
+      <td>${r.encoder}</td>
+      <td><span class="badge badge-blue">Table ${r.table_no}</span></td>
+      <td>${statusBadge(r.table_status || 'done')}</td>
+      <td style="color:#6b7280;font-size:12.5px">${r.updated_at ? r.updated_at.substring(0,16).replace('T',' ') : '—'}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${cachedSubRows.indexOf(r)})">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          View Data
+        </button>
+        <button class="btn-sm-fc btn-sm-accept" onclick="acceptSub(${cachedSubRows.indexOf(r)})">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Accept
+        </button>
+        <button class="btn-sm-fc btn-sm-return" onclick="returnSub(${cachedSubRows.indexOf(r)})">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.73"/></svg>
+          Return
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
 async function loadSubs() {
   const year   = document.getElementById('subYearSel').value;
   const status = document.getElementById('subStatusSel').value;
@@ -155,38 +199,7 @@ async function loadSubs() {
     const res  = await fetch(url);
     const json = await res.json();
     cachedSubRows = json.rows || [];
-
-    if (cachedSubRows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#9ca3af">
-        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 10px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        No submissions found for CY ${year}.
-      </td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = cachedSubRows.map((r, idx) => `
-      <tr>
-        <td><strong>${r.institution}</strong></td>
-        <td>${r.encoder}</td>
-        <td><span class="badge badge-blue">Table ${r.table_no}</span></td>
-        <td>${statusBadge(r.table_status || 'done')}</td>
-        <td style="color:#6b7280;font-size:12.5px">${r.updated_at ? r.updated_at.substring(0,16).replace('T',' ') : '—'}</td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${idx})">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            View Data
-          </button>
-          <button class="btn-sm-fc btn-sm-accept" onclick="acceptSub(${idx})">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            Accept
-          </button>
-          <button class="btn-sm-fc btn-sm-return" onclick="returnSub(${idx})">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.73"/></svg>
-            Return
-          </button>
-        </td>
-      </tr>
-    `).join('');
+    renderSubsTable();
   } catch(e) { console.error('PTA Submissions load error:', e); }
 }
 

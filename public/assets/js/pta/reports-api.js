@@ -7,7 +7,7 @@
 // ── API ───────────────────────────────────────────────────────
 async function fetchConsolidated(tableKey) {
   const year = getYear();
-  const url  = `/api/pta/reports/get_consolidated.php?year=${encodeURIComponent(year)}&table=${encodeURIComponent(tableKey)}`;
+  const url  = `/api/pta/reports/consolidated?year=${encodeURIComponent(year)}&table=${encodeURIComponent(tableKey)}`;
   const res  = await fetch(url);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const json = await res.json();

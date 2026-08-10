@@ -7,7 +7,7 @@
 .pg-banner-title { font-size:22px; font-weight:700; color:#111827; letter-spacing:-.4px; }
 .pg-banner-sub   { font-size:13px; color:#6b7280; margin-top:3px; }
 .fc-card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; box-shadow:0 2px 12px rgba(16,185,129,.05); margin-bottom:24px; overflow:hidden; }
-.fc-card-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 14px; border-bottom:1px solid #f3f4f6; }
+.fc-card-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 14px; border-bottom:1px solid #f3f4f6; flex-wrap:wrap; gap:10px; }
 .fc-card-title { font-size:15px; font-weight:700; color:#111827; display:flex; align-items:center; gap:8px; }
 .fc-card-title svg { color:#10b981; }
 .fc-card-body  { padding:0 24px 24px; }
@@ -36,7 +36,32 @@
 .btn-sm-toggle:hover { background:#dbeafe; }
 
 /* ── User Avatar ── */
-.user-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; background:#ecfdf5; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#059669; border:2px solid #a7f3d0; }
+.user-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; background:#ecfdf5; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#059669; border:2px solid #a7f3d0; flex-shrink:0; }
+
+/* ── Add User Button ── */
+.btn-primary-fc { display:inline-flex; align-items:center; gap:7px; background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,.3); transition:all .2s; }
+.btn-primary-fc:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(16,185,129,.4); }
+
+/* ── Modal ── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(17,24,39,.55); backdrop-filter:blur(6px); z-index:9990; align-items:center; justify-content:center; padding:16px; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:#fff; border-radius:20px; padding:28px 32px; width:100%; max-width:480px; box-shadow:0 24px 60px rgba(0,0,0,.18); max-height:90vh; overflow-y:auto; }
+.modal-title { font-size:18px; font-weight:800; color:#111827; margin-bottom:4px; display:flex; align-items:center; gap:9px; }
+.modal-title svg { color:#10b981; }
+.modal-desc { font-size:13px; color:#6b7280; margin-bottom:20px; }
+.modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
+.form-group { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+.form-label { font-size:12.5px; font-weight:600; color:#374151; }
+.form-input, .form-select { border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 14px; font-size:13.5px; color:#111827; background:#fafafa; outline:none; font-family:inherit; transition:all .15s; width:100%; box-sizing:border-box; }
+.form-input:focus, .form-select:focus { border-color:#10b981; background:#fff; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.btn-cancel { background:#f3f4f6; color:#374151; border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+.btn-cancel:hover { background:#e5e7eb; }
+
+/* ── Temp password success box ── */
+.temp-pw-box { background:#f0fdf4; border:1px solid #a7f3d0; border-radius:12px; padding:16px; margin-top:16px; display:none; }
+.temp-pw-label { font-size:12px; color:#6b7280; margin-bottom:4px; }
+.temp-pw-val { font-size:17px; font-weight:800; color:#059669; letter-spacing:.05em; font-family:monospace; }
 </style>
 @endsection
 
@@ -48,6 +73,15 @@
       <div class="pg-banner-title">User Management</div>
       <div class="pg-banner-sub">Manage system users, CMI representatives, and pending account approvals</div>
     </div>
+    <button class="btn-primary-fc" onclick="openAddUserModal()">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="8.5" cy="7" r="4"/>
+        <line x1="20" y1="8" x2="20" y2="14"/>
+        <line x1="23" y1="11" x2="17" y2="11"/>
+      </svg>
+      Add User
+    </button>
   </div>
 
   <!-- Pending Approvals Card -->
@@ -106,12 +140,152 @@
   </div>
 
 </div>
+
+<!-- ═══ ADD USER MODAL ═══ -->
+<div class="modal-overlay" id="modalAddUser">
+  <div class="modal-box">
+    <div class="modal-title">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="8.5" cy="7" r="4"/>
+        <line x1="20" y1="8" x2="20" y2="14"/>
+        <line x1="23" y1="11" x2="17" y2="11"/>
+      </svg>
+      Add New User
+    </div>
+    <div class="modal-desc">Create a user account directly. A temporary password will be generated — share it with the user.</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">First Name <span style="color:#ef4444">*</span></label>
+        <input class="form-input" id="addUserFirstName" placeholder="e.g. Juan"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name <span style="color:#ef4444">*</span></label>
+        <input class="form-input" id="addUserLastName" placeholder="e.g. Dela Cruz"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address <span style="color:#ef4444">*</span></label>
+      <input class="form-input" id="addUserEmail" type="email" placeholder="user@institution.gov.ph"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Role <span style="color:#ef4444">*</span></label>
+        <select class="form-select" id="addUserRole" onchange="onRoleChange()">
+          <option value="cmi">CMI Representative</option>
+          <option value="viewer">Viewer</option>
+        </select>
+      </div>
+      <div class="form-group" id="addUserInstGroup">
+        <label class="form-label">Institution</label>
+        <input class="form-input" id="addUserInstitution" placeholder="e.g. Isabela State University"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Designation / Position</label>
+      <input class="form-input" id="addUserPosition" placeholder="e.g. Research Specialist"/>
+    </div>
+
+    <!-- Temp password display after creation -->
+    <div class="temp-pw-box" id="tempPwBox">
+      <div class="temp-pw-label">✅ User created! Temporary password (share securely):</div>
+      <div class="temp-pw-val" id="tempPwVal"></div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:6px">The user must change this password after first login.</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modalAddUser')">Cancel</button>
+      <button class="btn-primary-fc" id="addUserSubmitBtn" onclick="submitAddUser()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Create User
+      </button>
+    </div>
+  </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
 function initials(name) {
   return name ? name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase() : '?';
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  // Reset form if it's the add user modal
+  if (id === 'modalAddUser') {
+    ['addUserFirstName','addUserLastName','addUserEmail','addUserInstitution','addUserPosition'].forEach(f => {
+      const el = document.getElementById(f);
+      if (el) el.value = '';
+    });
+    document.getElementById('addUserRole').value = 'cmi';
+    document.getElementById('tempPwBox').style.display = 'none';
+    onRoleChange();
+  }
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', function(e){ if(e.target===this) closeModal(this.id); }));
+
+function onRoleChange() {
+  const role = document.getElementById('addUserRole').value;
+  const instGroup = document.getElementById('addUserInstGroup');
+  if (instGroup) instGroup.style.display = role === 'cmi' ? '' : 'none';
+}
+
+function openAddUserModal() {
+  openModal('modalAddUser');
+  onRoleChange();
+}
+
+async function submitAddUser() {
+  const firstName = document.getElementById('addUserFirstName').value.trim();
+  const lastName  = document.getElementById('addUserLastName').value.trim();
+  const email     = document.getElementById('addUserEmail').value.trim();
+  const role      = document.getElementById('addUserRole').value;
+  const inst      = document.getElementById('addUserInstitution')?.value?.trim() || '';
+  const position  = document.getElementById('addUserPosition').value.trim();
+
+  if (!firstName || !lastName) { showToast('First and last name are required.'); return; }
+  if (!email) { showToast('Email is required.'); return; }
+
+  const btn = document.getElementById('addUserSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+
+  try {
+    const res  = await fetch('/api/pta/users/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name        : firstName + ' ' + lastName,
+        email,
+        role,
+        institution : inst,
+        position,
+      })
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      document.getElementById('tempPwVal').textContent = json.temp_password;
+      document.getElementById('tempPwBox').style.display = 'block';
+      showToast('User created successfully!');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Done`;
+      loadUsers();
+    } else {
+      showToast(json.error || json.message || 'Failed to create user.');
+      btn.disabled = false;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create User`;
+    }
+  } catch(e) {
+    showToast('Network error. Please try again.');
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create User`;
+  }
 }
 
 async function loadUsers() {

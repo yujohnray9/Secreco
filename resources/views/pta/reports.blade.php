@@ -1,127 +1,145 @@
 @extends('layouts.pta')
 
 @section('styles')
+<link rel="stylesheet" href="/assets/css/pta/reports.css"/>
 <style>
-.pg-banner { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
-.pg-banner-title { font-size:22px; font-weight:700; color:#111827; letter-spacing:-.4px; }
-.pg-banner-sub   { font-size:13px; color:#6b7280; margin-top:3px; }
-.fc-card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; box-shadow:0 2px 12px rgba(16,185,129,.05); margin-bottom:24px; overflow:hidden; }
-.fc-card-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 14px; border-bottom:1px solid #f3f4f6; }
-.fc-card-title { font-size:15px; font-weight:700; color:#111827; display:flex; align-items:center; gap:8px; }
-.fc-card-title svg { color:#10b981; }
-.fc-card-body  { padding:24px; }
-.fc-table-wrap { overflow-x:auto; }
-.fc-table { width:100%; border-collapse:collapse; font-size:13.5px; }
-.fc-table thead tr { background:#f9fafb; }
-.fc-table thead th { padding:11px 16px; text-align:left; font-size:11.5px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid #f0f0f0; }
-.fc-table tbody tr { border-bottom:1px solid #f9fafb; transition:background .15s; }
-.fc-table tbody tr:last-child { border-bottom:none; }
-.fc-table tbody tr:hover { background:#f9fafe; }
-.fc-table td { padding:13px 16px; color:#374151; vertical-align:middle; }
-.fc-table td strong { color:#111827; font-weight:600; }
-.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600; }
-.badge-green  { background:#ecfdf5; color:#059669; }
-.badge-gray   { background:#f3f4f6; color:#6b7280; }
-.badge-blue   { background:#eff6ff; color:#2563eb; }
+/* ── Modern FreshCart adjustments for Reports ── */
+.page-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.page-title { font-size:22px; font-weight:700; color:#111827; letter-spacing:-.4px; }
+.page-sub { font-size:13px; color:#6b7280; margin-top:3px; }
 
-/* ── Select Filter ── */
-.filter-select { border:1px solid #e5e7eb; border-radius:8px; padding:7px 14px; font-size:13px; color:#374151; background:#f9fafb; cursor:pointer; outline:none; min-width:180px; }
-.filter-select:focus { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
+.rpt-filter-row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:24px; }
+.toggle-group { display:flex; background:#eef7ee; border-radius:8px; padding:3px; gap:3px; border:1px solid #c8e6c9; }
+.toggle-opt { padding:7px 18px; border-radius:6px; font-size:12.5px; font-weight:600; cursor:pointer; color:#2e7d32; transition:all .2s; user-select:none; }
+.toggle-opt.active { background:#2d6a30; color:#fff; shadow:0 2px 4px rgba(0,0,0,.1); }
 
-/* ── Report Grid (two charts side by side) ── */
-.report-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-@media (max-width:900px) { .report-grid { grid-template-columns:1fr; } }
-.chart-card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
-.chart-title { font-size:14px; font-weight:700; color:#111827; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-.chart-title svg { color:#10b981; }
+.filter-select { border:1px solid #d1d5db; border-radius:8px; padding:7px 14px; font-size:13px; color:#374151; background:#fff; cursor:pointer; outline:none; }
+.filter-select:focus { border-color:#2d6a30; box-shadow:0 0 0 3px rgba(45,106,48,.12); }
 
-/* ── Completion Progress Bars ── */
-.inst-prog-list { display:flex; flex-direction:column; gap:16px; padding:8px 0; }
-.inst-prog-item { display:flex; flex-direction:column; gap:6px; }
-.inst-prog-head { display:flex; justify-content:space-between; align-items:center; }
-.inst-prog-name { font-size:13px; font-weight:600; color:#374151; }
-.inst-prog-pct  { font-size:12px; font-weight:700; color:#10b981; }
-.prog-track { height:8px; background:#f3f4f6; border-radius:20px; overflow:hidden; }
-.prog-fill  { height:100%; border-radius:20px; background:linear-gradient(90deg,#10b981,#34d399); transition:width .8s ease; }
+.card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; box-shadow:0 2px 12px rgba(0,0,0,.04); overflow:hidden; margin-bottom:24px; }
+.card-hdr { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid #f3f4f6; }
+.card-title { font-size:15px; font-weight:700; color:#111827; }
+.tbl-wrap { overflow-x:auto; }
+
+.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all .2s; }
+.btn-sm { padding:6px 14px; font-size:12.5px; }
+.btn-yellow { background:#f59e0b; color:#fff; }
+.btn-yellow:hover { background:#d97706; }
+.btn-primary { background:#2d6a30; color:#fff; }
+.btn-primary:hover { background:#235425; }
+
+.word-preview { background:#fff; border:1px solid #e0e0e0; border-radius:10px; padding:40px 48px; font-family:'Calibri',Arial,sans-serif; font-size:13px; color:#1a1a1a; max-width:780px; margin:0 auto; box-shadow:0 4px 24px rgba(0,0,0,.08); }
 </style>
 @endsection
 
 @section('content')
 <div class="page active" id="page-reports">
 
-  <div class="pg-banner">
+  <!-- PAGE HEADER -->
+  <div class="page-hdr">
     <div>
-      <div class="pg-banner-title">Consolidated Reports</div>
-      <div class="pg-banner-sub">View consolidated accomplishment data by table</div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <select id="reportYearSel" class="filter-select">
-        @for($y = date('Y'); $y >= 2020; $y--)
-          <option value="{{ $y }}" {{ date('Y') == $y ? 'selected' : '' }}>CY {{ $y }}</option>
-        @endfor
-      </select>
-      <select id="reportTableSel" class="filter-select">
-        <option value="T1">Table 1 — R&D Projects</option>
-        <option value="T2a">Table 2a — Completed R&D</option>
-        <option value="T2b">Table 2b — Ongoing R&D</option>
-        <option value="T3">Table 3 — Technologies Commercialized</option>
-        <option value="T4">Table 4 — Intellectual Property</option>
-        <option value="T5">Table 5 — Publications</option>
-      </select>
+      <div class="page-title">Consolidated Reports</div>
+      <div class="page-sub" id="rptSubtitle">Consolidated Annual Accomplishment Report</div>
     </div>
   </div>
 
-  <!-- Main Table Card -->
-  <div class="fc-card">
-    <div class="fc-card-head">
-      <div class="fc-card-title">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-        </svg>
-        <span id="repTableHdr">Consolidated Data — Table T1</span>
+  <!-- FILTERS ROW -->
+  <div class="rpt-filter-row">
+    <div class="toggle-group">
+      <div class="toggle-opt active" id="togPerTable" onclick="switchReportView('table')" style="display:flex;align-items:center;gap:6px">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Per Table
       </div>
-      <span class="badge badge-blue" id="repCount">—</span>
+      <div class="toggle-opt" id="togPerCMI" onclick="switchReportView('cmi')" style="display:flex;align-items:center;gap:6px">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 18V11"/><path d="M10 18V11"/><path d="M14 18V11"/><path d="M18 18V11"/><path d="M12 3L2 9h20L12 3z"/></svg>
+        Per CMI
+      </div>
     </div>
-    <div class="fc-card-body" style="padding:0 24px 24px">
-      <div class="fc-table-wrap">
-        <table class="fc-table">
-          <thead>
-            <tr>
-              <th>Institution</th>
-              <th>Submission Status</th>
-              <th>Table Status</th>
-              <th>Submitted At</th>
-            </tr>
-          </thead>
-          <tbody id="repTbody">
-            <tr><td colspan="4" style="text-align:center;padding:32px;color:#9ca3af">Loading report data...</td></tr>
-          </tbody>
-        </table>
+
+    <select class="filter-select" id="rptYearFilter">
+      @for($y = date('Y'); $y >= 2020; $y--)
+        <option value="{{ $y }}" {{ $y == date('Y') ? 'selected' : '' }}>CY {{ $y }}</option>
+      @endfor
+    </select>
+
+    <!-- Per Table filters -->
+    <select class="filter-select" id="rptTableFilter">
+      @php
+      $tables = [
+        'T1'  => 'Table 1 — AIHRs',
+        'T2a' => 'Table 2a — RSRDH Summary',
+        'T2b' => 'Table 2b — RSRDH Participants',
+        'T3'  => 'Table 3 — Projects Monitored',
+        'T4'  => 'Table 4 — Resources Shared',
+        'T5'  => 'Table 5 — Resources Generated',
+        'T6'  => 'Table 6 — Linkages',
+        'T7a' => 'Table 7a — Databases',
+        'T7b' => 'Table 7b — Info Systems',
+        'T8a' => 'Table 8a — R&D Programs',
+        'T8b' => 'Table 8b — Collaborative R&D',
+        'T9'  => 'Table 9 — Technologies from R&D',
+        'T10' => 'Table 10 — TT Programs',
+        'T11' => 'Table 11 — Technologies Extended',
+        'T12' => 'Table 12 — Commercialized',
+        'T13' => 'Table 13 — Promotion Approaches',
+        'T14' => 'Table 14 — Non-degree Trainings',
+        'T15' => 'Table 15 — Equipment/Facilities',
+        'T16' => 'Table 16 — Awards',
+        'T17' => 'Table 17 — Regular Meetings',
+        'T18' => 'Table 18 — CMI Contributions',
+        'T19' => 'Table 19 — New Initiatives',
+        'T20a'=> 'Table 20a — Policy Researches',
+        'T20b'=> 'Table 20b — Policies',
+      ];
+      @endphp
+      @foreach ($tables as $key => $label)
+        <option value="{{ $key }}">{{ $label }}</option>
+      @endforeach
+    </select>
+
+    <!-- Per CMI filter -->
+    <select class="filter-select" id="rptCMIFilter" style="display:none">
+      <option value="">Select Institution...</option>
+    </select>
+
+    <div class="card-actions" id="rptExportBtns" style="margin-left:auto;display:flex;gap:8px;"></div>
+  </div>
+
+  <!-- PER TABLE VIEW -->
+  <div id="viewPerTable">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title" id="tableCardTitle">Loading...</div>
+      </div>
+      <div class="tbl-wrap" id="tableContainer">
+        <div class="loading-state" style="padding:40px;text-align:center;color:#9ca3af">Loading data...</div>
+      </div>
+      <div class="tbl-note-footer" style="padding:14px 20px;border-top:1px solid #f3f4f6;font-size:11.5px;color:#6b7280;font-style:italic;">
+        Note: The Regional Consortium may prepare other tables for ease in data presentation.
+      </div>
+    </div>
+
+    <!-- Word Preview Card -->
+    <div class="card" id="wordPreviewCard" style="display:none">
+      <div class="card-hdr">
+        <div class="card-title">Export Preview — Word A4 Format</div>
+        <button class="btn btn-sm" style="background:#f3f4f6;color:#374151" onclick="closeWordPreview()">Close Preview</button>
+      </div>
+      <div class="card-body" style="padding:24px;">
+        <div class="word-preview" id="wordPreviewContent"></div>
       </div>
     </div>
   </div>
 
-  <!-- Summary Charts + Progress Bars -->
-  <div class="report-grid">
-    <!-- Submission Progress by Institution -->
-    <div class="chart-card">
-      <div class="chart-title">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-        Institution Completion
+  <!-- PER CMI VIEW -->
+  <div id="viewPerCMI" style="display:none">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title" id="cmiCardTitle">Select a CMI</div>
       </div>
-      <div class="inst-prog-list" id="instProgList">
-        <div style="color:#9ca3af;font-size:13px">Loading...</div>
+      <div class="tbl-wrap" id="cmiContainer">
+        <div class="loading-state" style="padding:40px;text-align:center;color:#9ca3af">Select an institution to view their tables.</div>
       </div>
-    </div>
-
-    <!-- Doughnut Summary -->
-    <div class="chart-card">
-      <div class="chart-title">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 7.07 17.07"/></svg>
-        Status Overview
-      </div>
-      <canvas id="statusDonut" height="200"></canvas>
     </div>
   </div>
 
@@ -129,76 +147,42 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-let donutChart = null;
+<script src="/assets/js/pta/reports-helpers.js"></script>
+<script src="/assets/js/pta/reports-docs-lightbox.js"></script>
 
-async function loadConsolidated() {
-  const table = document.getElementById('reportTableSel').value;
-  const year  = document.getElementById('reportYearSel').value;
-  document.getElementById('repTableHdr').textContent = `Consolidated Data — Table ${table}`;
-  const tbody = document.getElementById('repTbody');
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:#9ca3af">Loading report data...</td></tr>';
+<!-- ── Table renderers (must load before reports-tabledefs.js) ── -->
+<script src="/assets/js/pta/renderers/render-t1.js"></script>
+<script src="/assets/js/pta/renderers/render-t2a.js"></script>
+<script src="/assets/js/pta/renderers/render-t2b.js"></script>
+<script src="/assets/js/pta/renderers/render-t3.js"></script>
+<script src="/assets/js/pta/renderers/render-t4.js"></script>
+<script src="/assets/js/pta/renderers/render-t5.js"></script>
+<script src="/assets/js/pta/renderers/render-t6.js"></script>
+<script src="/assets/js/pta/renderers/render-t7a.js"></script>
+<script src="/assets/js/pta/renderers/render-t7b.js"></script>
+<script src="/assets/js/pta/renderers/render-t8a.js"></script>
+<script src="/assets/js/pta/renderers/render-t8b.js"></script>
+<script src="/assets/js/pta/renderers/render-t9.js"></script>
+<script src="/assets/js/pta/renderers/render-t10.js"></script>
+<script src="/assets/js/pta/renderers/render-t11.js"></script>
+<script src="/assets/js/pta/renderers/render-t12.js"></script>
+<script src="/assets/js/pta/renderers/render-t13.js"></script>
+<script src="/assets/js/pta/renderers/render-t14.js"></script>
+<script src="/assets/js/pta/renderers/render-t15.js"></script>
+<script src="/assets/js/pta/renderers/render-t16.js"></script>
+<script src="/assets/js/pta/renderers/render-t17.js"></script>
+<script src="/assets/js/pta/renderers/render-t18.js"></script>
+<script src="/assets/js/pta/renderers/render-t19.js"></script>
+<script src="/assets/js/pta/renderers/render-t20a.js"></script>
+<script src="/assets/js/pta/renderers/render-t20b.js"></script>
+<script src="/assets/js/pta/renderers/render-generic.js"></script>
+<!-- ── End renderers ── -->
 
-  try {
-    const res  = await fetch(`/api/pta/reports/consolidated?year=${year}&table=${table}`);
-    const json = await res.json();
-    const data = json.data || [];
-    document.getElementById('repCount').textContent = `${data.length} institutions`;
-
-    if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:#9ca3af">No data submitted for this table yet.</td></tr>`;
-    } else {
-      tbody.innerHTML = data.map(d => `
-        <tr>
-          <td><strong>${d.institution}</strong></td>
-          <td><span class="badge badge-blue">${d.sub_status || 'Submitted'}</span></td>
-          <td><span class="badge ${d.table_status === 'done' ? 'badge-green' : 'badge-gray'}">${d.table_status}</span></td>
-          <td style="color:#6b7280;font-size:12.5px">${d.submitted_at ? d.submitted_at.substring(0,16).replace('T',' ') : '—'}</td>
-        </tr>
-      `).join('');
-    }
-
-    // Institution progress bars
-    const progList = document.getElementById('instProgList');
-    if (data.length > 0) {
-      progList.innerHTML = data.slice(0,6).map(d => {
-        const pct = d.table_status === 'done' ? 100 : (d.table_status === 'draft' ? 50 : 0);
-        return `
-          <div class="inst-prog-item">
-            <div class="inst-prog-head">
-              <span class="inst-prog-name">${d.institution}</span>
-              <span class="inst-prog-pct">${pct}%</span>
-            </div>
-            <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
-          </div>
-        `;
-      }).join('');
-    } else {
-      progList.innerHTML = '<div style="color:#9ca3af;font-size:13px">No institution data available.</div>';
-    }
-
-    // Donut chart
-    const done       = data.filter(d => d.table_status === 'done').length;
-    const draft      = data.filter(d => d.table_status === 'draft').length;
-    const notStarted = data.filter(d => !d.table_status || d.table_status === 'not-started').length;
-    const error      = data.filter(d => d.table_status === 'error').length;
-    const ctx = document.getElementById('statusDonut').getContext('2d');
-    if (donutChart) donutChart.destroy();
-    donutChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Done','Draft','Not Started','Error'],
-        datasets: [{ data:[done,draft,notStarted,error], backgroundColor:['#10b981','#f59e0b','#d1d5db','#ef4444'], borderWidth:0, hoverOffset:6 }]
-      },
-      options: { cutout:'70%', plugins:{ legend:{ position:'bottom', labels:{ padding:16, font:{size:12} } } } }
-    });
-
-  } catch(e) { console.error('Report load error:', e); }
-}
-
-document.getElementById('reportTableSel').addEventListener('change', loadConsolidated);
-document.getElementById('reportYearSel').addEventListener('change', loadConsolidated);
-document.addEventListener('DOMContentLoaded', loadConsolidated);
-</script>
+<script src="/assets/js/pta/reports-renderers.js"></script>
+<script src="/assets/js/pta/reports-tabledefs.js"></script>
+<script src="/assets/js/pta/reports-api.js"></script>
+<script src="/assets/js/pta/reports-view-table.js"></script>
+<script src="/assets/js/pta/reports-view-cmi.js"></script>
+<script src="/assets/js/pta/reports-export.js"></script>
+<script src="/assets/js/pta/reports-boot.js"></script>
 @endsection

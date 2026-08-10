@@ -43,13 +43,7 @@
     <div class="hdr-page-sub">Analyze consortium submissions, metrics, and institutional accomplishments.</div>
   </div>
 
-  <!-- Search Input Pill -->
-  <div class="hdr-search-wrap">
-    <svg class="hdr-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-    <input type="text" class="hdr-search-input" placeholder="Search submissions, reports, users..."/>
-  </div>
+
 
   <!-- Right Actions -->
   <div class="hdr-right-actions">
@@ -62,9 +56,21 @@
       <span class="notif-dot"></span>
     </button>
 
+    @php
+      $photoUrl = Auth::user()?->profile_picture ?? $userPhoto;
+      if ($photoUrl) {
+          $photoUrl = ltrim($photoUrl, '/');
+          if (!str_starts_with($photoUrl, 'storage/') && !str_starts_with($photoUrl, 'assets/')) {
+              $photoUrl = 'storage/' . $photoUrl;
+          }
+          $photoUrl = '/' . $photoUrl;
+      } else {
+          $photoUrl = '/assets/img/default-avatar.svg';
+      }
+    @endphp
     <!-- User Profile Badge -->
     <div class="hdr-user-profile">
-      <img class="hdr-user-avatar" src="{{ $userPhoto ? '/' . e($userPhoto) : '/assets/img/default-avatar.svg' }}" alt="avatar"/>
+      <img class="hdr-user-avatar" src="{{ $photoUrl }}" alt="avatar"/>
       <div class="hdr-user-details">
         <span class="hdr-user-name">{{ $userName }}</span>
         <span class="hdr-user-email">PTA Admin</span>

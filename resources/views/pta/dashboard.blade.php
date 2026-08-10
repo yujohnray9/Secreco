@@ -87,13 +87,19 @@
     <div class="middle-charts-grid">
       <!-- Submission Growth Trends (Line Chart) -->
       <div class="card-fc">
-        <div class="card-fc-header">
+        <div class="card-fc-header" style="flex-wrap:wrap;gap:10px">
           <div>
             <div class="card-fc-title">Submission Activity Trends</div>
-            <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">Last 14 days activity</div>
+            <div style="font-size:13px;color:#6b7280;margin-top:3px" id="trendSubtitle">Last 7 days activity</div>
+          </div>
+          <!-- Weekly / Monthly / Annually filter -->
+          <div style="display:flex;gap:3px;background:#f3f4f6;border-radius:8px;padding:3px;align-items:center">
+            <button id="btnW" onclick="filterTrend('weekly')" style="background:#10b981;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s">Weekly</button>
+            <button id="btnM" onclick="filterTrend('monthly')" style="background:none;color:#6b7280;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s">Monthly</button>
+            <button id="btnA" onclick="filterTrend('annually')" style="background:none;color:#6b7280;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s">Annually</button>
           </div>
         </div>
-        <div style="height: 260px; position: relative;">
+        <div style="height:260px;position:relative">
           <canvas id="growthTrendChart"></canvas>
         </div>
       </div>
@@ -153,40 +159,72 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // 1. Line Growth Trend Chart (Real DB Data)
-    const ctxTrend = document.getElementById('growthTrendChart').getContext('2d');
-    const gradTrend = ctxTrend.createLinearGradient(0, 0, 0, 260);
-    gradTrend.addColorStop(0, 'rgba(16, 185, 129, 0.35)');
-    gradTrend.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+    let trendChartInst = null;
+    const rawTrendLabels = json.trend_labels && json.trend_labels.length ? json.trend_labels : ['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6','Today'];
+    const rawTrendValues = json.trend_values && json.trend_values.length ? json.trend_values : [0,0,1,2,1,3,4];
 
-    const labels = json.trend_labels && json.trend_labels.length ? json.trend_labels : ['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6','Today'];
-    const values = json.trend_values && json.trend_values.length ? json.trend_values : [0,0,1,2,1,3,4];
+    // Static monthly / annual placeholders (will be replaced with real API data when available)
+    const monthlyLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthlyValues = json.monthly_values || [0,0,0,0,0,0,0,0,0,0,0,0];
+    const annualLabels  = json.annual_labels  || ['2022','2023','2024','2025','2026'];
+    const annualValues  = json.annual_values  || [0,0,0,0,0];
 
-    new Chart(ctxTrend, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Completed Tables',
-          data: values,
-          borderColor: '#10b981',
-          borderWidth: 3,
-          backgroundColor: gradTrend,
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#10b981',
-          pointRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false } },
-          y: { grid: { color: '#f3f4f6' }, ticks: { precision: 0 } }
+    function buildTrendChart(labels, values) {
+      const ctx = document.getElementById('growthTrendChart').getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 260);
+      grad.addColorStop(0, 'rgba(16,185,129,0.35)');
+      grad.addColorStop(1, 'rgba(16,185,129,0)');
+      if (trendChartInst) trendChartInst.destroy();
+      trendChartInst = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Submissions',
+            data: values,
+            borderColor: '#10b981',
+            borderWidth: 3,
+            backgroundColor: grad,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#10b981',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { grid: { color: '#f3f4f6' }, ticks: { precision: 0 } }
+          }
         }
-      }
-    });
+      });
+    }
+
+    window.filterTrend = function(period) {
+      const btns = { weekly:'btnW', monthly:'btnM', annually:'btnA' };
+      Object.values(btns).forEach(id => {
+        const b = document.getElementById(id);
+        b.style.background = 'none';
+        b.style.color = '#6b7280';
+        b.style.fontWeight = '600';
+      });
+      const active = document.getElementById(btns[period]);
+      if (active) { active.style.background = '#10b981'; active.style.color = '#fff'; active.style.fontWeight = '700'; }
+
+      const subs = { weekly: 'Last 7 days activity', monthly: `Monthly trends CY ${new Date().getFullYear()}`, annually: `Annual accomplishments (${annualLabels[0]}–${annualLabels[annualLabels.length-1]})` };
+      const el = document.getElementById('trendSubtitle');
+      if (el) el.textContent = subs[period] || '';
+
+      if (period === 'weekly')   buildTrendChart(rawTrendLabels, rawTrendValues);
+      if (period === 'monthly')  buildTrendChart(monthlyLabels, monthlyValues);
+      if (period === 'annually') buildTrendChart(annualLabels, annualValues);
+    };
+
+    // Initial render — weekly
+    buildTrendChart(rawTrendLabels, rawTrendValues);
 
     // 2. Bar Chart (Status Comparison from DB)
     const ctxBar = document.getElementById('frequencyBarChart').getContext('2d');

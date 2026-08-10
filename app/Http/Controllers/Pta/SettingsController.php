@@ -87,8 +87,12 @@ class SettingsController extends Controller
                 return response()->json(['ok' => true, 'message' => 'System settings saved.']);
 
             case 'get_profile':
-                $user = User::find($userId, ['id', 'first_name', 'last_name', 'email', 'institution', 'designation', 'role', 'status', 'created_at', 'updated_at']);
-                return response()->json(['ok' => true, 'user' => $user]);
+                $user = User::find($userId, ['id', 'first_name', 'last_name', 'email', 'institution', 'designation', 'role', 'status', 'profile_picture', 'created_at', 'updated_at']);
+                $userData = $user ? $user->toArray() : null;
+                if ($userData) {
+                    $userData['photo'] = $userData['profile_picture'] ?? null;
+                }
+                return response()->json(['ok' => true, 'user' => $userData]);
 
             case 'get_system':
                 $role = Auth::user()?->role ?? session('user_role');

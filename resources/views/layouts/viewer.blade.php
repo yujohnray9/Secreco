@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SecReCo — Viewer Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/assets/css/pta/base.css?v=2"/>
-<link rel="stylesheet" href="/assets/css/pta/header.css?v=2"/>
-<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=2"/>
-<link rel="stylesheet" href="/assets/css/pta/modals.css?v=2"/>
+<link rel="stylesheet" href="/assets/css/pta/base.css?v=3"/>
+<link rel="stylesheet" href="/assets/css/pta/header.css?v=3"/>
+<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=3"/>
+<link rel="stylesheet" href="/assets/css/pta/modals.css?v=3"/>
 @yield('styles')
 </head>
 <body>
@@ -16,62 +16,67 @@
 <!-- TOAST -->
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- MODAL: Generic Confirm -->
-<div class="modal-overlay" id="modalConfirm">
-  <div class="modal" style="width:360px">
-    <div class="modal-title" id="confirmTitle">Are you sure?</div>
-    <div class="modal-desc" id="confirmMsg">Are you sure you want to proceed?</div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('modalConfirm')">Cancel</button>
-      <button class="btn btn-danger" id="confirmOkBtn">OK</button>
-    </div>
-  </div>
-</div>
-
 <!-- ═══ HEADER ═══ -->
 <header class="app-header">
-  <div class="hdr-left">
-    <div class="logo-circle" style="background:#2d5a2f;overflow:hidden;padding:0">
-      <img src="/assets/img/cvaarrd.png" alt="CVAARRD" style="width:100%;height:100%;object-fit:cover"/>
-    </div>
+  <div class="hdr-left" style="display:flex;align-items:center;gap:10px">
+    <img src="/assets/img/cvaarrd.png" alt="CVAARRD" style="height:36px;width:auto;object-fit:contain;margin-right:4px"/>
     <div>
-      <div class="brand-name">SecReCo · CVAARRD Consortium</div>
-      <div class="brand-sub">Secure Reporting and Consolidation System (Viewer)</div>
+      <div class="hdr-page-title" style="font-size:16px;font-weight:700;color:#111827">SecReCo Dashboard</div>
+      <div class="hdr-page-sub" style="font-size:12px;color:#6b7280">CVAARRD Consortium System (Viewer)</div>
     </div>
   </div>
 
-  <div class="hdr-center">
-    <div class="hdr-meta">
-      <span class="hdr-cy">CY {{ date('Y') }}</span>
-      <span style="color:var(--border);margin:0 4px">|</span>
-      Annual Accomplishment Report
-    </div>
-  </div>
-
-  <div class="hdr-right">
+  <div class="hdr-right-actions">
     <button class="notif-btn" onclick="window.location.href='/dashboard/viewer/notifications'" title="Notifications">
-      🔔<span class="notif-dot"></span>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span class="notif-dot"></span>
     </button>
-    <button class="signout-btn" onclick="confirmSignOut()">
+
+    <div class="hdr-user-profile">
+      <img class="hdr-user-avatar" src="{{ $userPhoto ? '/' . e($userPhoto) : '/assets/img/default-avatar.svg' }}" alt="avatar"/>
+      <div class="hdr-user-details">
+        <span class="hdr-user-name">{{ $userName }}</span>
+        <span class="hdr-user-email">Viewer</span>
+      </div>
+    </div>
+
+    <button class="signout-btn" onclick="confirmSignOut()" title="Sign Out">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      Sign Out
     </button>
   </div>
 </header>
 
-<script src="/assets/js/pta/core.js?v=2"></script>
+<script src="/assets/js/pta/core.js?v=3"></script>
 <script>
+window.showToast = window.toast = window.toast || function(msg) {
+  const c = document.getElementById('toastWrap');
+  if (!c) { alert(msg); return; }
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
+};
+
 function confirmSignOut() {
-  document.getElementById('confirmTitle').textContent = 'Sign Out?';
-  document.getElementById('confirmMsg').textContent   = 'Are you sure you want to sign out?';
-  const okBtn = document.getElementById('confirmOkBtn');
-  okBtn.textContent = 'Sign Out';
-  okBtn.onclick = function () {
-    fetch('/api/auth/logout', { method: 'POST' }).then(() => {
-      window.location.href = '/login';
-    });
-  };
-  openModal('modalConfirm');
+  showConfirmModal({
+    title: 'Sign Out Account?',
+    message: 'Are you sure you want to sign out of your Viewer session?',
+    confirmText: 'Sign Out',
+    type: 'red',
+    onConfirm: function() {
+      fetch('/api/auth/logout', { method: 'POST' }).then(() => {
+        window.location.href = '/login';
+      });
+    }
+  });
 }
 
 (async function loadBellBadge() {
@@ -92,19 +97,16 @@ function confirmSignOut() {
 <!-- ═══ BODY ═══ -->
 <div class="app-body">
   <aside class="sidebar">
-    <div class="sidebar-user">
-      <div class="sb-user-center">
-        <div class="sb-av-lg">
-          <img id="sidebarAvatarImg"
-               src="{{ $userPhoto ? '/' . e($userPhoto) : '/assets/img/default-avatar.svg' }}"
-               alt="avatar"/>
-        </div>
-        <div class="sb-name" style="margin-top:6px">{{ $userName }}</div>
-        <div class="sb-role">Viewer</div>
+    <div class="sb-brand">
+      <img src="/assets/img/cvaarrd.png" alt="CVAARRD Logo" style="height:36px;width:auto;object-fit:contain;margin-right:10px;"/>
+      <div>
+        <div class="sb-brand-title">SecReCo</div>
+        <div class="sb-brand-sub">CVAARRD Consortium</div>
       </div>
     </div>
 
     <div class="nav-section">
+      <div class="nav-sec-label">Main</div>
       <a href="/dashboard/viewer/dashboard" class="nav-item {{ $currentPage === 'dashboard' ? 'active' : '' }}">
         <span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
         Dashboard

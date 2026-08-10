@@ -30,7 +30,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/finalize-register', [AuthController::class, 'finalizeRegister']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/verify-otp-fp', [AuthController::class, 'verifyOtp']);
+    Route::post('/verify-otp-fp', [AuthController::class, 'verifyOtpFp']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 

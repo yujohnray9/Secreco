@@ -325,6 +325,38 @@ class AuthController extends Controller
         }
     }
 
+    /**
+     * Verify OTP for Forgot Password flow (session-based, not PendingRegistration).
+     */
+    public function verifyOtpFp(Request $request): JsonResponse
+    {
+        $email = trim($request->input('email', ''));
+        $otp   = trim($request->input('otp', ''));
+
+        if (!$email || !$otp) {
+            return response()->json(['success' => false, 'message' => 'Email and OTP are required.']);
+        }
+
+        if (empty(session('fp_otp')) || empty(session('fp_email')) || session('fp_email') !== $email) {
+            return response()->json(['success' => false, 'message' => 'Session expired. Please request a new OTP.']);
+        }
+
+        if (strtotime(session('fp_expiry')) < time()) {
+            session()->forget(['fp_otp', 'fp_email', 'fp_expiry']);
+            return response()->json(['success' => false, 'message' => 'OTP has expired. Please request a new one.']);
+        }
+
+        $otpStripped = ltrim($otp, '0') ?: '0';
+        if (!Hash::check($otp, session('fp_otp')) && !Hash::check($otpStripped, session('fp_otp'))) {
+            return response()->json(['success' => false, 'message' => 'Invalid OTP. Please try again.']);
+        }
+
+        // Mark as verified so resetPassword can proceed
+        session(['fp_verified' => true]);
+
+        return response()->json(['success' => true, 'message' => 'OTP verified successfully.']);
+    }
+
     public function forgotPassword(Request $request): JsonResponse
     {
         $email = trim($request->input('email', ''));

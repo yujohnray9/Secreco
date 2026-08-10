@@ -43,14 +43,6 @@
     <div class="hdr-page-sub">{{ $userInst ? $userInst : 'Secure Reporting & Accomplishment System' }}</div>
   </div>
 
-  <!-- Search Input Pill -->
-  <div class="hdr-search-wrap">
-    <svg class="hdr-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-    <input type="text" class="hdr-search-input" placeholder="Search tables, drafts, submissions..."/>
-  </div>
-
   <!-- Right Actions -->
   <div class="hdr-right-actions">
     <button class="notif-btn" onclick="window.location.href='/dashboard/cmi/notifications'" title="Notifications">
@@ -61,8 +53,20 @@
       <span class="notif-dot"></span>
     </button>
 
+    @php
+      $photoUrl = Auth::user()?->profile_picture ?? $userPhoto;
+      if ($photoUrl) {
+          $photoUrl = ltrim($photoUrl, '/');
+          if (!str_starts_with($photoUrl, 'storage/') && !str_starts_with($photoUrl, 'assets/')) {
+              $photoUrl = 'storage/' . $photoUrl;
+          }
+          $photoUrl = '/' . $photoUrl;
+      } else {
+          $photoUrl = '/assets/img/default-avatar.svg';
+      }
+    @endphp
     <div class="hdr-user-profile" onclick="window.location.href='/dashboard/cmi/profile'">
-      <img class="hdr-user-avatar" src="{{ $userPhoto ? '/' . e($userPhoto) : '/assets/img/default-avatar.svg' }}" alt="avatar"/>
+      <img class="hdr-user-avatar" src="{{ $photoUrl }}" alt="avatar"/>
       <div class="hdr-user-details">
         <span class="hdr-user-name">{{ $userName }}</span>
         <span class="hdr-user-email">CMI Rep</span>
@@ -85,7 +89,11 @@ window.showToast = window.toast = window.toast || function(msg) {
   t.className = 'toast';
   t.textContent = msg;
   c.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
 };
 
 function closeGlobalModal() {
@@ -159,11 +167,11 @@ function confirmSignOut() {
 <!-- ═══ BODY ═══ -->
 <div class="app-body">
   <aside class="sidebar">
-    <div class="sb-brand">
-      <img src="/assets/img/cvaarrd.png" alt="CVAARRD Logo" style="height:36px;width:auto;object-fit:contain;margin-right:10px;"/>
+    <div class="sb-brand" onclick="window.location.href='/dashboard/cmi/profile'" style="cursor:pointer">
+      <img id="sidebarAvatarImg" src="{{ $userPhoto ? '/' . e($userPhoto) : '/assets/img/default-avatar.svg' }}" alt="User Profile" style="width:38px;height:38px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid #a5d6a7;flex-shrink:0;"/>
       <div>
-        <div class="sb-brand-title">SecReCo</div>
-        <div class="sb-brand-sub">CVAARRD CMI</div>
+        <div class="sb-brand-title" style="font-size:13.5px;font-weight:700;line-height:1.2;">{{ $userName }}</div>
+        <div class="sb-brand-sub" style="font-size:11px;color:rgba(255,255,255,0.75);">{{ $userDesig ? $userDesig : 'CMI Representative' }}</div>
       </div>
     </div>
 

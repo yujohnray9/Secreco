@@ -325,11 +325,8 @@ async function loadFormats(year) {
 
   // Card action buttons
   const actions = document.getElementById('cardActions');
-  let btns = '';
-  if (fmtYearStatus !== 'archived') {
-    btns += `<button class="btn-outline-fc" onclick="openAddModal(${year})">
-      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ Add Table</button>`;
-  }
+  let btns = `<button class="btn-outline-fc" onclick="openAddModal(${year})">
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ Add Table</button>`;
   if (fmtYearStatus === 'draft') {
     btns += `<button class="btn-primary-fc" onclick="confirmActivate(${year})">
       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activate CY ${year}</button>`;
@@ -342,7 +339,7 @@ async function loadFormats(year) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:48px;color:#9ca3af">
       <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 12px">
         <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-      </svg>No format templates defined for CY ${year}. Use "+ Prepare New Year" to clone from a previous year.
+      </svg>No format templates defined for CY ${year}. Use "+ Add Table" or "+ Prepare New Year" to start.
     </td></tr>`;
     return;
   }
@@ -351,8 +348,7 @@ async function loadFormats(year) {
     const pct   = t.total_cmi > 0 ? Math.round((t.submission_count / t.total_cmi) * 100) : 0;
     const pcBg  = pct >= 75 ? '#ecfdf5' : pct >= 40 ? '#fff7ed' : '#fef2f2';
     const pcTxt = pct >= 75 ? '#059669'  : pct >= 40 ? '#d97706'  : '#dc2626';
-    const canDelete = fmtYearStatus === 'draft' || t.submission_count == 0;
-    const isArchived = fmtYearStatus === 'archived';
+    const canDelete = t.submission_count == 0;
     const colsJson = JSON.stringify(t.columns_json || []);
     return `
       <tr>
@@ -371,16 +367,14 @@ async function loadFormats(year) {
           </div>
         </td>
         <td>
-          ${!isArchived ? `
-            <div style="display:flex;gap:6px">
-              <button class="btn-sm-edit" onclick='openEditModal(${t.id}, ${JSON.stringify(t.table_no)}, ${JSON.stringify(t.title)}, ${JSON.stringify(t.section)}, ${t.is_required}, ${JSON.stringify(colsJson)})'>
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
-              </button>
-              ${canDelete ? `<button class="btn-sm-del" onclick="deleteTable(${t.id},'${t.table_no}')">
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Remove
-              </button>` : ''}
-            </div>
-          ` : '<span style="color:#9ca3af;font-size:12px">Archived</span>'}
+          <div style="display:flex;gap:6px">
+            <button class="btn-sm-edit" onclick='openEditModal(${t.id}, ${JSON.stringify(t.table_no)}, ${JSON.stringify(t.title)}, ${JSON.stringify(t.section)}, ${t.is_required}, ${JSON.stringify(colsJson)})'>
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
+            </button>
+            ${canDelete ? `<button class="btn-sm-del" onclick="deleteTable(${t.id},'${t.table_no}')">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Remove
+            </button>` : ''}
+          </div>
         </td>
       </tr>
     `;

@@ -153,7 +153,7 @@ class ProfileController extends Controller
 
         $filename  = 'profile_' . $userId . '_' . time() . '.jpg';
         $path      = $file->storeAs('uploads/profiles', $filename, 'public');
-        $photoPath = 'uploads/profiles/' . $filename;
+        $photoPath = 'storage/uploads/profiles/' . $filename;
 
         $user->update(['profile_picture' => $photoPath]);
         session(['user_photo' => $photoPath]);

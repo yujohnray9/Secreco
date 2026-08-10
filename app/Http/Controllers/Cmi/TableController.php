@@ -121,6 +121,29 @@ class TableController extends Controller
             }
         }
 
+        // Notify PTA admins about the table update
+        try {
+            $user = \App\Models\User::find($userId);
+            $inst = $user?->institution ?: ($user?->name ?: 'CMI Representative');
+            $ptaUsers = \App\Models\User::where('role', 'pta')->get();
+            foreach ($ptaUsers as $ptaUser) {
+                \App\Models\Notification::create([
+                    'user_id'      => $ptaUser->id,
+                    'role'         => 'pta',
+                    'type'         => 'submission_updated',
+                    'icon'         => 'edit',
+                    'color'        => 'blue',
+                    'message'      => "{$inst} updated Table {$tableNo}.",
+                    'action_url'   => '/dashboard/pta/submissions',
+                    'action_label' => 'View Submissions',
+                    'is_read'      => false,
+                    'created_at'   => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to notify PTA on table update: ' . $e->getMessage());
+        }
+
         return response()->json([
             'success'    => true,
             'status'     => $status,
