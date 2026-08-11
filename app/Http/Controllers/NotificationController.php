@@ -13,9 +13,12 @@ class NotificationController extends Controller
 {
     public function get(Request $request): JsonResponse
     {
-        $userId   = Auth::id() ?? session('user_id');
-        $userRole = Auth::user()?->role ?? session('user_role');
-        $year     = (int) ($request->input('year') ?? date('Y'));
+        $userId    = Auth::id() ?? session('user_id');
+        $userRole  = Auth::user()?->role ?? session('user_role');
+        $year      = (int) ($request->input('year') ?? date('Y'));
+        $readAll   = session('notifs_read_all_' . $userId, false) || session('notifs_read_all', false);
+        $readAtTs  = session('notifs_read_at_ts_' . $userId);
+        $readKeys  = session('read_notif_keys_' . $userId, []);
 
         $notifications = [];
 
@@ -27,15 +30,23 @@ class NotificationController extends Controller
         })->orderByDesc('created_at')->take(50)->get();
 
         foreach ($stored as $n) {
+            $key = 'stored_' . $n->id;
+            $unread = !$n->is_read;
+            $tTs    = $n->created_at ? strtotime((string)$n->created_at) : 0;
+            if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
+                $unread = false;
+            }
+
             $notifications[] = [
                 'id'           => (int) $n->id,
+                'key'          => $key,
                 'type'         => $n->color ?: 'blue',
                 'icon'         => $n->icon ?: '📋',
                 'msg'          => $n->message,
                 'action'       => $n->action_url,
                 'action_label' => $n->action_label ?: 'View',
                 'time'         => $n->created_at ? $n->created_at->format('Y-m-d\TH:i:s+08:00') : null,
-                'unread'       => !$n->is_read,
+                'unread'       => $unread,
                 'notif_type'   => $n->type,
                 'source'       => 'stored',
             ];
@@ -48,22 +59,30 @@ class NotificationController extends Controller
                 ->get();
 
             if ($pendingUsers->count() > 0) {
-                $count = $pendingUsers->count();
-                $names = array_slice(array_map(
+                $count  = $pendingUsers->count();
+                $names  = array_slice(array_map(
                     fn($u) => $u['first_name'] . ' ' . $u['last_name'] . ($u['institution'] ? ' (' . $u['institution'] . ')' : ''),
                     $pendingUsers->toArray()
                 ), 0, 2);
-                $label = implode(' and ', $names) . ($count > 2 ? " and " . ($count - 2) . " more" : '');
+                $label  = implode(' and ', $names) . ($count > 2 ? " and " . ($count - 2) . " more" : '');
+                $key    = 'derived_pending_users';
+                $t      = $pendingUsers[0]->created_at;
+                $tTs    = $t ? strtotime((string)$t) : 0;
+                $unread = true;
+                if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
+                    $unread = false;
+                }
 
                 $notifications[] = [
                     'id'           => null,
+                    'key'          => $key,
                     'type'         => 'yellow',
                     'icon'         => '👥',
                     'msg'          => $count === 1 ? "1 account pending approval — {$label}." : "{$count} accounts pending approval — {$label}.",
                     'action'       => '/dashboard/pta/users',
                     'action_label' => 'Review',
-                    'time'         => $pendingUsers[0]->created_at ? $pendingUsers[0]->created_at->format('Y-m-d\TH:i:s+08:00') : null,
-                    'unread'       => true,
+                    'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
+                    'unread'       => $unread,
                     'notif_type'   => 'user_approval',
                     'source'       => 'derived',
                 ];
@@ -79,15 +98,24 @@ class NotificationController extends Controller
 
             foreach ($corrections as $cr) {
                 $ptaName = $cr->ptaUser?->name ?? 'PTA';
+                $key     = 'derived_corr_' . $cr->id;
+                $t       = $cr->created_at;
+                $tTs     = $t ? strtotime((string)$t) : 0;
+                $unread  = true;
+                if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
+                    $unread = false;
+                }
+
                 $notifications[] = [
                     'id'           => null,
+                    'key'          => $key,
                     'type'         => 'red',
                     'icon'         => '🔴',
                     'msg'          => "{$cr->table_no} flagged for correction by {$ptaName}: \"{$cr->reason}\"",
                     'action'       => '/dashboard/cmi/fillup',
                     'action_label' => 'Go to ' . $cr->table_no,
-                    'time'         => $cr->created_at ? $cr->created_at->format('Y-m-d\TH:i:s+08:00') : null,
-                    'unread'       => true,
+                    'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
+                    'unread'       => $unread,
                     'notif_type'   => 'correction',
                     'source'       => 'derived',
                 ];
@@ -96,18 +124,16 @@ class NotificationController extends Controller
 
         usort($notifications, fn($a, $b) => strcmp($b['time'] ?? '', $a['time'] ?? ''));
 
-        $urgent   = count(array_filter($notifications, fn($n) => $n['type'] === 'red' && $n['unread']));
-        $pending  = count(array_filter($notifications, fn($n) => $n['type'] === 'yellow' && $n['unread']));
-        $activity = count(array_filter($notifications, fn($n) => in_array($n['type'], ['green', 'blue'], true)));
+        $unreadCount = count(array_filter($notifications, fn($n) => $n['unread']));
 
         return response()->json([
             'ok'            => true,
             'notifications' => $notifications,
-            'unread_count'  => count(array_filter($notifications, fn($n) => $n['unread'])),
+            'unread_count'  => $unreadCount,
             'counts'        => [
-                'urgent'   => $urgent,
-                'pending'  => $pending,
-                'activity' => $activity,
+                'urgent'   => count(array_filter($notifications, fn($n) => $n['type'] === 'red' && $n['unread'])),
+                'pending'  => count(array_filter($notifications, fn($n) => $n['type'] === 'yellow' && $n['unread'])),
+                'activity' => count(array_filter($notifications, fn($n) => in_array($n['type'], ['green', 'blue'], true))),
             ],
         ]);
     }
@@ -120,31 +146,41 @@ class NotificationController extends Controller
         $input   = $request->json()->all() ?: $request->all();
         $markAll = !empty($input['all']);
         $notifId = (int) ($input['id'] ?? 0);
+        $key     = $input['key'] ?? null;
 
         if ($markAll) {
-            $affected = Notification::where(function ($q) use ($userId, $userRole) {
+            Notification::where(function ($q) use ($userId, $userRole) {
                 $q->where('user_id', $userId)
                   ->orWhere(function ($q2) use ($userRole) {
                       $q2->whereNull('user_id')->where('role', $userRole);
                   });
             })->where('is_read', false)->update(['is_read' => true]);
 
-            return response()->json(['ok' => true, 'marked' => $affected, 'message' => "Marked {$affected} notifications as read."]);
-        } elseif ($notifId > 0) {
-            $updated = Notification::where('id', $notifId)
+            session(['notifs_read_all_' . $userId => true]);
+            session(['notifs_read_all' => true]);
+            session(['notifs_read_at_ts_' . $userId => time() + 86400]);
+
+            return response()->json(['ok' => true, 'message' => 'All notifications marked as read.']);
+        }
+
+        if ($key) {
+            $readKeys = session('read_notif_keys_' . $userId, []);
+            if (!in_array($key, $readKeys, true)) {
+                $readKeys[] = $key;
+                session(['read_notif_keys_' . $userId => $readKeys]);
+            }
+        }
+
+        if ($notifId > 0) {
+            Notification::where('id', $notifId)
                 ->where(function ($q) use ($userId, $userRole) {
                     $q->where('user_id', $userId)
                       ->orWhere(function ($q2) use ($userRole) {
                           $q2->whereNull('user_id')->where('role', $userRole);
                       });
                 })->update(['is_read' => true]);
-
-            if ($updated) {
-                return response()->json(['ok' => true, 'message' => 'Notification marked as read.']);
-            }
-            return response()->json(['ok' => false, 'message' => 'Notification not found or already read.']);
         }
 
-        return response()->json(['ok' => false, 'message' => 'Please provide "id" or "all": true.']);
+        return response()->json(['ok' => true, 'message' => 'Notification marked as read.']);
     }
 }

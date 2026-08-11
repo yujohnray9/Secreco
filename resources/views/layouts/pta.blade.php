@@ -195,12 +195,18 @@ function confirmSignOut() {
 (async function loadBellBadge() {
   try {
     const year = new Date().getFullYear();
-    const res  = await fetch(`/api/notifications?year=${year}`);
+    const res  = await fetch(`/api/pta/notifications?year=${year}`);
     const json = await res.json();
     if (!json.ok) return;
     const dot = document.querySelector('.notif-dot');
     if (!dot) return;
-    dot.style.display = json.unread_count > 0 ? 'block' : 'none';
+    if (json.unread_count > 0) {
+      dot.textContent = json.unread_count > 99 ? '99+' : json.unread_count;
+      dot.style.display = 'flex';
+    } else {
+      dot.style.display = 'none';
+      dot.textContent = '';
+    }
   } catch (e) {
     console.warn('[bell] Could not fetch notification count:', e);
   }

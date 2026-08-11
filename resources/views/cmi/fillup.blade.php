@@ -70,16 +70,38 @@ document.addEventListener('DOMContentLoaded', function() {
   const saveDraftBtn = document.getElementById('btn-save-draft');
 
   if (yearSel) {
+    // Load format years from Manage Formats
+    fetch('/api/formats')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
+          const activeYr = data.active_year || window.CMI_REPORTING_YEAR || new Date().getFullYear();
+          window.CMI_REPORTING_YEAR = activeYr;
+          yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+          if (subtitle) subtitle.textContent = 'CY ' + activeYr + ' Annual Accomplishment Report — All Sections & Tables';
+          fetch('/api/cmi/tables/statuses?year=' + activeYr)
+            .then(r => r.json())
+            .then(stData => {
+              if (stData && typeof CMI !== 'undefined') CMI.setStatuses(stData.statuses || {}, stData);
+            }).catch(() => {});
+        }
+      }).catch(() => {});
+
     yearSel.addEventListener('change', function() {
-      window.CMI_REPORTING_YEAR = parseInt(this.value);
-      if (subtitle) subtitle.textContent = 'CY ' + this.value + ' Annual Accomplishment Report — All Sections & Tables';
+      const selectedYear = parseInt(this.value);
+      window.CMI_REPORTING_YEAR = selectedYear;
+      if (subtitle) subtitle.textContent = 'CY ' + selectedYear + ' Annual Accomplishment Report — All Sections & Tables';
+      
+      const body = document.getElementById('fillBody');
+      if (body) body.innerHTML = '<div style="padding:32px;text-align:center;color:#9ca3af">Loading CY ' + selectedYear + ' data...</div>';
+
       // Reload statuses for selected year then re-show current table
-      fetch('/api/cmi/tables/statuses?year=' + this.value)
+      fetch('/api/cmi/tables/statuses?year=' + selectedYear)
         .then(r => r.json())
         .then(data => {
-          if (data && data.statuses) CMI.setStatuses(data.statuses);
+          if (typeof CMI !== 'undefined') CMI.setStatuses(data ? data.statuses : {}, data);
           const active = window._cmiActiveTable || 'T1';
-          CMI.showTable(active);
+          if (typeof CMI !== 'undefined' && typeof CMI.showTable === 'function') CMI.showTable(active);
         })
         .catch(() => {});
     });

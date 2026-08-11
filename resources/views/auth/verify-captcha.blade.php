@@ -180,7 +180,7 @@
       <!-- CLOUDFLARE TURNSTILE WIDGET -->
       <div class="turnstile-wrap">
         <div class="cf-turnstile"
-             data-sitekey="{{ request()->getHost() === 'localhost' || request()->getHost() === '127.0.0.1' ? '1x00000000000000000000AA' : '0x4AAAAAADm44d5meCp5GCFg' }}"
+             data-sitekey="{{ env('CF_TURNSTILE_SITE_KEY', '0x4AAAAAADm44d5meCp5GCFg') }}"
              data-theme="light"
              data-callback="onTurnstileSuccess"
              data-expired-callback="onTurnstileExpired"

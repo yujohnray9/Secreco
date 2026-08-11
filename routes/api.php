@@ -91,6 +91,7 @@ Route::prefix('pta')->middleware(['auth.custom', 'role:pta'])->group(function ()
     Route::post('/profile/remove-photo', [PtaProfileController::class, 'removePhoto']);
 
     Route::get('/notifications', [PtaNotificationController::class, 'get']);
+    Route::post('/notifications/mark-read', [NotificationController::class, 'markRead']);
 });
 
 /*
@@ -101,4 +102,5 @@ Route::prefix('pta')->middleware(['auth.custom', 'role:pta'])->group(function ()
 Route::middleware(['auth.custom'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'get']);
     Route::post('/notifications/mark-read', [NotificationController::class, 'markRead']);
+    Route::get('/formats', [PtaFormatController::class, 'index']);
 });

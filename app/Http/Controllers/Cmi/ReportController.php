@@ -24,11 +24,17 @@ class ReportController extends Controller
             'T16','T17','T18','T19','T20a','T20b'
         ]);
 
-        // Update any existing draft tables with content to 'done' on submit
+        // Update ALL tables with content for this user and year to 'done' on submit
         ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
-            ->where('status', 'draft')
-            ->update(['status' => 'done', 'updated_at' => now()]);
+            ->get()
+            ->each(function ($tbl) {
+                $hasRows = is_array($tbl->rows_json) && count($tbl->rows_json) > 0;
+                $hasMeta = is_array($tbl->meta_json) && count($tbl->meta_json) > 0;
+                if ($hasRows || $hasMeta || $tbl->status === 'draft') {
+                    $tbl->update(['status' => 'done', 'updated_at' => now()]);
+                }
+            });
 
         $saved = ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)

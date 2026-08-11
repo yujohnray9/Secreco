@@ -89,8 +89,22 @@
         _registry[def.no] = def;
     };
 
-    CMI.setStatuses = function (statuses) {
-        Object.assign(_status, statuses);
+    CMI.setStatuses = function (statuses, meta = null) {
+        for (let k in _status) delete _status[k];
+        Object.assign(_status, statuses || {});
+
+        if (meta && meta.submitted) {
+            _isSubmitted = true;
+            _submittedAt = meta.submitted_at || null;
+            _submittedTables = meta.submitted_tables || [];
+        } else {
+            _isSubmitted = false;
+            _submittedAt = null;
+            _submittedTables = [];
+            const banner = document.getElementById("cmi-submitted-banner");
+            if (banner) banner.remove();
+        }
+
         renderFillNav();
     };
 
@@ -346,6 +360,13 @@
      SUBMIT REPORT
   ───────────────────────────────────────── */
     CMI.submitReport = function () {
+        // Save current active table open on screen first
+        const active = window._cmiActiveTable || 'T1';
+        const winModule = window[active] || window[active.toUpperCase()] || window[active.toLowerCase()];
+        if (winModule && typeof winModule.save === 'function') {
+            winModule.save('done');
+        }
+
         const allNos = Object.keys(TABLE_TITLES);
         const done = allNos.filter((n) => _status[n] === "done").length;
         const draft = allNos.filter((n) => _status[n] === "draft").length;
@@ -353,7 +374,7 @@
             (n) => !_status[n] || _status[n] === "not-started",
         ).length;
         const total = allNos.length;
-        const yr = new Date().getFullYear();
+        const yr = window.CMI_REPORTING_YEAR || new Date().getFullYear();
 
         const pct = Math.round((done / total) * 100);
         const bar = `
@@ -380,31 +401,28 @@
             title: `Submit CY ${yr} Annual Report`,
             html: `${bar}${rows}
         <p style="margin:14px 0 0;font-size:12px;color:#888">
-          Blank and draft tables will be submitted as-is.<br>
-          The admin can follow up on any incomplete items.
+          Report tables will be submitted to PTA.<br>
+          You can view your submitted tables under <em>My Submissions</em>.
         </p>`,
             okLabel: "Submit Now",
             onOk() {
                 toast("Submitting report…", 99999);
-                fetch(API_SUBMIT, { method: "POST" })
+                fetch(API_SUBMIT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ year: yr }) })
                     .then((r) => r.json())
                     .then((res) => {
                         const wrap = document.getElementById("toastWrap");
                         if (wrap) wrap.innerHTML = "";
                         if (res.success) {
-                            toast("Report submitted successfully!");
+                            toast("✅ Report submitted successfully! Redirecting to My Submissions...");
                             _isSubmitted = true;
-                            _submittedAt =
-                                res.submitted_at || new Date().toISOString();
-                            _submittedTables = allNos.filter(
-                                (n) => _status[n] === "done",
-                            );
+                            _submittedAt = res.submitted_at || new Date().toISOString();
+                            _submittedTables = allNos.filter((n) => _status[n] === "done" || _status[n] === "draft");
                             CMI.lockReport();
+                            setTimeout(function () {
+                                window.location.href = "/dashboard/cmi/submissions";
+                            }, 1200);
                         } else {
-                            toast(
-                                "Submission failed: " +
-                                    (res.error || "Unknown error"),
-                            );
+                            toast("Submission failed: " + (res.error || "Unknown error"));
                         }
                     })
                     .catch(() => {
@@ -430,12 +448,7 @@
         fetch("/api/cmi/tables/statuses?year=" + year)
             .then((r) => r.json())
             .then((data) => {
-                if (data && data.statuses) CMI.setStatuses(data.statuses);
-                if (data && data.submitted) {
-                    _isSubmitted = true;
-                    _submittedAt = data.submitted_at || null;
-                    _submittedTables = data.submitted_tables || [];
-                }
+                if (data) CMI.setStatuses(data.statuses || {}, data);
             })
             .catch(() => {})
             .finally(() => {

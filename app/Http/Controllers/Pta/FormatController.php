@@ -37,9 +37,23 @@ class FormatController extends Controller
             return $array;
         });
 
+        $activeYear = (int) (SystemSetting::where('key', 'active_year')->value('value') ?? date('Y'));
         $years = FormatTemplate::distinct()->orderByDesc('year')->pluck('year')->all();
+        if (empty($years)) {
+            $years = [(int) date('Y')];
+        }
+        if (!in_array((int) date('Y'), $years, true)) {
+            $years[] = (int) date('Y');
+            rsort($years);
+        }
 
-        return response()->json(['ok' => true, 'templates' => $templates, 'years' => $years, 'year' => $year]);
+        return response()->json([
+            'ok'          => true,
+            'templates'   => $templates,
+            'years'       => array_values(array_unique($years)),
+            'year'        => $year,
+            'active_year' => $activeYear,
+        ]);
     }
 
     public function save(Request $request): JsonResponse

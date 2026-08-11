@@ -13,7 +13,12 @@ class NotificationController extends Controller
 {
     public function get(Request $request): JsonResponse
     {
-        $year          = (int) ($request->input('year') ?? date('Y'));
+        $userId    = \Illuminate\Support\Facades\Auth::id() ?? session('user_id');
+        $year      = (int) ($request->input('year') ?? date('Y'));
+        $readAll   = session('notifs_read_all_' . $userId, false) || session('notifs_read_all', false);
+        $readAtTs  = session('notifs_read_at_ts_' . $userId);
+        $readKeys  = session('read_notif_keys_' . $userId, []);
+
         $notifications = [];
 
         $pendingUsers = User::where('status', 'pending')
@@ -22,18 +27,26 @@ class NotificationController extends Controller
             ->get();
 
         if ($pendingUsers->count() > 0) {
-            $count = $pendingUsers->count();
-            $names = array_slice(array_map(fn($u) => $u['first_name'] . ' ' . $u['last_name'] . ($u['institution'] ? ' (' . $u['institution'] . ')' : ''), $pendingUsers->toArray()), 0, 2);
-            $label = implode(' and ', $names) . ($count > 2 ? " and " . ($count - 2) . " more" : '');
+            $count  = $pendingUsers->count();
+            $names  = array_slice(array_map(fn($u) => $u['first_name'] . ' ' . $u['last_name'] . ($u['institution'] ? ' (' . $u['institution'] . ')' : ''), $pendingUsers->toArray()), 0, 2);
+            $label  = implode(' and ', $names) . ($count > 2 ? " and " . ($count - 2) . " more" : '');
+            $key    = 'derived_pending_users';
+            $t      = $pendingUsers[0]->created_at;
+            $tTs    = $t ? strtotime((string)$t) : 0;
+            $unread = true;
+            if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
+                $unread = false;
+            }
 
             $notifications[] = [
+                'key'          => $key,
                 'type'         => 'yellow',
                 'icon'         => '👥',
                 'msg'          => $count === 1 ? "1 account pending approval — {$label}." : "{$count} accounts pending approval — {$label}.",
                 'action'       => 'users',
                 'action_label' => 'Review',
-                'time'         => $pendingUsers[0]->created_at ? $pendingUsers[0]->created_at->format('Y-m-d\TH:i:s+08:00') : null,
-                'unread'       => true,
+                'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
+                'unread'       => $unread,
             ];
         }
 
@@ -61,15 +74,23 @@ class NotificationController extends Controller
                 'returned' => '↩️',
                 default    => '📨',
             };
+            $key    = 'derived_sub_' . $sub->id;
+            $t      = $sub->submitted_at;
+            $tTs    = $t ? strtotime((string)$t) : 0;
+            $unread = true;
+            if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
+                $unread = false;
+            }
 
             $notifications[] = [
+                'key'          => $key,
                 'type'         => $type,
                 'icon'         => $icon,
                 'msg'          => "{$inst} {$statusLabel}.",
                 'action'       => 'submissions',
                 'action_label' => 'View',
-                'time'         => $sub->submitted_at ? $sub->submitted_at->format('Y-m-d\TH:i:s+08:00') : null,
-                'unread'       => true,
+                'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
+                'unread'       => $unread,
             ];
         }
 
@@ -77,6 +98,7 @@ class NotificationController extends Controller
 
         foreach ($actLogs as $log) {
             $notifications[] = [
+                'key'    => 'log_' . $log->id,
                 'type'   => 'blue',
                 'icon'   => '📋',
                 'msg'    => $log->description,

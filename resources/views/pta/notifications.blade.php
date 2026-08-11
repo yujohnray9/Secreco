@@ -79,6 +79,28 @@ const notifIconMap = {
   submit:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
 };
 
+async function updateBellBadge(unreadCount) {
+  const dot = document.querySelector('.notif-dot');
+  if (!dot) return;
+  if (unreadCount > 0) {
+    dot.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    dot.style.display = 'flex';
+  } else {
+    dot.style.display = 'none';
+    dot.textContent = '';
+  }
+}
+
+window.markPtaItemRead = async function(id, key) {
+  await fetch('/api/pta/notifications/mark-read', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id, key: key }),
+  });
+  if (typeof showToast === 'function') showToast('Marked as read');
+  loadNotifs();
+};
+
 async function loadNotifs() {
   const year      = new Date().getFullYear();
   const container = document.getElementById('notifContainer');
@@ -86,11 +108,15 @@ async function loadNotifs() {
     const res  = await fetch(`/api/pta/notifications?year=${year}`);
     const json = await res.json();
     const notifs = json.notifications || [];
-    const unread = notifs.filter(n => n.unread).length;
+    const unread = json.unread_count || 0;
+
+    updateBellBadge(unread);
 
     const badge = document.getElementById('unreadBadge');
-    badge.textContent = `${unread} unread`;
-    badge.style.display = unread > 0 ? 'inline-flex' : 'none';
+    if (badge) {
+      badge.textContent = `${unread} unread`;
+      badge.style.display = unread > 0 ? 'inline-flex' : 'none';
+    }
 
     if (notifs.length === 0) {
       container.innerHTML = `<div style="padding:48px;text-align:center;color:#9ca3af">
@@ -110,15 +136,18 @@ async function loadNotifs() {
           <div class="notif-msg">${n.msg}</div>
           <div class="notif-time">${n.time ? n.time.substring(0,16).replace('T',' ') : ''}</div>
         </div>
-        ${n.action ? `<div class="notif-action"><a href="/dashboard/pta/${n.action}" class="btn-sm-fc btn-sm-view">${n.action_label || 'View'}</a></div>` : ''}
+        <div class="notif-action" style="display:flex;align-items:center;gap:6px">
+          ${n.unread ? `<button type="button" class="btn-sm-fc" onclick="markPtaItemRead(${n.id || 'null'}, '${n.key || ''}')" style="background:#e5e7eb;color:#374151">Mark read</button>` : ''}
+          ${n.action ? `<a href="/dashboard/pta/${n.action}" class="btn-sm-fc btn-sm-view">${n.action_label || 'View'}</a>` : ''}
+        </div>
       </div>
     `).join('')}</div>`;
   } catch(e) { console.error('Notif load error:', e); }
 }
 
 document.getElementById('btnMarkAllRead').addEventListener('click', async function() {
-  await fetch('/api/notifications/mark-read', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({all:true}) });
-  showToast('All notifications marked as read');
+  await fetch('/api/pta/notifications/mark-read', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({all:true}) });
+  if (typeof showToast === 'function') showToast('All notifications marked as read');
   loadNotifs();
 });
 
