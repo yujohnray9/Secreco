@@ -47,7 +47,6 @@
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="T14.save()">Save</button>
         <button class="btn t-docs-btn" onclick="T14.openDocs()">
           📎 Documentation <span id="t14_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>

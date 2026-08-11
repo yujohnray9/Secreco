@@ -68,6 +68,7 @@ Route::prefix('pta')->middleware(['auth.custom', 'role:pta'])->group(function ()
     Route::post('/submissions/accept', [PtaSubmissionController::class, 'accept']);
     Route::post('/submissions/request-correction', [PtaSubmissionController::class, 'requestCorrection']);
     Route::post('/submissions/delete', [PtaSubmissionController::class, 'delete']);
+    Route::post('/submissions/update-table', [PtaSubmissionController::class, 'updateTable']);
 
     Route::get('/users', [PtaUserController::class, 'index']);
     Route::get('/users/pending', [PtaUserController::class, 'getPending']);

@@ -104,12 +104,13 @@
               <th>Encoder</th>
               <th>Table</th>
               <th>Table Status</th>
+              <th>Date Submitted</th>
               <th>Updated At</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody id="subsTbody">
-            <tr><td colspan="6" style="text-align:center;padding:32px;color:#9ca3af">
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af">
               <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 8px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               Loading submissions...
             </td></tr>
@@ -132,8 +133,9 @@
     
     <div id="vdTableWrap" style="margin-bottom:20px; overflow-x:auto;"></div>
 
-    <div style="display:flex; justify-content:flex-end;">
-      <button class="btn-sm-fc btn-sm-view" onclick="closeModal('modalViewData')" style="padding:8px 20px; font-size:13px;">Close</button>
+    <div style="display:flex; justify-content:flex-end; gap:10px;">
+      <button class="btn-sm-fc" onclick="closeModal('modalViewData')" style="background:#f3f4f6;color:#374151;padding:8px 20px; font-size:13px;">Close</button>
+      <button class="btn-sm-fc" onclick="savePtaModalEdit()" style="background:#10b981;color:#fff;border:none;padding:8px 22px; font-size:13px;font-weight:700;">💾 Save / Submit Updates</button>
     </div>
   </div>
 </div>
@@ -142,6 +144,7 @@
 @section('scripts')
 <script>
 let cachedSubRows = [];
+let currentEditSubIdx = -1;
 
 const statusBadge = s => {
   const map = {
@@ -173,13 +176,14 @@ function renderSubsTable() {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#9ca3af">
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#9ca3af">
       No submissions found matching "${query}".
     </td></tr>`;
     return;
   }
 
   tbody.innerHTML = filtered.map((r, idx) => {
+    const subDate = r.submitted_at ? r.submitted_at.substring(0,16).replace('T',' ') : '—';
     const ts = r.updated_at ? r.updated_at.substring(0,16).replace('T',' ') : '—';
     const actionTs = r.action_at ? `<span class="ts-label">${r.action_at.substring(0,16).replace('T',' ')}</span>` : '';
     const isActioned = r.table_status === 'accepted' || r.table_status === 'returned' || r.table_status === 'deleted';
@@ -189,11 +193,12 @@ function renderSubsTable() {
       <td>${r.encoder}</td>
       <td><span class="badge badge-blue">Table ${r.table_no}</span></td>
       <td>${statusBadge(r.table_status || 'done')}${actionTs}</td>
+      <td style="color:#059669;font-weight:600;font-size:12.5px">${subDate}</td>
       <td style="color:#6b7280;font-size:12.5px">${ts}</td>
       <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${cachedSubRows.indexOf(r)})">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          View
+          View / Edit
         </button>
         ${!isActioned ? `
         <button class="btn-sm-fc btn-sm-accept" onclick="acceptSub(${cachedSubRows.indexOf(r)})">
@@ -217,7 +222,7 @@ async function loadSubs() {
   const year   = document.getElementById('subYearSel').value;
   const status = document.getElementById('subStatusSel').value;
   const tbody  = document.getElementById('subsTbody');
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:#9ca3af">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af">Loading...</td></tr>';
   try {
     let url = `/api/pta/submissions?year=${year}`;
     if (status) url += `&status=${status}`;
@@ -229,21 +234,44 @@ async function loadSubs() {
 }
 
 window.viewDataModal = function(idx) {
+  currentEditSubIdx = idx;
   const r = cachedSubRows[idx];
   if (!r) return;
-  document.getElementById('vdInst').textContent    = r.institution;
-  document.getElementById('vdEncoder').textContent = `Encoder: ${r.encoder} • Table ${r.table_no}`;
+  document.getElementById('vdInst').textContent    = `${r.institution} — Table ${r.table_no}`;
+  document.getElementById('vdEncoder').textContent = `Encoder: ${r.encoder} • Status: ${r.table_status}`;
 
   const wrap = document.getElementById('vdTableWrap');
   let html = '';
-  if (r.rows && r.rows.length > 0) {
-    const keys = Object.keys(r.rows[0]);
-    html += '<table class="fc-table" style="font-size:13px"><thead><tr>' + keys.map(k=>`<th>${k}</th>`).join('') + '</tr></thead><tbody>';
-    html += r.rows.map(row => '<tr>' + keys.map(k=>`<td>${row[k]||'—'}</td>`).join('') + '</tr>').join('');
-    html += '</tbody></table>';
-  } else {
-    html += '<div style="padding:24px;text-align:center;color:#9ca3af;font-size:13.5px;">No row data entered for this table yet.</div>';
-  }
+
+  let rows = (r.rows && r.rows.length > 0) ? JSON.parse(JSON.stringify(r.rows)) : [{}];
+  let keys = rows.length > 0 && Object.keys(rows[0]).length > 0 ? Object.keys(rows[0]) : ['Date', 'Agency', 'New', 'Ongoing', 'Completed', 'Terminated'];
+
+  html += `<div style="font-size:12.5px;color:#374151;margin-bottom:12px;background:#ecfdf5;padding:10px 14px;border-radius:8px;border:1px solid #a7f3d0;">
+    <strong>PTA Admin Access:</strong> You can edit cell values or add missing rows below, then click <strong>Save / Submit Updates</strong> to update this submission.
+  </div>`;
+
+  html += `<table class="fc-table" id="ptaEditGrid" style="font-size:12.5px">
+    <thead>
+      <tr>
+        <th style="width:36px">#</th>
+        ${keys.map(k=>`<th>${k}</th>`).join('')}
+        <th style="width:40px">Del</th>
+      </tr>
+    </thead>
+    <tbody id="ptaEditTbody">`;
+
+  rows.forEach((row, rIdx) => {
+    html += `<tr>
+      <td style="text-align:center;font-weight:600;color:#6b7280">${rIdx + 1}</td>
+      ${keys.map(k=>`<td><input type="text" class="pta-cell-inp" data-key="${k}" value="${String(row[k] ?? '').replace(/"/g, '&quot;')}" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" /></td>`).join('')}
+      <td style="text-align:center"><button type="button" onclick="this.closest('tr').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:bold;">×</button></td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>
+  <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+    <button type="button" class="btn-sm-fc" onclick="addPtaEditRow()" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;">+ Add Row</button>
+  </div>`;
 
   // Render Documentation attachments if present
   if (r.docs && r.docs.length > 0) {
@@ -268,6 +296,66 @@ window.viewDataModal = function(idx) {
 
   wrap.innerHTML = html;
   openModal('modalViewData');
+};
+
+window.addPtaEditRow = function() {
+  const tbody = document.getElementById('ptaEditTbody');
+  if (!tbody) return;
+  const firstRow = tbody.querySelector('tr');
+  let keys = ['field1', 'field2', 'field3', 'field4'];
+  if (firstRow) {
+    keys = [...firstRow.querySelectorAll('.pta-cell-inp')].map(inp => inp.dataset.key);
+  }
+  const rowCount = tbody.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td style="text-align:center;font-weight:600;color:#6b7280">${rowCount}</td>
+    ${keys.map(k=>`<td><input type="text" class="pta-cell-inp" data-key="${k}" value="" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" /></td>`).join('')}
+    <td style="text-align:center"><button type="button" onclick="this.closest('tr').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:bold;">×</button></td>`;
+  tbody.appendChild(tr);
+};
+
+window.savePtaModalEdit = async function() {
+  if (currentEditSubIdx < 0) return;
+  const r = cachedSubRows[currentEditSubIdx];
+  const year = document.getElementById('subYearSel').value;
+  const tbody = document.getElementById('ptaEditTbody');
+  
+  const updatedRows = [];
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('.pta-cell-inp');
+      const rowObj = {};
+      inputs.forEach(inp => {
+        rowObj[inp.dataset.key] = inp.value;
+      });
+      updatedRows.push(rowObj);
+    });
+  }
+
+  try {
+    const res = await fetch('/api/pta/submissions/update-table', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cmi_user_id: r.cmi_user_id,
+        table_no: r.table_no,
+        year: year,
+        rows: updatedRows,
+        meta: r.meta || {},
+        status: 'done'
+      })
+    });
+    const json = await res.json();
+    if (json.ok) {
+      showToast(json.message || 'Table updated and saved successfully!');
+      closeModal('modalViewData');
+      loadSubs();
+    } else {
+      showToast('Error saving update: ' + (json.error || 'Unknown error'));
+    }
+  } catch(e) {
+    showToast('Failed to save update.');
+  }
 };
 
 window.acceptSub = function(idx) {

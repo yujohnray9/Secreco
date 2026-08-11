@@ -218,19 +218,30 @@
     };
 
     CMI.saveDraft = function () {
-        const body = document.getElementById("fillBody");
-        if (!body) return;
-        const saveBtn =
-            body.querySelector('button[data-action="save"]') ||
-            [...body.querySelectorAll("button")].find((b) =>
-                /save/i.test(b.textContent),
-            );
-        if (saveBtn) {
-            saveBtn.click();
+        window._cmiSavingDraft = true;
+        const active = window._cmiActiveTable || 'T1';
+        const winModule = window[active] || window[active.toUpperCase()] || window[active.toLowerCase()];
+        if (winModule && typeof winModule.save === 'function') {
+            winModule.save('draft');
         } else {
-            if (typeof window.showToast === "function")
-                window.showToast("Nothing to save yet — add some data first.");
+            const body = document.getElementById("fillBody");
+            if (body) {
+                const saveBtn =
+                    body.querySelector('button[data-action="save"]') ||
+                    [...body.querySelectorAll("button")].find((b) =>
+                        /save/i.test(b.textContent),
+                    );
+                if (saveBtn) {
+                    saveBtn.click();
+                } else {
+                    if (typeof window.showToast === "function")
+                        window.showToast("Nothing to save yet — add some data first.");
+                }
+            }
         }
+        setTimeout(function () {
+            window._cmiSavingDraft = false;
+        }, 1200);
     };
 
     /* ─────────────────────────────────────────

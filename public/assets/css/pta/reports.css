@@ -43,38 +43,54 @@
   color: var(--green);
 }
 
-/* ── MERGED TABLE ── */
-table.merged th.group {
-  background: var(--green);
-  color: #fff;
+/* ── MERGED & REPORT TABLES ── */
+table.merged, table.rpt-table, .fc-table, table.dt {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: inherit;
+}
+table.merged th, table.rpt-table th, .fc-table th, table.dt th {
+  background: #10b981;
+  color: #ffffff;
   text-align: center;
-  border: 1px solid var(--green-dark);
-  padding: 7px;
-  font-size: 11px;
+  border: 1px solid #059669;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+table.merged th.group, table.rpt-table th.group {
+  background: #10b981;
+  color: #ffffff;
+  text-align: center;
+  border: 1px solid #059669;
+  padding: 9px 12px;
+  font-size: 12px;
   font-weight: 700;
 }
-table.merged th.sub {
-  background: var(--green-light);
-  color: var(--green-dark);
+table.merged th.sub, table.rpt-table th.sub {
+  background: #ecfdf5;
+  color: #065f46;
   text-align: center;
-  border: 1px solid #c0c0c0;
+  border: 1px solid #a7f3d0;
   padding: 7px 10px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
-table.merged td {
-  padding: 8px 10px;
-  border: 1px solid #c8c8c8;
-  font-size: 11px;
+table.merged td, table.rpt-table td {
+  padding: 9px 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 12px;
   vertical-align: middle;
   text-align: center;
+  color: #374151;
 }
-table.merged td:nth-child(2) {
+table.merged td:nth-child(2), table.rpt-table td:nth-child(2) {
   text-align: left;
 }
-table.merged td.not-submitted {
+table.merged td.not-submitted, table.rpt-table td.not-submitted {
   color: var(--text-muted);
   font-style: italic;
   background: #fafafa;

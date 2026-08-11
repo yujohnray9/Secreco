@@ -71,3 +71,59 @@ window.CMIUtils = {
   },
 
 };
+
+/* ─────────────────────────────────────────
+   FETCH INTERCEPTOR FOR YEAR ISOLATION
+───────────────────────────────────────── */
+(function() {
+  const origFetch = window.fetch;
+  window.fetch = function(resource, config) {
+    let url = typeof resource === 'string' ? resource : (resource?.url || '');
+    const yr = window.CMI_REPORTING_YEAR || new Date().getFullYear();
+
+    if (url.includes('/api/cmi/tables/load') && !url.includes('year=')) {
+      url += (url.includes('?') ? '&' : '?') + 'year=' + yr;
+      if (typeof resource === 'string') resource = url;
+      else if (resource?.url) resource = new Request(url, resource);
+    }
+
+    if (url.includes('/api/cmi/tables/statuses') && !url.includes('year=')) {
+      url += (url.includes('?') ? '&' : '?') + 'year=' + yr;
+      if (typeof resource === 'string') resource = url;
+      else if (resource?.url) resource = new Request(url, resource);
+    }
+
+    if (url.includes('/api/cmi/tables/save') && config && config.body) {
+      try {
+        const data = typeof config.body === 'string' ? JSON.parse(config.body) : config.body;
+        if (!data.year) {
+          data.year = yr;
+        }
+        if (window._cmiSavingDraft) {
+          data.status = 'draft';
+        }
+        config = { ...config, body: JSON.stringify(data) };
+      } catch(e) {}
+    }
+
+    if (url.includes('/api/cmi/tables/upload-doc') && config && config.body instanceof FormData) {
+      if (!config.body.has('year')) {
+        config.body.append('year', yr);
+      }
+    }
+
+    if (url.includes('/api/cmi/report/submit')) {
+      config = config || { method: 'POST' };
+      try {
+        let data = config.body ? JSON.parse(config.body) : {};
+        data.year = yr;
+        config.headers = { ...(config.headers || {}), 'Content-Type': 'application/json' };
+        config.body = JSON.stringify(data);
+      } catch(e) {
+        config.body = JSON.stringify({ year: yr });
+      }
+    }
+
+    return origFetch.call(this, resource, config);
+  };
+})();

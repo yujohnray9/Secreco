@@ -66,7 +66,7 @@
 
       <!-- Actions -->
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="T1.save()">Save</button>
+      
         <button class="btn t-docs-btn" onclick="T1.openDocs()">
           📎 Documentation <span id="t1_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
@@ -228,14 +228,21 @@
   /* ─────────────────────────────────────────
      SAVE
   ───────────────────────────────────────── */
-  function save() {
+  function save(requestedStatus) {
     const rows = collectRows();
 
     // Block save if the table is completely empty (no rows, no meta content)
     const fields = ['date', 'agency', 'new_', 'ongoing', 'completed', 'terminated'];
     if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
-    const status = computeStatus(rows);
+    let status = 'draft';
+    if (requestedStatus === 'done') {
+      status = computeStatus(rows);
+    } else if (requestedStatus === 'draft' || window._cmiSavingDraft) {
+      status = 'draft';
+    } else {
+      status = computeStatus(rows);
+    }
 
     const payload = {
       table_no: TABLE_NO,

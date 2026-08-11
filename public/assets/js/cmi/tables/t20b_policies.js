@@ -53,7 +53,6 @@
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="T20B.save()">Save</button>
         <button class="btn t-docs-btn" onclick="T20B.openDocs()">
           📎 Documentation <span id="t20b_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>

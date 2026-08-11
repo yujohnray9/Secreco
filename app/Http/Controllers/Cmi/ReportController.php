@@ -17,8 +17,18 @@ class ReportController extends Controller
     public function submit(Request $request): JsonResponse
     {
         $userId        = Auth::id() ?? session('user_id');
-        $reportingYear = (int) date('Y');
-        $allTables     = config('secreco.all_tables');
+        $reportingYear = (int) ($request->input('year') ?? $request->input('reporting_year') ?? date('Y'));
+        $allTables     = config('secreco.all_tables', [
+            'T1','T2a','T2b','T3','T4','T5','T6','T7a','T7b',
+            'T8a','T8b','T9','T10','T11','T12','T13','T14','T15',
+            'T16','T17','T18','T19','T20a','T20b'
+        ]);
+
+        // Update any existing draft tables with content to 'done' on submit
+        ReportTable::where('user_id', $userId)
+            ->where('reporting_year', $reportingYear)
+            ->where('status', 'draft')
+            ->update(['status' => 'done', 'updated_at' => now()]);
 
         $saved = ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
@@ -65,7 +75,7 @@ class ReportController extends Controller
             $summary[$st] = ($summary[$st] ?? 0) + 1;
         }
 
-        $nowManila        = new DateTime('now', new DateTimeZone('Asia/Manila'));
+        $nowManila       = new DateTime('now', new DateTimeZone('Asia/Manila'));
         $submittedAtStr  = $nowManila->format('Y-m-d H:i:s');
 
         $submission = ReportSubmission::create([
