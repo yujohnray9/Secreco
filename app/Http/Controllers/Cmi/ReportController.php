@@ -24,9 +24,10 @@ class ReportController extends Controller
             'T16','T17','T18','T19','T20a','T20b'
         ]);
 
-        // Update ALL tables with content for this user and year to 'done' on submit
+        // Update ALL tables with content for this user and year to 'done' on submit (except accepted ones)
         ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
+            ->where('status', '!=', 'accepted')
             ->get()
             ->each(function ($tbl) {
                 $hasRows = is_array($tbl->rows_json) && count($tbl->rows_json) > 0;
@@ -81,8 +82,21 @@ class ReportController extends Controller
             $summary[$st] = ($summary[$st] ?? 0) + 1;
         }
 
-        $nowManila       = new DateTime('now', new DateTimeZone('Asia/Manila'));
-        $submittedAtStr  = $nowManila->format('Y-m-d H:i:s');
+        // Prefer the client-sent timestamp (user's local clock) so displayed times match.
+        // The client sends submitted_at_client as an ISO string (from new Date().toISOString()).
+        $clientTs = $request->input('submitted_at_client');
+        try {
+            if ($clientTs) {
+                $dt = new DateTime($clientTs);
+                $dt->setTimezone(new DateTimeZone('Asia/Manila'));
+                $submittedAtStr = $dt->format('Y-m-d H:i:s');
+            } else {
+                throw new \Exception('no client ts');
+            }
+        } catch (\Throwable $e) {
+            $nowManila = new DateTime('now', new DateTimeZone('Asia/Manila'));
+            $submittedAtStr = $nowManila->format('Y-m-d H:i:s');
+        }
 
         $submission = ReportSubmission::create([
             'user_id'        => $userId,

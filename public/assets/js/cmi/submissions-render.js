@@ -52,7 +52,7 @@
 
       const sectionRows = [];
       section.tables.forEach(t => {
-        if (window.SubState.statuses[t.no] !== 'done') return;
+        if (window.SubState.statuses[t.no] !== 'accepted') return;
         if (searchTerm && !(
           t.no.toLowerCase().includes(searchTerm) ||
           t.title.toLowerCase().includes(searchTerm)

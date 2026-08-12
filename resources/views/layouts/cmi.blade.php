@@ -127,9 +127,19 @@ function showConfirmModal(opts) {
     iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
   }
 
-  btn.onclick = function() {
-    closeGlobalModal();
-    if (onConfirm) onConfirm();
+  btn.onclick = async function() {
+    btn.disabled = true;
+    const oldText = confirmText;
+    btn.innerHTML = '<span class="btn-spinner"></span> Processing...';
+    try {
+      if (onConfirm) await onConfirm();
+    } catch(e) {
+      console.error(e);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+      closeGlobalModal();
+    }
   };
 
   document.getElementById('globalConfirmModal').classList.add('open');
@@ -174,10 +184,12 @@ function confirmSignOut() {
 <div class="app-body">
   <aside class="sidebar">
     <div class="sb-brand" onclick="window.location.href='/dashboard/cmi/profile'" style="cursor:pointer">
-      <img src="/assets/img/cvaarrd.png" alt="CVAARRD" style="width:40px;height:40px;object-fit:contain;margin-right:10px;flex-shrink:0;border-radius:6px;background:#fff;padding:2px;"/>
+      <div class="sb-brand-logo">
+        <img src="/assets/img/cvaarrd.png" alt="CVAARRD Logo" style="width:26px;height:26px;object-fit:contain;" onerror="this.outerHTML='<svg viewBox=\\'0 0 24 24\\' width=\\'20\\' height=\\'20\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2.5\\'><path d=\\'M12 2L2 7l10 5 10-5-10-5z\\'/><path d=\\'M2 17l10 5 10-5\\'/><path d=\\'M2 12l10 5 10-5\\'/></svg>'"/>
+      </div>
       <div>
-        <div class="sb-brand-title" style="font-size:13.5px;font-weight:700;line-height:1.2;">{{ $userName }}</div>
-        <div class="sb-brand-sub" style="font-size:11px;color:rgba(255,255,255,0.75);">{{ $userDesig ? $userDesig : 'CMI Representative' }}</div>
+        <div class="sb-brand-title">SecReCo</div>
+        <div class="sb-brand-sub">CVAARRD Consortium</div>
       </div>
     </div>
 

@@ -36,7 +36,7 @@
             <th rowspan="2" style="width:110px">Last Updated</th>
           </tr>
           <tr>
-            ${CATEGORIES.map(() => '<th style="font-size:10px;color:var(--text-muted)">Participants</th>').join('')}
+            ${CATEGORIES.map(() => '<th style="font-size:10.5px;color:#ffffff !important;font-weight:600;">Participants</th>').join('')}
           </tr>
         </thead>
         <tbody>`;

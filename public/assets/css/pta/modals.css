@@ -197,3 +197,25 @@
 }
 @keyframes toastSlideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes toastFadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+/* ── Spinner ── */
+@keyframes btnSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: btnSpin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+.btn-spinner-dark {
+  border-color: rgba(0, 0, 0, 0.15);
+  border-top-color: #374151;
+}

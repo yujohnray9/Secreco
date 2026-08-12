@@ -135,9 +135,19 @@ function showConfirmModal(opts) {
     iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
   }
 
-  btn.onclick = function() {
-    closeGlobalModal();
-    if (onConfirm) onConfirm();
+  btn.onclick = async function() {
+    btn.disabled = true;
+    const oldText = confirmText;
+    btn.innerHTML = '<span class="btn-spinner"></span> Processing...';
+    try {
+      if (onConfirm) await onConfirm();
+    } catch(e) {
+      console.error(e);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+      closeGlobalModal();
+    }
   };
 
   document.getElementById('globalConfirmModal').classList.add('open');

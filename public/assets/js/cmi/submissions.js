@@ -22,19 +22,23 @@
 
   document.addEventListener('DOMContentLoaded', () => {
 
-    /* ── Bootstrap ── */
+    /* ── Bootstrap & Year filter ── */
     window.SubHelpers.populateSectionFilter();
-    window.SubLoad.loadData();
 
-    /* ── Search & filter ── */
-    document.getElementById('subSearch')?.addEventListener('input',  () => window.SubRender.renderTable());
-    document.getElementById('subSectionFilter')?.addEventListener('change', () => window.SubRender.renderTable());
-
-    /* ── Year filter ── */
-    document.getElementById('subYearFilter')?.addEventListener('change', e => {
-      window.SubState.selectedYear = +e.target.value;
-      window.SubLoad.loadData();
-    });
+    fetch('/api/formats')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
+          const activeYr = data.active_year || new Date().getFullYear();
+          const yearSel  = document.getElementById('subYearFilter');
+          if (yearSel) {
+            yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+            window.SubState.selectedYear = activeYr;
+          }
+        }
+      }).catch(() => {}).finally(() => {
+        window.SubLoad.loadData();
+      });
 
     /* ── View modal ── */
     document.getElementById('btnCloseViewModal')

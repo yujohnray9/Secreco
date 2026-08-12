@@ -189,6 +189,15 @@
     const files = [...input.files];
     if (!files.length) return;
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    for (let f of files) {
+      if (f.size > MAX_FILE_SIZE) {
+        setStatus(`File "${f.name}" exceeds the 5MB limit. Please upload a file smaller than 5MB.`);
+        input.value = '';
+        return;
+      }
+    }
+
     setStatus('Uploading…');
     const fd = new FormData();
     files.forEach(f => fd.append('images[]', f));

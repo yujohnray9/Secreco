@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
     {
         // ── 1. USERS ─────────────────────────────────────────────────
         $ptaUser = User::firstOrCreate(
-            ['email' => 'pta@secreco.ph'],
+            ['email' => 'pta@gmail.com'],
             [
                 'first_name'  => 'PTA',
                 'last_name'   => 'Admin',
@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
                 'status'      => 'active',
             ]
         );
-
+        
         $cmiUsers = [
             ['email' => 'cmi@secreco.ph',   'first_name' => 'Maria',    'last_name' => 'Santos',     'institution' => 'Isabela State University - Echague', 'designation' => 'Research Coordinator'],
             ['email' => 'cmi2@secreco.ph',  'first_name' => 'Juan',     'last_name' => 'Dela Cruz',  'institution' => 'Cagayan State University',           'designation' => 'CMI Representative'],

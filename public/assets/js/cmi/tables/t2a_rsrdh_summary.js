@@ -41,7 +41,7 @@
       <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:8px">
           <label style="font-weight:600">Date:</label>
-          <input type="text" id="t2a_date" placeholder="e.g. March 15, 2025" style="min-width:200px"/>
+          <input type="date" id="t2a_date" style="min-width:180px"/>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <label style="font-weight:600">Venue:</label>

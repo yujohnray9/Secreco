@@ -17,7 +17,20 @@ function _reportsInit() {
   el('rptCMIFilter')?.addEventListener('change', e => {
     if (e.target.value) renderCMIAllTables(e.target.value);
   });
-  switchReportView('table');
+
+  fetch('/api/formats')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
+        const activeYr = data.active_year || new Date().getFullYear();
+        const yearSel  = el('rptYearFilter');
+        if (yearSel) {
+          yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+        }
+      }
+    }).catch(() => {}).finally(() => {
+      switchReportView('table');
+    });
 }
 
 // Fire immediately if DOM ready, else wait

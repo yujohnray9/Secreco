@@ -1,4 +1,4 @@
-@extends('layouts.cmi')
+@extends(Auth::user()?->role === 'pta' ? 'layouts.pta' : 'layouts.cmi')
 
 @section('styles')
 <link rel="stylesheet" href="/assets/css/cmi/fillup.css?v=3"/>
@@ -7,8 +7,8 @@
 /* ── Modern Fillup Layout Fixes ── */
 .fill-layout { display: flex; gap: 24px; margin-top: 20px; align-items: flex-start; }
 @media (max-width: 900px) { .fill-layout { flex-direction: column; } }
-.fill-nav { width: 320px; flex-shrink: 0; background: #ffffff; border-radius: 16px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(16,185,129,.05); padding: 18px; max-height: calc(100vh - 140px); overflow-y: auto; }
-.fill-body { flex: 1; min-width: 0; }
+.fill-nav { width: 320px; flex-shrink: 0; background: #ffffff; border-radius: 16px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(16,185,129,.05); padding: 18px; max-height: calc(100vh - 160px); overflow-y: auto; position: sticky; top: 20px; }
+.fill-body { flex: 1; min-width: 0; background: #ffffff; border-radius: 16px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(16,185,129,.05); padding: 24px; max-height: calc(100vh - 160px); overflow-y: auto; }
 .btn-submit-report { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; border-radius: 12px; padding: 10px 22px; font-size: 13.5px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,.35); transition: all .2s; }
 .btn-submit-report:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,.45); }
 </style>
@@ -32,11 +32,6 @@
         </select>
       </div>
       <button class="btn-submit-report" id="btn-save-draft" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/>
-          <polyline points="7 3 7 8 15 8"/>
-        </svg>
         Save Draft
       </button>
       <button class="btn-submit-report" id="btn-submit">
@@ -54,12 +49,41 @@
   </div>
 
 </div>
+
+<!-- ═══ CONFIRM SUBMIT MODAL ═══ -->
+<div class="modal-overlay" id="modalConfirmSubmit" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:9000;align-items:center;justify-content:center;">
+  <div class="modal-box" style="background:#fff;border-radius:18px;padding:28px 32px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.18);">
+    <div class="modal-title" style="font-size:18px;font-weight:800;color:#111827;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+      Submit Annual Accomplishment Report?
+    </div>
+    <div class="modal-desc" style="font-size:13.5px;color:#4b5563;line-height:1.5;margin-bottom:24px;">
+      Are you sure you want to submit your <strong id="confirmSubmitYearText">CY {{ date('Y') }}</strong> annual accomplishment report?
+      <br><br>
+      Once submitted, your report will be sent to the PTA for review and editing will be locked for this year.
+    </div>
+    <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:12px;">
+      <button class="btn-cancel" onclick="closeSubmitModal()" style="background:#f3f4f6;color:#374151;border:none;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+      <button class="btn-submit-report" onclick="confirmAndExecuteSubmit()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(16,185,129,.3);">
+        Yes, Submit Report
+      </button>
+    </div>
+  </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
-  window.CMI_AGENCY_NAME = @json(Auth::user()?->institution ?? session('user_inst') ?? '');
-  window.CMI_REPORTING_YEAR = {{ date('Y') }};
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramYear = parseInt(urlParams.get('year')) || {{ date('Y') }};
+  const paramCmiUser = parseInt(urlParams.get('cmi_user_id')) || {{ $targetUserId ?? 0 }};
+
+  window.CMI_AGENCY_NAME = @json($userInst ?? session('user_inst') ?? '');
+  window.CMI_REPORTING_YEAR = paramYear;
+  window.CMI_TARGET_USER_ID = paramCmiUser;
 </script>
 
 <script>

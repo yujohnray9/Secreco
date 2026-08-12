@@ -14,13 +14,20 @@ class CmiPageController extends Controller
             $page = 'dashboard';
         }
 
+        $targetUserId = (int) $request->input('cmi_user_id', 0);
+        $targetUser   = $targetUserId > 0 ? \App\Models\User::find($targetUserId) : null;
+
+        $userInst = $targetUser?->institution ?: session('user_inst', '');
+        $userName = $targetUser ? ($targetUser->first_name . ' ' . $targetUser->last_name) : session('user_name', 'CMI User');
+
         return view("cmi.{$page}", [
-            'currentPage' => $page,
-            'userName'    => session('user_name', 'CMI User'),
-            'userRole'    => session('user_role', 'cmi'),
-            'userInst'    => session('user_inst', ''),
-            'userDesig'   => session('user_desig', ''),
-            'userPhoto'   => session('user_photo', null),
+            'currentPage'  => $page,
+            'userName'     => $userName,
+            'userRole'     => session('user_role', 'cmi'),
+            'userInst'     => $userInst,
+            'userDesig'    => $targetUser?->designation ?: session('user_desig', ''),
+            'userPhoto'    => $targetUser?->profile_picture ?: session('user_photo', null),
+            'targetUserId' => $targetUserId,
         ]);
     }
 }

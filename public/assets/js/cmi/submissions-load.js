@@ -32,7 +32,7 @@
         window.SubState.statuses = data?.statuses ?? {};
 
         const relevant = Object.keys(window.SubState.statuses)
-          .filter(no => window.SubState.statuses[no] === 'done');
+          .filter(no => window.SubState.statuses[no] === 'accepted');
 
         if (!relevant.length) { window.SubRender.renderTable(); return; }
 

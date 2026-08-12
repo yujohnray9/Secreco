@@ -50,6 +50,9 @@
 .btn-sm-delete  { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
 .btn-sm-delete:hover { background:#fee2e2; }
 .ts-label { display:block; font-size:10.5px; color:#9ca3af; margin-top:2px; }
+.pg-btn { border:1px solid #d1d5db; background:#fff; color:#374151; border-radius:8px; padding:5px 12px; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+.pg-btn:hover:not(:disabled) { border-color:#10b981; color:#059669; background:#ecfdf5; }
+.pg-btn.active { background:#10b981; color:#fff; border-color:#10b981; }
 
 /* ── Modal Box for View Data ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(17,24,39,0.55); backdrop-filter:blur(6px); z-index:9990; align-items:center; justify-content:center; padding:16px; }
@@ -92,6 +95,7 @@
           <option value="">All Statuses</option>
           <option value="done">Done / Complete</option>
           <option value="draft">Draft</option>
+          <option value="not-started">Not Started</option>
         </select>
       </div>
     </div>
@@ -117,6 +121,7 @@
           </tbody>
         </table>
       </div>
+      <div id="subsPaginationWrap"></div>
     </div>
   </div>
 
@@ -135,7 +140,7 @@
 
     <div style="display:flex; justify-content:flex-end; gap:10px;">
       <button class="btn-sm-fc" onclick="closeModal('modalViewData')" style="background:#f3f4f6;color:#374151;padding:8px 20px; font-size:13px;">Close</button>
-      <button class="btn-sm-fc" onclick="savePtaModalEdit()" style="background:#10b981;color:#fff;border:none;padding:8px 22px; font-size:13px;font-weight:700;">💾 Save / Submit Updates</button>
+      <button class="btn-sm-fc" onclick="savePtaModalEdit()" style="background:#10b981;color:#fff;border:none;padding:8px 22px; font-size:13px;font-weight:700;">Save / Submit Updates</button>
     </div>
   </div>
 </div>
@@ -145,6 +150,15 @@
 <script>
 let cachedSubRows = [];
 let currentEditSubIdx = -1;
+
+function formatPHDate(dt) {
+  if (!dt) return '—';
+  let str = String(dt).trim();
+  if (!/Z$|[+-]\d{2}:?\d{2}$/.test(str)) str = str.replace('T', ' ') + ' GMT+0800';
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return dt;
+  return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' }) + ' ' + d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Manila' });
+}
 
 const statusBadge = s => {
   const map = {
@@ -164,8 +178,12 @@ const statusBadge = s => {
   return `<span class="badge ${map[s] || 'badge-gray'}">${label[s] || s}</span>`;
 };
 
+let currentSubPage = 1;
+let subPageSize = 10;
+
 function renderSubsTable() {
   const query = (document.getElementById('subSearchInput')?.value || '').toLowerCase().trim();
+  const year  = document.getElementById('subYearSel')?.value || new Date().getFullYear();
   const tbody = document.getElementById('subsTbody');
   
   const filtered = cachedSubRows.filter(r => {
@@ -175,17 +193,27 @@ function renderSubsTable() {
            (`table ${r.table_no}` || '').toLowerCase().includes(query);
   });
 
-  if (filtered.length === 0) {
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / subPageSize) || 1;
+  if (currentSubPage > totalPages) currentSubPage = totalPages;
+  if (currentSubPage < 1) currentSubPage = 1;
+
+  const startIdx = (currentSubPage - 1) * subPageSize;
+  const endIdx   = Math.min(startIdx + subPageSize, totalItems);
+  const pageRows = filtered.slice(startIdx, endIdx);
+
+  if (pageRows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#9ca3af">
       No submissions found matching "${query}".
     </td></tr>`;
+    renderSubsPagination(0, 0, 0, 1);
     return;
   }
 
-  tbody.innerHTML = filtered.map((r, idx) => {
-    const subDate = r.submitted_at ? r.submitted_at.substring(0,16).replace('T',' ') : '—';
-    const ts = r.updated_at ? r.updated_at.substring(0,16).replace('T',' ') : '—';
-    const actionTs = r.action_at ? `<span class="ts-label">${r.action_at.substring(0,16).replace('T',' ')}</span>` : '';
+  tbody.innerHTML = pageRows.map((r) => {
+    const subDate = formatPHDate(r.submitted_at);
+    const ts = formatPHDate(r.updated_at);
+    const actionTs = r.action_at ? `<span class="ts-label">${formatPHDate(r.action_at)}</span>` : '';
     const isActioned = r.table_status === 'accepted' || r.table_status === 'returned' || r.table_status === 'deleted';
     return `
     <tr>
@@ -196,10 +224,6 @@ function renderSubsTable() {
       <td style="color:#059669;font-weight:600;font-size:12.5px">${subDate}</td>
       <td style="color:#6b7280;font-size:12.5px">${ts}</td>
       <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${cachedSubRows.indexOf(r)})">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          View / Edit
-        </button>
         ${!isActioned ? `
         <button class="btn-sm-fc btn-sm-accept" onclick="acceptSub(${cachedSubRows.indexOf(r)})">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -216,7 +240,43 @@ function renderSubsTable() {
       </td>
     </tr>`;
   }).join('');
+
+  renderSubsPagination(startIdx + 1, endIdx, totalItems, totalPages);
 }
+
+function renderSubsPagination(start, end, total, totalPages) {
+  let wrap = document.getElementById('subsPaginationWrap');
+  if (!wrap) return;
+
+  if (total === 0) {
+    wrap.innerHTML = '';
+    return;
+  }
+
+  let pageBtns = '';
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentSubPage - 1 && i <= currentSubPage + 1)) {
+      pageBtns += `<button class="pg-btn ${i === currentSubPage ? 'active' : ''}" onclick="goToSubPage(${i})">${i}</button>`;
+    } else if (i === currentSubPage - 2 || i === currentSubPage + 2) {
+      pageBtns += `<span style="padding:0 4px;color:#9ca3af">…</span>`;
+    }
+  }
+
+  wrap.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid #f3f4f6;flex-wrap:wrap;gap:10px;font-size:12.5px;color:#6b7280">
+      <div>Showing <strong>${start}</strong> to <strong>${end}</strong> of <strong>${total}</strong> submissions</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="pg-btn" ${currentSubPage === 1 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''} onclick="goToSubPage(${currentSubPage - 1})">‹ Prev</button>
+        ${pageBtns}
+        <button class="pg-btn" ${currentSubPage === totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''} onclick="goToSubPage(${currentSubPage + 1})">Next ›</button>
+      </div>
+    </div>`;
+}
+
+window.goToSubPage = function(page) {
+  currentSubPage = page;
+  renderSubsTable();
+};
 
 async function loadSubs() {
   const year   = document.getElementById('subYearSel').value;
@@ -423,6 +483,20 @@ window.deleteSub = function(idx) {
 
 document.getElementById('subYearSel').addEventListener('change', loadSubs);
 document.getElementById('subStatusSel').addEventListener('change', loadSubs);
-document.addEventListener('DOMContentLoaded', loadSubs);
+const searchInp = document.getElementById('subSearchInput');
+if (searchInp) searchInp.addEventListener('input', renderSubsTable);
+document.addEventListener('DOMContentLoaded', function() {
+  fetch('/api/formats')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
+        const yearSel = document.getElementById('subYearSel');
+        const activeYr = data.active_year || new Date().getFullYear();
+        if (yearSel) {
+          yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+        }
+      }
+    }).catch(() => {}).finally(() => loadSubs());
+});
 </script>
 @endsection

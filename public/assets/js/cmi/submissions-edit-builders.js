@@ -51,11 +51,12 @@
     if (tableDef?.meta?.length) {
       html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">';
       tableDef.meta.forEach(m => {
+        const isDate = m.type === 'date' || /date/i.test(m.key) || /date/i.test(m.label || '');
         html += `
           <div style="flex:1;min-width:180px">
             <label style="display:block;font-size:11px;text-transform:uppercase;
               letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px">${escapeHtml(m.label)}</label>
-            <input type="text" class="edit-meta-input" data-meta-key="${escapeHtml(m.key)}"
+            <input type="${isDate ? 'date' : 'text'}" class="edit-meta-input" data-meta-key="${escapeHtml(m.key)}"
               value="${escapeHtml(String(state.meta[m.key] || ''))}"
               style="width:100%;border:1px solid var(--border,#ddd);border-radius:4px;
                 padding:6px 8px;font-size:13px;font-family:inherit;box-sizing:border-box"/>
@@ -140,11 +141,13 @@
   function buildEditRow(row, idx, columns) {
     let cells = '';
     columns.forEach(c => {
-      const isNum = c.type === 'number';
+      const isNum  = c.type === 'number';
+      const isDate = c.type === 'date' || /date/i.test(c.key) || /date/i.test(c.label || '');
+      const inputType = isNum ? 'number' : (isDate ? 'date' : 'text');
       cells += `<td style="padding:4px 6px">
-        <input type="${isNum ? 'number' : 'text'}" class="edit-cell-input"
+        <input type="${inputType}" class="edit-cell-input"
           data-row="${idx}" data-key="${escapeHtml(c.key)}" value="${escapeHtml(String(row[c.key] ?? ''))}"
-          style="${isNum ? 'width:60px;text-align:center;' : 'width:100%;'}border:1px solid var(--border,#ddd);
+          style="${isNum ? 'width:60px;text-align:center;' : isDate ? 'min-width:130px;' : 'width:100%;'}border:1px solid var(--border,#ddd);
             border-radius:3px;padding:4px 6px;font-size:12px;font-family:inherit;box-sizing:border-box"/>
       </td>`;
     });

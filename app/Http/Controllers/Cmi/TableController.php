@@ -7,6 +7,7 @@ use App\Models\CmiTableImage;
 use App\Models\ReportSubmission;
 use App\Models\ReportTable;
 use App\Models\ReportTableDoc;
+use App\Models\User;
 use DateTime;
 use DateTimeZone;
 use Illuminate\Http\JsonResponse;
@@ -25,16 +26,37 @@ class TableController extends Controller
             return response()->json(['error' => 'Missing table_no']);
         }
 
+        // Load from this user's record first; fall back to best institution-mate record.
         $row = ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
             ->where('table_no', $tableNo)
             ->first();
 
         if (!$row) {
+            // Try institution-mates (another account in the same institution may have filled this)
+            $mateIds = $this->getInstMateIds($userId);
+            if (!empty($mateIds)) {
+                $priority = ['accepted' => 4, 'done' => 3, 'draft' => 2, 'not-started' => 0];
+                $best = null;
+                foreach (ReportTable::whereIn('user_id', $mateIds)
+                    ->where('reporting_year', $reportingYear)
+                    ->where('table_no', $tableNo)
+                    ->get() as $r) {
+                    if (!$best || ($priority[$r->status] ?? 0) > ($priority[$best->status] ?? 0)) {
+                        $best = $r;
+                    }
+                }
+                $row = $best;
+            }
+        }
+
+        if (!$row) {
             return response()->json(['status' => 'not-started', 'meta' => null, 'rows' => [], 'updated_at' => null]);
         }
 
-        $images = ReportTableDoc::where('user_id', $userId)
+        // Docs: load from the user whose row we're showing (may be a mate's row)
+        $docOwner = $row->user_id;
+        $images = ReportTableDoc::where('user_id', $docOwner)
             ->where('reporting_year', $reportingYear)
             ->where('table_no', $tableNo)
             ->orderBy('sort_order', 'asc')
@@ -187,15 +209,26 @@ class TableController extends Controller
             }
         }
 
-        $rows = ReportTable::where('user_id', $userId)->where('reporting_year', $reportingYear)->get();
+        // Build statuses from this user's records, merged with institution-mate records.
+        // Higher-priority status wins: accepted > done > draft > not-started.
+        $priority = ['accepted' => 4, 'done' => 3, 'draft' => 2, 'not-started' => 0];
+        $mateIds  = $this->getInstMateIds($userId);
+        $allIds   = array_merge([$userId], $mateIds);
+
+        $allRows = ReportTable::whereIn('user_id', $allIds)
+            ->where('reporting_year', $reportingYear)
+            ->get();
 
         $statuses = [];
-        foreach ($rows as $r) {
+        foreach ($allRows as $r) {
             $st = $r->status;
             if ($st === 'draft' && !$this->hasContent($r->meta_json, $r->rows_json)) {
                 $st = 'not-started';
             }
-            $statuses[$r->table_no] = $st;
+            $cur = $statuses[$r->table_no] ?? 'not-started';
+            if (($priority[$st] ?? 0) > ($priority[$cur] ?? 0)) {
+                $statuses[$r->table_no] = $st;
+            }
         }
 
         return response()->json([
@@ -250,6 +283,13 @@ class TableController extends Controller
         $createdFiles = [];
         foreach ($files as $file) {
             if (!$file->isValid()) continue;
+
+            if ($file->getSize() > 5 * 1024 * 1024) {
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'File size exceeds the 5MB limit. Please upload a file smaller than 5MB.'
+                ], 422);
+            }
 
             $ext      = strtolower($file->getClientOriginalExtension());
             $filename = 'img_' . bin2hex(random_bytes(8)) . '.' . time() . '.' . $ext;
@@ -331,5 +371,22 @@ class TableController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Return IDs of all CMI users that share the same institution as $userId
+     * (excluding $userId itself). Returns an empty array if no institution is set.
+     */
+    protected function getInstMateIds(int $userId): array
+    {
+        $me = User::find($userId);
+        if (!$me || empty(trim((string) $me->institution))) {
+            return [];
+        }
+        return User::where('institution', $me->institution)
+            ->where('id', '!=', $userId)
+            ->where('role', '!=', 'pta')
+            ->pluck('id')
+            ->toArray();
     }
 }

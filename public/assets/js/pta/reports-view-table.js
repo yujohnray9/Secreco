@@ -19,9 +19,9 @@ function switchReportView(view) {
   if (pCMI)   pCMI.style.display    = isTable ? 'none' : 'block';
 
   // conditional filters
-  el('rptTableFilter').style.display  = isTable ? 'block' : 'none';
-  el('rptCMIFilter').style.display    = isTable ? 'none'  : 'block';
-  el('rptExportBtns').style.display   = isTable ? 'flex'  : 'none';
+  if (el('rptTableFilter')) el('rptTableFilter').style.display  = isTable ? 'block' : 'none';
+  if (el('rptCMIFilter'))   el('rptCMIFilter').style.display    = isTable ? 'none'  : 'block';
+  if (el('rptExportBtns'))  el('rptExportBtns').style.display   = isTable ? 'flex'  : 'none';
 
   if (isTable) {
     loadTableView();
@@ -29,6 +29,8 @@ function switchReportView(view) {
     loadCMIView();
   }
 }
+// Expose to window so inline onclick attributes always find it
+window.switchReportView = switchReportView;
 
 // ── PER TABLE ─────────────────────────────────────────────────
 async function loadTableView() {

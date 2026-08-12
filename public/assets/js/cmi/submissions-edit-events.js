@@ -147,7 +147,7 @@
       if (!file) return;
 
       const ALLOWED = ['image/jpeg','image/png','image/gif','image/webp','application/pdf'];
-      const MAX     = 10 * 1024 * 1024;
+      const MAX     = 5 * 1024 * 1024;
 
       if (!ALLOWED.includes(file.type)) {
         _setAttachStatus('❌ Invalid file type. Only JPG, PNG, GIF, WebP, or PDF allowed.', true);
@@ -155,7 +155,7 @@
         return;
       }
       if (file.size > MAX) {
-        _setAttachStatus('❌ File too large. Maximum size is 10 MB.', true);
+        _setAttachStatus('❌ File too large. Maximum size is 5 MB.', true);
         e.target.value = '';
         return;
       }

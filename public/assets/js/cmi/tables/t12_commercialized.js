@@ -115,7 +115,7 @@
       .then(r => r.json())
       .then(data => {
         tbody.innerHTML = '';
-        const rows = (data.rows && data.rows.length) ? data.rows : [{}, {}, {}, {}];
+        const rows = (data.rows && data.rows.length) ? data.rows : [{}];
         rows.forEach((row, i) => tbody.appendChild(makeRow(row, i > 0)));
         renumber();
         _images = (data.meta && data.meta.images) ? data.meta.images : [];
@@ -126,7 +126,7 @@
       })
       .catch(() => {
         tbody.innerHTML = '';
-        [{}, {}, {}, {}].forEach((r, i) => tbody.appendChild(makeRow(r, i > 0)));
+        [{}].forEach((r, i) => tbody.appendChild(makeRow(r, i > 0)));
         renumber();
       });
   }

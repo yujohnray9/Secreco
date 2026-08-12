@@ -75,7 +75,7 @@
       <td><input type="text" class="t16-sponsor"   placeholder="Sponsor"               value="${esc(data.sponsor||'')}"/></td>
       <td><input type="text" class="t16-event"     placeholder="Event / Activity"      value="${esc(data.event||'')}"/></td>
       <td><input type="text" class="t16-venue"     placeholder="Venue / Place"         value="${esc(data.venue||'')}"/></td>
-      <td><input type="text" class="t16-date"      placeholder="Date Awarded"          value="${esc(data.date||'')}"/></td>
+      <td><input type="date" class="t16-date" value="${esc(data.date||'')}"/></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove()">🗑</button>` : ''}
       </td>

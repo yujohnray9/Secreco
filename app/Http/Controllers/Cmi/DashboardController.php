@@ -13,13 +13,27 @@ class DashboardController extends Controller
 {
     public function getData(Request $request): JsonResponse
     {
-        $userId        = Auth::id() ?? session('user_id');
-        $reportingYear = (int) date('Y');
+        $activeYear = (int) (\App\Models\SystemSetting::where('key', 'active_year')->value('value') ?? date('Y'));
+        $reportingYear = (int) ($request->input('year') ?? $activeYear);
 
         $sections = config('secreco.sections');
         $tableLabels = config('secreco.table_labels');
-        $totalRequired = 20;
 
+        $templates = \App\Models\FormatTemplate::where('year', $reportingYear)->get();
+        if ($templates->count() > 0) {
+            $allTableKeys = array_unique($templates->pluck('table_no')->map(fn($t) => strtoupper($t))->all());
+        } else {
+            $allTableKeys = [];
+            foreach ($sections as $tables) {
+                foreach ($tables as $t) {
+                    $allTableKeys[] = strtoupper($t);
+                }
+            }
+            $allTableKeys = array_unique($allTableKeys);
+        }
+        $totalRequired = count($allTableKeys);
+
+        $userId = Auth::id() ?? session('user_id');
         $rows = ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
             ->get(['table_no', 'status', 'updated_at']);
@@ -32,14 +46,6 @@ class DashboardController extends Controller
         $complete   = 0;
         $draft      = 0;
         $notStarted = 0;
-
-        $allTableKeys = [];
-        foreach ($sections as $tables) {
-            foreach ($tables as $t) {
-                $allTableKeys[] = strtoupper($t);
-            }
-        }
-        $allTableKeys = array_unique($allTableKeys);
 
         foreach ($allTableKeys as $t) {
             $status = $tableMap[$t]['status'] ?? 'not-started';

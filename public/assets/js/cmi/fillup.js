@@ -139,8 +139,8 @@
         <span style="font-size:11px;color:var(--text-muted);font-style:italic">Note: The Regional Consortium may prepare other tables for ease in data presentation.</span>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn" onclick="toast('💾 Table 1 draft saved!')">💾 Save Draft</button>
-        <button class="btn btn-primary" onclick="toast('✅ Table 1 marked as complete!')">✅ Mark as Complete</button>
+        <button class="btn" onclick="toast('Table 1 draft saved!')">Save Draft</button>
+        <button class="btn btn-primary" onclick="toast('Table 1 marked as complete!')">Mark as Complete</button>
       </div>`;
   }
 

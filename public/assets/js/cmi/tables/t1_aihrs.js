@@ -83,8 +83,8 @@
   function makeRow(data = {}, removable = false) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" class="t1-date" placeholder="e.g. Jan 15" value="${esc(data.date||'')}"/></td>
-      <td><input type="text" class="t1-agency" placeholder="Agency name" value="${esc(data.agency || window.CMI_AGENCY_NAME || '')}" readonly/></td>
+      <td><input type="date" class="t1-date" value="${esc(data.date||'')}"/></td>
+      <td><input type="text" class="t1-agency" placeholder="Agency name" value="${esc(data.agency||'')}"/></td>
       <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.new_||'')}"/></td>
       <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.ongoing||'')}"/></td>
       <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.completed||'')}"/></td>

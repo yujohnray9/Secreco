@@ -18,6 +18,16 @@ class NotificationController extends Controller
         $readAll   = session('notifs_read_all_' . $userId, false) || session('notifs_read_all', false);
         $readAtTs  = session('notifs_read_at_ts_' . $userId);
         $readKeys  = session('read_notif_keys_' . $userId, []);
+        $deletedKeys = session('deleted_notif_keys_' . $userId, []);
+        $deleteAll   = session('notifs_delete_all_' . $userId, false);
+
+        if ($deleteAll) {
+            return response()->json([
+                'ok'            => true,
+                'notifications' => [],
+                'unread_count'  => 0,
+            ]);
+        }
 
         $notifications = [];
 
@@ -31,23 +41,25 @@ class NotificationController extends Controller
             $names  = array_slice(array_map(fn($u) => $u['first_name'] . ' ' . $u['last_name'] . ($u['institution'] ? ' (' . $u['institution'] . ')' : ''), $pendingUsers->toArray()), 0, 2);
             $label  = implode(' and ', $names) . ($count > 2 ? " and " . ($count - 2) . " more" : '');
             $key    = 'derived_pending_users';
-            $t      = $pendingUsers[0]->created_at;
-            $tTs    = $t ? strtotime((string)$t) : 0;
-            $unread = true;
-            if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
-                $unread = false;
-            }
+            if (!in_array($key, $deletedKeys, true)) {
+                $t      = $pendingUsers[0]->created_at;
+                $tTs    = $t ? strtotime((string)$t) : 0;
+                $unread = true;
+                if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
+                    $unread = false;
+                }
 
-            $notifications[] = [
-                'key'          => $key,
-                'type'         => 'yellow',
-                'icon'         => '👥',
-                'msg'          => $count === 1 ? "1 account pending approval — {$label}." : "{$count} accounts pending approval — {$label}.",
-                'action'       => 'users',
-                'action_label' => 'Review',
-                'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
-                'unread'       => $unread,
-            ];
+                $notifications[] = [
+                    'key'          => $key,
+                    'type'         => 'yellow',
+                    'icon'         => '👥',
+                    'msg'          => $count === 1 ? "1 account pending approval — {$label}." : "{$count} accounts pending approval — {$label}.",
+                    'action'       => 'users',
+                    'action_label' => 'Review',
+                    'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
+                    'unread'       => $unread,
+                ];
+            }
         }
 
         $recentSubs = ReportSubmission::where('reporting_year', $year)
@@ -57,6 +69,10 @@ class NotificationController extends Controller
             ->get();
 
         foreach ($recentSubs as $sub) {
+            $key = 'derived_sub_' . $sub->id;
+            if (in_array($key, $deletedKeys, true)) {
+                continue;
+            }
             $inst = $sub->user?->institution ?? $sub->user?->name;
             $statusLabel = match ($sub->status) {
                 'pending'  => 'submitted their report for review',
@@ -74,7 +90,6 @@ class NotificationController extends Controller
                 'returned' => '↩️',
                 default    => '📨',
             };
-            $key    = 'derived_sub_' . $sub->id;
             $t      = $sub->submitted_at;
             $tTs    = $t ? strtotime((string)$t) : 0;
             $unread = true;
@@ -97,8 +112,12 @@ class NotificationController extends Controller
         $actLogs = ActivityLog::with('user')->orderByDesc('created_at')->take(10)->get();
 
         foreach ($actLogs as $log) {
+            $key = 'log_' . $log->id;
+            if (in_array($key, $deletedKeys, true)) {
+                continue;
+            }
             $notifications[] = [
-                'key'    => 'log_' . $log->id,
+                'key'    => $key,
                 'type'   => 'blue',
                 'icon'   => '📋',
                 'msg'    => $log->description,

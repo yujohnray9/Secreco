@@ -77,6 +77,15 @@ class UserApprovalController extends Controller
                         }
                         $user->update(['status' => 'inactive']);
                         ActivityLogService::log($adminId, "Deactivated account for {$name}");
+
+                        try {
+                            \Illuminate\Support\Facades\Mail::to($user->email)->send(
+                                new \App\Mail\ApprovalMail($user->first_name . ' ' . $user->last_name, 'deactivated')
+                            );
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning("Could not send deactivation email to {$user->email}: " . $e->getMessage());
+                        }
+
                         return response()->json(['success' => true, 'message' => "{$name}'s account has been deactivated."]);
 
                     case 'activate':
@@ -85,6 +94,15 @@ class UserApprovalController extends Controller
                         }
                         $user->update(['status' => 'active']);
                         ActivityLogService::log($adminId, "Reactivated account for {$name}");
+
+                        try {
+                            \Illuminate\Support\Facades\Mail::to($user->email)->send(
+                                new \App\Mail\ApprovalMail($user->first_name . ' ' . $user->last_name, 'approved')
+                            );
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning("Could not send activation email to {$user->email}: " . $e->getMessage());
+                        }
+
                         return response()->json(['success' => true, 'message' => "{$name}'s account has been reactivated."]);
                 }
             });
@@ -113,6 +131,15 @@ class UserApprovalController extends Controller
 
         $target->update(['status' => $newStatus]);
         $label = $newStatus === 'active' ? 'reactivated' : 'deactivated';
+
+        try {
+            $mailResult = $newStatus === 'active' ? 'approved' : 'deactivated';
+            \Illuminate\Support\Facades\Mail::to($target->email)->send(
+                new \App\Mail\ApprovalMail($target->first_name . ' ' . $target->last_name, $mailResult)
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Could not send {$label} email to {$target->email}: " . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => "Account {$label} successfully."]);
     }

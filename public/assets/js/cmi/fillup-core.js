@@ -321,13 +321,10 @@
 
             const close = () => {
                 el.style.opacity = "0";
-                document.getElementById("cmi-confirm-box").style.transform =
-                    "translateY(12px)";
+                document.getElementById("cmi-confirm-box").style.transform = "translateY(12px)";
                 setTimeout(() => (el.style.display = "none"), 160);
             };
-            document
-                .getElementById("cmi-confirm-cancel")
-                .addEventListener("click", close);
+            document.getElementById("cmi-confirm-cancel").addEventListener("click", close);
             el.addEventListener("click", (e) => {
                 if (e.target === el) close();
             });
@@ -355,10 +352,6 @@
             box.style.transform = "translateY(0)";
         });
     }
-
-    /* ─────────────────────────────────────────
-     SUBMIT REPORT
-  ───────────────────────────────────────── */
     CMI.submitReport = function () {
         // Save current active table open on screen first
         const active = window._cmiActiveTable || 'T1';
@@ -406,32 +399,64 @@
         </p>`,
             okLabel: "Submit Now",
             onOk() {
-                toast("Submitting report…", 99999);
-                fetch(API_SUBMIT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ year: yr }) })
-                    .then((r) => r.json())
-                    .then((res) => {
-                        const wrap = document.getElementById("toastWrap");
-                        if (wrap) wrap.innerHTML = "";
-                        if (res.success) {
-                            toast("✅ Report submitted successfully! Redirecting to My Submissions...");
-                            _isSubmitted = true;
-                            _submittedAt = res.submitted_at || new Date().toISOString();
-                            _submittedTables = allNos.filter((n) => _status[n] === "done" || _status[n] === "draft");
-                            CMI.lockReport();
-                            setTimeout(function () {
-                                window.location.href = "/dashboard/cmi/submissions";
-                            }, 1200);
-                        } else {
-                            toast("Submission failed: " + (res.error || "Unknown error"));
-                        }
-                    })
-                    .catch(() => {
-                        const wrap = document.getElementById("toastWrap");
-                        if (wrap) wrap.innerHTML = "";
-                        toast("Network error — please try again.");
-                    });
+                window.openSubmitModal();
             },
         });
+    };
+
+    window.openSubmitModal = function () {
+        const modal = document.getElementById("modalConfirmSubmit");
+        const yrText = document.getElementById("confirmSubmitYearText");
+        if (yrText) yrText.textContent = "CY " + (window.CMI_REPORTING_YEAR || new Date().getFullYear());
+        if (modal) modal.style.display = "flex";
+    };
+
+    window.closeSubmitModal = function () {
+        const modal = document.getElementById("modalConfirmSubmit");
+        if (modal) modal.style.display = "none";
+    };
+
+    window.confirmAndExecuteSubmit = async function () {
+        const btn = document.querySelector('#modalConfirmSubmit .btn-submit-report');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-spinner"></span> Submitting...';
+        }
+
+        const yr = window.CMI_REPORTING_YEAR || new Date().getFullYear();
+        const allNos = Object.keys(TABLE_TITLES);
+
+        toast("Submitting report…", 99999);
+        try {
+            const r = await fetch(API_SUBMIT, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ year: yr, submitted_at_client: new Date().toISOString() })
+            });
+            const res = await r.json();
+            const wrap = document.getElementById("toastWrap");
+            if (wrap) wrap.innerHTML = "";
+
+            if (res.success) {
+                toast("✅ Report submitted successfully! It is now pending PTA review.");
+                _isSubmitted = true;
+                _submittedAt = res.submitted_at || new Date().toISOString();
+                _submittedTables = allNos.filter((n) => _status[n] === "done" || _status[n] === "draft");
+                CMI.lockReport();
+            } else {
+                toast("Submission failed: " + (res.error || "Unknown error"));
+            }
+        } catch(e) {
+            const wrap = document.getElementById("toastWrap");
+            if (wrap) wrap.innerHTML = "";
+            toast("Network error — please try again.");
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = 'Yes, Submit Report';
+            }
+            window.closeSubmitModal();
+        }
     };
 
     /* ─────────────────────────────────────────
@@ -452,10 +477,9 @@
             })
             .catch(() => {})
             .finally(() => {
-                const urlParam = new URLSearchParams(
-                    window.location.search,
-                ).get("t");
-                CMI.showTable(urlParam || "T1");
+                const params = new URLSearchParams(window.location.search);
+                const initialTable = (params.get("table") || params.get("t") || "T1").toUpperCase();
+                CMI.showTable(initialTable);
             });
     });
 })();

@@ -7,7 +7,10 @@
       <div class="page-title">Notifications</div>
       <div class="page-sub">System updates and PTA remarks</div>
     </div>
-    <button type="button" class="btn" id="btnMarkAllRead">Mark All as Read</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button type="button" class="btn" id="btnMarkAllRead">Mark All as Read</button>
+      <button type="button" class="btn" id="btnDeleteAll" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca">Delete All</button>
+    </div>
   </div>
 
   <div class="card">
@@ -43,6 +46,24 @@ document.addEventListener('DOMContentLoaded', async function () {
     loadNotifs();
   };
 
+  window.deleteNotifItem = async function(id, key) {
+    showConfirmModal({
+      title: 'Delete Notification?',
+      message: 'Are you sure you want to delete this notification?',
+      confirmText: 'Delete Notification',
+      type: 'red',
+      onConfirm: async function() {
+        await fetch('/api/notifications/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id, key: key }),
+        });
+        if (typeof showToast === 'function') showToast('Notification deleted');
+        loadNotifs();
+      }
+    });
+  };
+
   async function loadNotifs() {
     try {
       const year = new Date().getFullYear();
@@ -67,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async function () {
               <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
                 ${n.unread ? `<button type="button" class="btn btn-sm" onclick="markItemRead(${n.id || 'null'}, '${n.key || ''}')" style="background:#e5e7eb;color:#374151;border:none;padding:4px 10px;font-size:12px">Mark read</button>` : ''}
                 ${n.action ? `<a href="${n.action}" class="btn btn-sm" style="background:#10b981;color:#fff;padding:4px 10px;font-size:12px">${n.action_label || 'View'}</a>` : ''}
+                <button type="button" class="btn btn-sm" onclick="deleteNotifItem(${n.id || 'null'}, '${n.key || ''}')" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:4px 10px;font-size:12px">Delete</button>
               </div>
             </div>
           `).join('');
@@ -85,6 +107,20 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
     if (typeof showToast === 'function') showToast('All notifications marked as read');
     loadNotifs();
+  });
+
+  document.getElementById('btnDeleteAll')?.addEventListener('click', function() {
+    showConfirmModal({
+      title: 'Delete All Notifications?',
+      message: 'Are you sure you want to delete all notifications? This action cannot be undone.',
+      confirmText: 'Delete All',
+      type: 'red',
+      onConfirm: async function() {
+        await fetch('/api/notifications/delete-all', { method: 'POST' });
+        if (typeof showToast === 'function') showToast('All notifications deleted');
+        loadNotifs();
+      }
+    });
   });
 
   loadNotifs();

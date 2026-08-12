@@ -37,14 +37,22 @@ function renderT2a(data) {
         byCategory[cat].push(r);
       });
 
-      // CMI info row (date + venue)
+      // 1st Row: CMI Institution Info Header (top of table)
       allRows += `
         <tr>
-          <td colspan="6" style="background:var(--bg-soft,#f3f6f4);font-size:12px;padding:6px 10px;border-bottom:1px solid #ddd">
+          <td colspan="6" style="background:#ecfdf5;font-weight:700;font-size:13.5px;padding:10px 14px;color:#166534;border-bottom:2px solid #a7f3d0;text-align:center;">
             <strong>${esc(cmi.institution)}</strong>
             &nbsp;·&nbsp; Date: <strong>${esc(date)}</strong>
             &nbsp;·&nbsp; Venue: <strong>${esc(venue)}</strong>
           </td>
+        </tr>
+        <tr style="background:#10b981;color:#fff;">
+          <th style="width:36px;padding:8px;font-size:11.5px;font-weight:600;color:#fff;border-bottom:1px solid #059669;text-align:center;">#</th>
+          <th style="padding:8px;font-size:11.5px;font-weight:600;color:#fff;border-bottom:1px solid #059669;text-align:left;">Title</th>
+          <th style="padding:8px;font-size:11.5px;font-weight:600;color:#fff;border-bottom:1px solid #059669;text-align:left;">Implementing Agency(ies)</th>
+          <th style="padding:8px;font-size:11.5px;font-weight:600;color:#fff;border-bottom:1px solid #059669;text-align:left;">Researcher(s)</th>
+          <th style="padding:8px;font-size:11.5px;font-weight:600;color:#fff;border-bottom:1px solid #059669;text-align:left;">Major Recommendations</th>
+          <th style="padding:8px;font-size:11.5px;font-weight:600;color:#fff;border-bottom:1px solid #059669;text-align:left;">Winners</th>
         </tr>`;
 
       // Rows per category
@@ -91,16 +99,6 @@ function renderT2a(data) {
 
   return `
     <table class="merged" style="width:100%">
-      <thead>
-        <tr>
-          <th class="group" style="width:36px">#</th>
-          <th class="group">Title</th>
-          <th class="group">Implementing Agency(ies)</th>
-          <th class="group">Researcher(s)</th>
-          <th class="group">Major Recommendations</th>
-          <th class="group">Winners</th>
-        </tr>
-      </thead>
       <tbody>
         ${allRows || '<tr><td colspan="6" class="not-submitted">No submissions yet.</td></tr>'}
       </tbody>

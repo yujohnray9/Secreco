@@ -23,25 +23,33 @@ class ApprovalMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $subject = $this->result === 'approved'
-            ? 'Your SecReCo Account Has Been Approved'
-            : 'Your SecReCo Account Was Not Approved';
+        $subject = match ($this->result) {
+            'approved', 'activate' => 'Your SecReCo Account Has Been Activated',
+            'deactivated'         => 'Your SecReCo Account Has Been Deactivated',
+            default               => 'Your SecReCo Account Was Not Approved',
+        };
 
         return new Envelope(subject: $subject);
     }
 
     public function content(): Content
     {
-        $isApproved  = $this->result === 'approved';
-        $statusLabel = $isApproved ? 'APPROVED'  : 'NOT APPROVED';
-        $statusColor = $isApproved ? '#166534'   : '#991b1b';
-        $statusBg    = $isApproved ? '#dcfce7'   : '#fee2e2';
+        $isActivated   = in_array($this->result, ['approved', 'activate'], true);
+        $isDeactivated = $this->result === 'deactivated';
 
-        $bodyMessage = $isApproved
-            ? "Your account has been reviewed and <strong>approved</strong> by the PTA. You may now sign in to SecReCo."
-            : "After review, your account registration was <strong>not approved</strong>. Please contact the PTA office for more information.";
+        $statusLabel = $isActivated ? 'ACTIVATED' : ($isDeactivated ? 'DEACTIVATED' : 'NOT APPROVED');
+        $statusColor = $isActivated ? '#166534' : '#991b1b';
+        $statusBg    = $isActivated ? '#dcfce7' : '#fee2e2';
 
-        $ctaBlock = $isApproved
+        if ($isActivated) {
+            $bodyMessage = "Your account has been reviewed and <strong>activated</strong> by the PTA. You may now sign in to SecReCo.";
+        } elseif ($isDeactivated) {
+            $bodyMessage = "Your Account is Deactivated. Please contact the Project technical assistant ii for assistance.";
+        } else {
+            $bodyMessage = "After review, your account registration was <strong>not approved</strong>. Please contact the PTA office for more information.";
+        }
+
+        $ctaBlock = $isActivated
             ? "<div style='text-align:center;margin-top:24px;'>
                  <a href='" . config('app.url') . "/login'
                     style='display:inline-block;padding:11px 28px;background:#2d6a30;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;'>

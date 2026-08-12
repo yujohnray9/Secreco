@@ -21,32 +21,37 @@ class SubmissionController extends Controller
         $year   = (int) ($request->input('year') ?? date('Y'));
         $status = $request->input('status');
 
-        $query = ReportTable::where('reporting_year', $year)
-            ->whereHas('user', function ($q) {
-                $q->where('role', 'cmi')->whereIn('status', ['active', 'approved', 'pending']);
-            })
-            ->with('user');
+        $cmiUsers = User::where('role', 'cmi')
+            ->whereIn('status', ['active', 'approved', 'pending'])
+            ->get();
 
-        if ($status) {
-            $query->where('status', $status);
-        } else {
-            $query->whereIn('status', ['done', 'submitted', 'accepted', 'returned', 'deleted', 'draft']);
+        $formatTables = \App\Models\FormatTemplate::where('year', $year)
+            ->orderBy('sort_order', 'asc')
+            ->pluck('table_no')
+            ->toArray();
+
+        if (empty($formatTables)) {
+            $formatTables = ['T1','T2a','T2b','T3','T4','T5','T6','T7a','T7b','T8a','T8b','T9','T10','T11','T12','T13','T14','T15','T16','T17','T18','T19','T20a','T20b'];
         }
 
-        $tables = $query->get()->sort(function ($a, $b) {
-            $cmp = strcmp($a->user?->institution ?? '', $b->user?->institution ?? '');
-            if ($cmp !== 0) return $cmp;
-            return strcmp($a->table_no ?? '', $b->table_no ?? '');
-        })->values();
+        $tableRecords = ReportTable::where('reporting_year', $year)
+            ->whereIn('user_id', $cmiUsers->pluck('id'))
+            ->with('user')
+            ->get();
 
-        $userIds = $tables->pluck('user_id')->unique()->filter()->values()->all();
+        $tableMap = [];
+        foreach ($tableRecords as $tr) {
+            $key = $tr->user_id . '_' . $tr->table_no;
+            $tableMap[$key] = $tr;
+        }
 
-        // Get submission timestamps from ReportSubmission
+        $userIds = $cmiUsers->pluck('id')->toArray();
+
         $submissionDates = [];
         if ($userIds) {
             $subs = ReportSubmission::where('reporting_year', $year)
                 ->whereIn('user_id', $userIds)
-                ->orderBy('submitted_at', 'asc')
+                ->orderBy('submitted_at', 'desc')
                 ->get(['user_id', 'submitted_at']);
             foreach ($subs as $sub) {
                 if (!isset($submissionDates[$sub->user_id])) {
@@ -85,24 +90,79 @@ class SubmissionController extends Controller
             }
         }
 
+        $groupedUsers = $cmiUsers->groupBy(function ($u) {
+            return trim($u->institution) ?: ($u->name ?? 'CMI User');
+        });
+
         $rows = [];
-        foreach ($tables as $t) {
-            $key = $t->user_id . '_' . $t->table_no;
-            $submittedAt = $submissionDates[$t->user_id] ?? ($t->created_at ? $t->created_at->toDateTimeString() : null);
-            $rows[] = [
-                'cmi_user_id'         => (int) $t->user_id,
-                'institution'         => $t->user?->institution ?? '—',
-                'encoder'             => $t->user?->name,
-                'table_no'            => $t->table_no,
-                'table_status'        => $t->status,
-                'submitted_at'        => $submittedAt,
-                'updated_at'          => $t->updated_at ? $t->updated_at->toDateTimeString() : null,
-                'meta'                => $t->meta_json,
-                'rows'                => $t->rows_json ?? [],
-                'docs'                => $docsByUserTable[$key] ?? [],
-                'has_open_correction' => isset($corrByUserTable[$key]),
-            ];
+        foreach ($groupedUsers as $instName => $instUsers) {
+            $primaryUser = $instUsers->first();
+
+            foreach ($formatTables as $tNo) {
+                $foundTr = null;
+                $foundUser = $primaryUser;
+
+                $statusPriority = ['accepted' => 4, 'returned' => 3, 'done' => 2, 'submitted' => 2, 'draft' => 1, 'not-started' => 0];
+
+                foreach ($instUsers as $u) {
+                    $key = $u->id . '_' . $tNo;
+                    if (isset($tableMap[$key])) {
+                        $tr = $tableMap[$key];
+                        if (!$foundTr) {
+                            $foundTr = $tr;
+                            $foundUser = $u;
+                        } else {
+                            $pCurrent = $statusPriority[$tr->status] ?? 0;
+                            $pBest    = $statusPriority[$foundTr->status] ?? 0;
+
+                            if ($pCurrent > $pBest) {
+                                $foundTr = $tr;
+                                $foundUser = $u;
+                            } elseif ($pCurrent === $pBest) {
+                                $tCurrent = $tr->updated_at ? strtotime((string)$tr->updated_at) : 0;
+                                $tBest    = $foundTr->updated_at ? strtotime((string)$foundTr->updated_at) : 0;
+                                if ($tCurrent > $tBest) {
+                                    $foundTr = $tr;
+                                    $foundUser = $u;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $st = $foundTr ? $foundTr->status : 'not-started';
+                if ($st === 'draft' && !$foundTr->meta_json && empty($foundTr->rows_json)) {
+                    $st = 'not-started';
+                }
+
+                if ($status && $status !== '' && $st !== $status) {
+                    continue;
+                }
+
+                $key = $foundUser->id . '_' . $tNo;
+                $submittedAt = ($foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null) ?? ($submissionDates[$foundUser->id] ?? ($foundTr?->created_at ? $foundTr->created_at->toDateTimeString() : null));
+
+                $rows[] = [
+                    'cmi_user_id'         => (int) $foundUser->id,
+                    'institution'         => $instName,
+                    'encoder'             => $foundUser->name,
+                    'table_no'            => $tNo,
+                    'table_status'        => $st,
+                    'submitted_at'        => $submittedAt,
+                    'updated_at'          => $foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null,
+                    'meta'                => $foundTr?->meta_json ?? [],
+                    'rows'                => $foundTr?->rows_json ?? [],
+                    'docs'                => $docsByUserTable[$key] ?? [],
+                    'has_open_correction' => isset($corrByUserTable[$key]),
+                ];
+            }
         }
+
+        usort($rows, function ($a, $b) {
+            $cmp = strcmp($a['institution'], $b['institution']);
+            if ($cmp !== 0) return $cmp;
+            return strcmp($a['table_no'], $b['table_no']);
+        });
 
         return response()->json(['ok' => true, 'year' => $year, 'rows' => $rows]);
     }
@@ -116,28 +176,43 @@ class SubmissionController extends Controller
         $year         = (int) ($request->input('year') ?? date('Y'));
 
         $sub = null;
-
         if ($submissionId > 0 || $id > 0) {
-            $targetId = $submissionId ?: $id;
-            $sub = ReportSubmission::find($targetId);
+            $sub = ReportSubmission::find($submissionId ?: $id);
+        }
+
+        if (!$sub && $cmiUserId > 0) {
+            $sub = ReportSubmission::where('user_id', $cmiUserId)
+                ->where('reporting_year', $year)
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        if ($sub && !$cmiUserId) {
+            $cmiUserId = (int) $sub->user_id;
         }
 
         if ($cmiUserId > 0) {
-            ReportTable::where('user_id', $cmiUserId)
-                ->where('reporting_year', $year)
-                ->where('table_no', $tableNo)
-                ->update(['status' => 'accepted', 'updated_at' => now()]);
-
-            if (!$sub) {
-                $sub = ReportSubmission::where('user_id', $cmiUserId)
-                    ->where('reporting_year', $year)
-                    ->first();
+            $q = ReportTable::where('user_id', $cmiUserId)->where('reporting_year', $year);
+            if ($tableNo !== '') {
+                $q->where('table_no', $tableNo);
             }
+            $q->update(['status' => 'accepted', 'updated_at' => now()]);
         }
 
         if ($sub) {
-            $sub->update(['status' => 'accepted', 'remarks' => null]);
-            $cmiUserId = $cmiUserId ?: $sub->user_id;
+            $snap = $sub->snapshot_json ?? [];
+            if (is_array($snap)) {
+                if ($tableNo !== '' && isset($snap[$tableNo])) {
+                    $snap[$tableNo]['status'] = 'accepted';
+                } else {
+                    foreach ($snap as $k => $v) {
+                        if (is_array($v)) {
+                            $snap[$k]['status'] = 'accepted';
+                        }
+                    }
+                }
+            }
+            $sub->update(['status' => 'accepted', 'remarks' => null, 'snapshot_json' => $snap]);
         }
 
         $cmiUser = User::find($cmiUserId);
@@ -275,24 +350,30 @@ class SubmissionController extends Controller
             ]
         );
 
-        // Sync into latest submission snapshot if exists
         $latestSub = ReportSubmission::where('user_id', $cmiUserId)
             ->where('reporting_year', $year)
             ->orderByDesc('id')
             ->first();
 
-        if ($latestSub) {
-            $snap = $latestSub->snapshot_json ?? [];
-            if (is_array($snap)) {
-                $snap[$tableNo] = [
-                    'status'     => $status,
-                    'meta'       => $meta,
-                    'rows'       => $rows,
-                    'updated_at' => now()->toDateTimeString(),
-                ];
-                $latestSub->update(['snapshot_json' => $snap]);
-            }
+        if (!$latestSub) {
+            $latestSub = ReportSubmission::create([
+                'user_id'        => $cmiUserId,
+                'reporting_year' => $year,
+                'status'         => 'pending',
+                'snapshot_json'  => [],
+                'submitted_at'   => now(),
+            ]);
         }
+
+        $snap = $latestSub->snapshot_json ?? [];
+        if (!is_array($snap)) $snap = [];
+        $snap[$tableNo] = [
+            'status'     => $status,
+            'meta'       => $meta,
+            'rows'       => $rows,
+            'updated_at' => now()->toDateTimeString(),
+        ];
+        $latestSub->update(['snapshot_json' => $snap]);
 
         $ptaUserId = Auth::id() ?? session('user_id');
         $cmiUser   = User::find($cmiUserId);

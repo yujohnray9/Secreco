@@ -78,7 +78,10 @@ class AuthController extends Controller
         }
 
         if ($user->status !== 'active') {
-            return response()->json(['success' => false, 'message' => 'Your account is pending approval. Please contact the administrator.']);
+            return response()->json([
+                'success' => false,
+                'message' => 'Your Account is Deactivated. Please contact the Project technical assistant ii for assistance.'
+            ]);
         }
 
         // Success

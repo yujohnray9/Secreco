@@ -24,7 +24,7 @@ Route::get('/verify-captcha', function () {
 })->name('verify-captcha');
 
 Route::prefix('dashboard')->group(function () {
-    Route::get('/cmi/{page?}', [CmiPageController::class, 'show'])->middleware(['auth.custom', 'role:cmi']);
+    Route::get('/cmi/{page?}', [CmiPageController::class, 'show'])->middleware(['auth.custom', 'role:cmi,pta']);
     Route::get('/pta/{page?}', [PtaPageController::class, 'show'])->middleware(['auth.custom', 'role:pta']);
     Route::get('/viewer/{page?}', [ViewerPageController::class, 'show'])->middleware(['auth.custom', 'role:viewer']);
 });

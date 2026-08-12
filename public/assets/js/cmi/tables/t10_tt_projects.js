@@ -209,7 +209,7 @@
 
         CATEGORIES.forEach(cat => {
           tbody.appendChild(makeCatHeader(cat));
-          const rows = byCat[cat.key].length ? byCat[cat.key] : [{}, {}];
+          const rows = byCat[cat.key].length ? byCat[cat.key] : [{}];
           rows.forEach((row, i) => tbody.appendChild(makeRow(cat.key, row, i > 0)));
           renumber(cat.key);
         });
@@ -224,7 +224,7 @@
         tbody.innerHTML = '';
         CATEGORIES.forEach(cat => {
           tbody.appendChild(makeCatHeader(cat));
-          [{}, {}].forEach((r, i) => tbody.appendChild(makeRow(cat.key, r, i > 0)));
+          [{}].forEach((r, i) => tbody.appendChild(makeRow(cat.key, r, i > 0)));
           renumber(cat.key);
         });
         updateStatusBadge('not-started');

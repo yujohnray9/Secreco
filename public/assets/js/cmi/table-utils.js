@@ -80,15 +80,18 @@ window.CMIUtils = {
   window.fetch = function(resource, config) {
     let url = typeof resource === 'string' ? resource : (resource?.url || '');
     const yr = window.CMI_REPORTING_YEAR || new Date().getFullYear();
+    const targetUserId = window.CMI_TARGET_USER_ID || 0;
 
-    if (url.includes('/api/cmi/tables/load') && !url.includes('year=')) {
-      url += (url.includes('?') ? '&' : '?') + 'year=' + yr;
+    if (url.includes('/api/cmi/tables/load')) {
+      if (!url.includes('year=')) url += (url.includes('?') ? '&' : '?') + 'year=' + yr;
+      if (targetUserId > 0 && !url.includes('cmi_user_id=')) url += '&cmi_user_id=' + targetUserId;
       if (typeof resource === 'string') resource = url;
       else if (resource?.url) resource = new Request(url, resource);
     }
 
-    if (url.includes('/api/cmi/tables/statuses') && !url.includes('year=')) {
-      url += (url.includes('?') ? '&' : '?') + 'year=' + yr;
+    if (url.includes('/api/cmi/tables/statuses')) {
+      if (!url.includes('year=')) url += (url.includes('?') ? '&' : '?') + 'year=' + yr;
+      if (targetUserId > 0 && !url.includes('cmi_user_id=')) url += '&cmi_user_id=' + targetUserId;
       if (typeof resource === 'string') resource = url;
       else if (resource?.url) resource = new Request(url, resource);
     }
@@ -96,20 +99,16 @@ window.CMIUtils = {
     if (url.includes('/api/cmi/tables/save') && config && config.body) {
       try {
         const data = typeof config.body === 'string' ? JSON.parse(config.body) : config.body;
-        if (!data.year) {
-          data.year = yr;
-        }
-        if (window._cmiSavingDraft) {
-          data.status = 'draft';
-        }
+        if (!data.year) data.year = yr;
+        if (targetUserId > 0 && !data.cmi_user_id) data.cmi_user_id = targetUserId;
+        if (window._cmiSavingDraft) data.status = 'draft';
         config = { ...config, body: JSON.stringify(data) };
       } catch(e) {}
     }
 
     if (url.includes('/api/cmi/tables/upload-doc') && config && config.body instanceof FormData) {
-      if (!config.body.has('year')) {
-        config.body.append('year', yr);
-      }
+      if (!config.body.has('year')) config.body.append('year', yr);
+      if (targetUserId > 0 && !config.body.has('cmi_user_id')) config.body.append('cmi_user_id', targetUserId);
     }
 
     if (url.includes('/api/cmi/report/submit')) {
@@ -117,10 +116,11 @@ window.CMIUtils = {
       try {
         let data = config.body ? JSON.parse(config.body) : {};
         data.year = yr;
+        if (targetUserId > 0 && !data.cmi_user_id) data.cmi_user_id = targetUserId;
         config.headers = { ...(config.headers || {}), 'Content-Type': 'application/json' };
         config.body = JSON.stringify(data);
       } catch(e) {
-        config.body = JSON.stringify({ year: yr });
+        config.body = JSON.stringify({ year: yr, cmi_user_id: targetUserId });
       }
     }
 

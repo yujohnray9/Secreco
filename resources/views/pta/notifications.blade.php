@@ -43,12 +43,20 @@
       <div class="pg-banner-title">Notifications</div>
       <div class="pg-banner-sub">System notifications, user registrations, and submission updates</div>
     </div>
-    <button type="button" class="btn-mark-read" id="btnMarkAllRead">
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>
-      Mark All as Read
-    </button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button type="button" class="btn-mark-read" id="btnMarkAllRead">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Mark All as Read
+      </button>
+      <button type="button" class="btn-delete-all" id="btnDeleteAll" style="border:1.5px solid #ef4444;background:#fff;color:#ef4444;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
+        </svg>
+        Delete All
+      </button>
+    </div>
   </div>
 
   <div class="fc-card">
@@ -138,17 +146,50 @@ async function loadNotifs() {
         </div>
         <div class="notif-action" style="display:flex;align-items:center;gap:6px">
           ${n.unread ? `<button type="button" class="btn-sm-fc" onclick="markPtaItemRead(${n.id || 'null'}, '${n.key || ''}')" style="background:#e5e7eb;color:#374151">Mark read</button>` : ''}
-          ${n.action ? `<a href="/dashboard/pta/${n.action}" class="btn-sm-fc btn-sm-view">${n.action_label || 'View'}</a>` : ''}
+          ${n.action ? `<a href="${n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action}" class="btn-sm-fc btn-sm-view">${n.action_label || 'View'}</a>` : ''}
+          <button type="button" class="btn-sm-fc" onclick="deletePtaNotifItem(${n.id || 'null'}, '${n.key || ''}')" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca">Delete</button>
         </div>
       </div>
     `).join('')}</div>`;
   } catch(e) { console.error('Notif load error:', e); }
 }
 
+window.deletePtaNotifItem = async function(id, key) {
+  showConfirmModal({
+    title: 'Delete Notification?',
+    message: 'Are you sure you want to delete this notification?',
+    confirmText: 'Delete Notification',
+    type: 'red',
+    onConfirm: async function() {
+      await fetch('/api/notifications/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, key: key }),
+      });
+      if (typeof showToast === 'function') showToast('Notification deleted');
+      loadNotifs();
+    }
+  });
+};
+
 document.getElementById('btnMarkAllRead').addEventListener('click', async function() {
   await fetch('/api/pta/notifications/mark-read', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({all:true}) });
   if (typeof showToast === 'function') showToast('All notifications marked as read');
   loadNotifs();
+});
+
+document.getElementById('btnDeleteAll')?.addEventListener('click', function() {
+  showConfirmModal({
+    title: 'Delete All Notifications?',
+    message: 'Are you sure you want to delete all notifications? This action cannot be undone.',
+    confirmText: 'Delete All',
+    type: 'red',
+    onConfirm: async function() {
+      await fetch('/api/notifications/delete-all', { method: 'POST' });
+      if (typeof showToast === 'function') showToast('All notifications deleted');
+      loadNotifs();
+    }
+  });
 });
 
 document.addEventListener('DOMContentLoaded', loadNotifs);

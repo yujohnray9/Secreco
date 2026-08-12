@@ -20,6 +20,18 @@ class NotificationController extends Controller
         $readAtTs  = session('notifs_read_at_ts_' . $userId);
         $readKeys  = session('read_notif_keys_' . $userId, []);
 
+        $deletedKeys = session('deleted_notif_keys_' . $userId, []);
+        $deleteAll   = session('notifs_delete_all_' . $userId, false);
+
+        if ($deleteAll) {
+            return response()->json([
+                'ok'            => true,
+                'notifications' => [],
+                'unread_count'  => 0,
+                'counts'        => ['urgent' => 0, 'pending' => 0, 'activity' => 0],
+            ]);
+        }
+
         $notifications = [];
 
         $stored = Notification::where(function ($q) use ($userId, $userRole) {
@@ -31,6 +43,9 @@ class NotificationController extends Controller
 
         foreach ($stored as $n) {
             $key = 'stored_' . $n->id;
+            if (in_array($key, $deletedKeys, true)) {
+                continue;
+            }
             $unread = !$n->is_read;
             $tTs    = $n->created_at ? strtotime((string)$n->created_at) : 0;
             if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
@@ -66,26 +81,28 @@ class NotificationController extends Controller
                 ), 0, 2);
                 $label  = implode(' and ', $names) . ($count > 2 ? " and " . ($count - 2) . " more" : '');
                 $key    = 'derived_pending_users';
-                $t      = $pendingUsers[0]->created_at;
-                $tTs    = $t ? strtotime((string)$t) : 0;
-                $unread = true;
-                if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
-                    $unread = false;
-                }
+                if (!in_array($key, $deletedKeys, true)) {
+                    $t      = $pendingUsers[0]->created_at;
+                    $tTs    = $t ? strtotime((string)$t) : 0;
+                    $unread = true;
+                    if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
+                        $unread = false;
+                    }
 
-                $notifications[] = [
-                    'id'           => null,
-                    'key'          => $key,
-                    'type'         => 'yellow',
-                    'icon'         => '👥',
-                    'msg'          => $count === 1 ? "1 account pending approval — {$label}." : "{$count} accounts pending approval — {$label}.",
-                    'action'       => '/dashboard/pta/users',
-                    'action_label' => 'Review',
-                    'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
-                    'unread'       => $unread,
-                    'notif_type'   => 'user_approval',
-                    'source'       => 'derived',
-                ];
+                    $notifications[] = [
+                        'id'           => null,
+                        'key'          => $key,
+                        'type'         => 'yellow',
+                        'icon'         => '👥',
+                        'msg'          => $count === 1 ? "1 account pending approval — {$label}." : "{$count} accounts pending approval — {$label}.",
+                        'action'       => '/dashboard/pta/users',
+                        'action_label' => 'Review',
+                        'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
+                        'unread'       => $unread,
+                        'notif_type'   => 'user_approval',
+                        'source'       => 'derived',
+                    ];
+                }
             }
         }
 
@@ -99,6 +116,9 @@ class NotificationController extends Controller
             foreach ($corrections as $cr) {
                 $ptaName = $cr->ptaUser?->name ?? 'PTA';
                 $key     = 'derived_corr_' . $cr->id;
+                if (in_array($key, $deletedKeys, true)) {
+                    continue;
+                }
                 $t       = $cr->created_at;
                 $tTs     = $t ? strtotime((string)$t) : 0;
                 $unread  = true;
@@ -182,5 +202,52 @@ class NotificationController extends Controller
         }
 
         return response()->json(['ok' => true, 'message' => 'Notification marked as read.']);
+    }
+
+    public function delete(Request $request): JsonResponse
+    {
+        $userId   = Auth::id() ?? session('user_id');
+        $userRole = Auth::user()?->role ?? session('user_role');
+
+        $input   = $request->json()->all() ?: $request->all();
+        $notifId = (int) ($input['id'] ?? 0);
+        $key     = $input['key'] ?? null;
+
+        if ($notifId > 0) {
+            Notification::where('id', $notifId)
+                ->where(function ($q) use ($userId, $userRole) {
+                    $q->where('user_id', $userId)
+                      ->orWhere(function ($q2) use ($userRole) {
+                          $q2->whereNull('user_id')->where('role', $userRole);
+                      });
+                })->delete();
+        }
+
+        if ($key) {
+            $deletedKeys = session('deleted_notif_keys_' . $userId, []);
+            if (!in_array($key, $deletedKeys, true)) {
+                $deletedKeys[] = $key;
+                session(['deleted_notif_keys_' . $userId => $deletedKeys]);
+            }
+        }
+
+        return response()->json(['ok' => true, 'message' => 'Notification deleted.']);
+    }
+
+    public function deleteAll(Request $request): JsonResponse
+    {
+        $userId   = Auth::id() ?? session('user_id');
+        $userRole = Auth::user()?->role ?? session('user_role');
+
+        Notification::where(function ($q) use ($userId, $userRole) {
+            $q->where('user_id', $userId)
+              ->orWhere(function ($q2) use ($userRole) {
+                  $q2->whereNull('user_id')->where('role', $userRole);
+              });
+        })->delete();
+
+        session(['notifs_delete_all_' . $userId => true]);
+
+        return response()->json(['ok' => true, 'message' => 'All notifications deleted.']);
     }
 }

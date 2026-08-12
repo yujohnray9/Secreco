@@ -38,11 +38,11 @@ class FormatController extends Controller
         });
 
         $activeYear = (int) (SystemSetting::where('key', 'active_year')->value('value') ?? date('Y'));
-        $years = FormatTemplate::distinct()->orderByDesc('year')->pluck('year')->all();
+        $years = FormatTemplate::distinct()->where('year', '>=', 2025)->orderByDesc('year')->pluck('year')->all();
         if (empty($years)) {
-            $years = [(int) date('Y')];
+            $years = [2025];
         }
-        if (!in_array((int) date('Y'), $years, true)) {
+        if (!in_array((int) date('Y'), $years, true) && (int) date('Y') >= 2025) {
             $years[] = (int) date('Y');
             rsort($years);
         }
