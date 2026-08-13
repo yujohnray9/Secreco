@@ -17,7 +17,7 @@ function renderT1(data) {
   data.forEach(cmi => {
     const s = cmi.table_status;
 
-    if (s === 'done' || s === 'submitted') {
+    if (s === 'done' || s === 'submitted' || s === 'accepted') {
       (cmi.rows ?? []).forEach(r => {
         const total = (+r.new_ || 0) + (+r.ongoing || 0) + (+r.completed || 0) + (+r.terminated || 0);
         submitted += `

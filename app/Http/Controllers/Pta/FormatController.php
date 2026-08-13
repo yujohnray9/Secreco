@@ -42,10 +42,8 @@ class FormatController extends Controller
         if (empty($years)) {
             $years = [2025];
         }
-        if (!in_array((int) date('Y'), $years, true) && (int) date('Y') >= 2025) {
-            $years[] = (int) date('Y');
-            rsort($years);
-        }
+        // Only show years that have been explicitly added in Manage Format (>= 2025)
+        // Do NOT auto-add current year — user controls this via Manage Format.
 
         return response()->json([
             'ok'          => true,

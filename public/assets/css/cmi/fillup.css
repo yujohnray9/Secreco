@@ -56,7 +56,7 @@
   transition: background .15s, color .15s;
 }
 .fill-nav-sub:hover { background: #eef6ee; color: var(--green); }
-.fill-nav-sub.done { color: var(--success); }
+.fill-nav-sub.done, .fill-nav-sub.submitted, .fill-nav-sub.accepted { color: var(--success); }
 .fill-nav-sub.draft { color: var(--warning); }
 .fill-nav-sub.error { color: var(--danger); }
 .fill-nav-sub.not-started { color: var(--text-muted); }

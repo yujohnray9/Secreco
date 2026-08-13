@@ -87,9 +87,7 @@
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <input type="text" class="filter-select" id="subSearchInput" placeholder="Search institution, encoder, table..." style="width:240px"/>
         <select class="filter-select" id="subYearSel" style="width:auto">
-          @for($y = date('Y'); $y >= 2020; $y--)
-            <option value="{{ $y }}" {{ date('Y') == $y ? 'selected' : '' }}>CY {{ $y }}</option>
-          @endfor
+          <option value="">Loading...</option>
         </select>
         <select class="filter-select" id="subStatusSel" style="width:auto">
           <option value="">All Statuses</option>
@@ -224,6 +222,13 @@ function renderSubsTable() {
       <td style="color:#059669;font-weight:600;font-size:12.5px">${subDate}</td>
       <td style="color:#6b7280;font-size:12.5px">${ts}</td>
       <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${cachedSubRows.indexOf(r)})" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Edit Data
+        </button>
         ${!isActioned ? `
         <button class="btn-sm-fc btn-sm-accept" onclick="acceptSub(${cachedSubRows.indexOf(r)})">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -333,29 +338,124 @@ window.viewDataModal = function(idx) {
     <button type="button" class="btn-sm-fc" onclick="addPtaEditRow()" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;">+ Add Row</button>
   </div>`;
 
-  // Render Documentation attachments if present
-  if (r.docs && r.docs.length > 0) {
-    html += `
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0">
-        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px;display:flex;align-items:center;gap:6px">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-          Attached Documentation (${r.docs.length})
+  // Always render Documentation section in the modal so PTA Admin can upload/manage documents
+  const docsList = r.docs || [];
+  html += `
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0">
+      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          Attached Documentation (<span id="ptaDocCount">${docsList.length}</span>)
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px">
-          ${r.docs.map(d => {
-            const src = '/' + (d.file_path || '').replace(/^\//, '');
-            return `
-              <div style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:120px">
-                <img src="${src}" style="width:120px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${d.caption||'View photo'}"/>
-                ${d.caption ? `<div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.caption}</div>` : ''}
-              </div>`;
-          }).join('')}
-        </div>
-      </div>`;
-  }
+        <label class="btn-sm-fc" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Attach / Upload Photo or File
+          <input type="file" id="ptaModalDocFileInput" multiple accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="uploadPtaModalDoc(this)" />
+        </label>
+      </div>
+
+      <div id="ptaModalDocsGallery" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px">
+        ${docsList.map(d => {
+          const src = '/' + (d.file_path || '').replace(/^\//, '');
+          return `
+            <div id="pta-doc-card-${d.id}" style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative">
+              <button type="button" onclick="deletePtaModalDoc(${d.id})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
+              <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${d.caption||'View photo'}"/>
+              <div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.caption || 'Attached photo'}</div>
+            </div>`;
+        }).join('')}
+        ${docsList.length === 0 ? '<div id="ptaNoDocsMsg" style="font-size:12.5px;color:#9ca3af;font-style:italic">No attachments uploaded yet. Use the button above to add document photos or files.</div>' : ''}
+      </div>
+    </div>`;
 
   wrap.innerHTML = html;
   openModal('modalViewData');
+};
+
+window.uploadPtaModalDoc = async function(input) {
+  if (!input.files || input.files.length === 0) return;
+  if (currentEditSubIdx < 0) return;
+  const r = cachedSubRows[currentEditSubIdx];
+  const year = document.getElementById('subYearSel')?.value || new Date().getFullYear();
+
+  const formData = new FormData();
+  for (let i = 0; i < input.files.length; i++) {
+    formData.append('images[]', input.files[i]);
+  }
+  formData.append('table_no', r.table_no);
+  formData.append('year', year);
+  formData.append('cmi_user_id', r.cmi_user_id);
+
+  try {
+    showToast('Uploading attachment(s)...');
+    const res = await fetch('/api/cmi/tables/upload-doc', {
+      method: 'POST',
+      body: formData
+    });
+    const json = await res.json();
+    if (json.success && json.files) {
+      showToast('✅ Attachment uploaded successfully!');
+      const gallery = document.getElementById('ptaModalDocsGallery');
+      const noDocsMsg = document.getElementById('ptaNoDocsMsg');
+      if (noDocsMsg) noDocsMsg.remove();
+
+      r.docs = r.docs || [];
+      json.files.forEach(f => {
+        r.docs.push(f);
+        const src = '/' + (f.file_path || '').replace(/^\//, '');
+        const card = document.createElement('div');
+        card.id = `pta-doc-card-${f.id}`;
+        card.style.cssText = 'border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative';
+        card.innerHTML = `
+          <button type="button" onclick="deletePtaModalDoc(${f.id})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
+          <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${f.caption||'View photo'}"/>
+          <div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.caption || 'Attached photo'}</div>`;
+        gallery.appendChild(card);
+      });
+
+      const countEl = document.getElementById('ptaDocCount');
+      if (countEl) countEl.textContent = r.docs.length;
+    } else {
+      showToast('❌ Upload failed: ' + (json.error || 'Unknown error'));
+    }
+  } catch(e) {
+    showToast('❌ Upload failed.');
+  } finally {
+    input.value = '';
+  }
+};
+
+window.deletePtaModalDoc = async function(docId) {
+  if (!confirm('Are you sure you want to delete this attachment?')) return;
+  if (currentEditSubIdx < 0) return;
+  const r = cachedSubRows[currentEditSubIdx];
+
+  try {
+    const res = await fetch('/api/cmi/tables/delete-doc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: docId, doc_id: docId, cmi_user_id: r.cmi_user_id })
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast('✅ Attachment deleted.');
+      const card = document.getElementById(`pta-doc-card-${docId}`);
+      if (card) card.remove();
+
+      r.docs = (r.docs || []).filter(d => d.id !== docId);
+      const countEl = document.getElementById('ptaDocCount');
+      if (countEl) countEl.textContent = r.docs.length;
+
+      const gallery = document.getElementById('ptaModalDocsGallery');
+      if (gallery && gallery.children.length === 0) {
+        gallery.innerHTML = '<div id="ptaNoDocsMsg" style="font-size:12.5px;color:#9ca3af;font-style:italic">No attachments uploaded yet. Use the button above to add document photos or files.</div>';
+      }
+    } else {
+      showToast('❌ Delete failed: ' + (json.error || 'Unknown error'));
+    }
+  } catch(e) {
+    showToast('❌ Delete failed.');
+  }
 };
 
 window.addPtaEditRow = function() {

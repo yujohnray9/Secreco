@@ -18,35 +18,48 @@ class TableController extends Controller
 {
     public function load(Request $request): JsonResponse
     {
-        $userId        = Auth::id() ?? session('user_id');
+        $cmiParam      = $request->input('cmi_user_id');
+        $userId        = $cmiParam ? (int) $cmiParam : (Auth::id() ?? session('user_id'));
         $reportingYear = (int) ($request->input('year') ?? date('Y'));
-        $tableNo       = preg_replace('/[^A-Za-z0-9]/', '', $request->input('table_no', ''));
+        $tableNo       = preg_replace('/[^A-Za-z0-9]/', '', $request->input('table_no') ?? 'T1');
 
         if (!$tableNo) {
             return response()->json(['error' => 'Missing table_no']);
         }
 
-        // Load from this user's record first; fall back to best institution-mate record.
-        $row = ReportTable::where('user_id', $userId)
+        // Load from all users belonging to this institution, picking the best/newest filled record.
+        $mateIds  = $this->getInstMateIds($userId);
+        $allIds   = array_merge([$userId], $mateIds);
+
+        $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'draft' => 2, 'not-started' => 0];
+        $allRows  = ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->where('table_no', $tableNo)
-            ->first();
+            ->get();
 
-        if (!$row) {
-            // Try institution-mates (another account in the same institution may have filled this)
-            $mateIds = $this->getInstMateIds($userId);
-            if (!empty($mateIds)) {
-                $priority = ['accepted' => 4, 'done' => 3, 'draft' => 2, 'not-started' => 0];
-                $best = null;
-                foreach (ReportTable::whereIn('user_id', $mateIds)
-                    ->where('reporting_year', $reportingYear)
-                    ->where('table_no', $tableNo)
-                    ->get() as $r) {
-                    if (!$best || ($priority[$r->status] ?? 0) > ($priority[$best->status] ?? 0)) {
-                        $best = $r;
+        $row = null;
+        foreach ($allRows as $r) {
+            if (!$row) {
+                $row = $r;
+                continue;
+            }
+            $pCurrent = $priority[$r->status] ?? 0;
+            $pBest    = $priority[$row->status] ?? 0;
+
+            if ($pCurrent > $pBest) {
+                $row = $r;
+            } elseif ($pCurrent === $pBest) {
+                $cCurrent = $this->hasContent($r->meta_json, $r->rows_json);
+                $cBest    = $this->hasContent($row->meta_json, $row->rows_json);
+                if ($cCurrent && !$cBest) {
+                    $row = $r;
+                } elseif ($cCurrent === $cBest) {
+                    $tCurrent = $r->updated_at ? strtotime((string)$r->updated_at) : 0;
+                    $tBest    = $row->updated_at ? strtotime((string)$row->updated_at) : 0;
+                    if ($tCurrent > $tBest) {
+                        $row = $r;
                     }
                 }
-                $row = $best;
             }
         }
 
@@ -90,7 +103,8 @@ class TableController extends Controller
             return response()->json(['error' => 'Invalid JSON']);
         }
 
-        $userId        = Auth::id() ?? session('user_id');
+        $cmiParam      = $body['cmi_user_id'] ?? $request->input('cmi_user_id');
+        $userId        = $cmiParam ? (int) $cmiParam : (Auth::id() ?? session('user_id'));
         $reportingYear = (int) ($body['year'] ?? date('Y'));
         $tableNo       = preg_replace('/[^A-Za-z0-9]/', '', $body['table_no'] ?? '');
         $meta          = $body['meta'] ?? new \stdClass();
@@ -181,16 +195,22 @@ class TableController extends Controller
 
     public function statuses(Request $request): JsonResponse
     {
-        $userId        = Auth::id() ?? session('user_id');
+        $cmiParam      = $request->input('cmi_user_id');
+        $userId        = $cmiParam ? (int) $cmiParam : (Auth::id() ?? session('user_id'));
         $reportingYear = (int) ($request->input('year') ?? date('Y'));
 
-        $submission = ReportSubmission::where('user_id', $userId)
+        $mateIds = $this->getInstMateIds($userId);
+        $allIds  = array_merge([$userId], $mateIds);
+
+        // Only lock the current user's own form if THEY personally submitted.
+        // Institution-mate submissions should NOT lock other users' forms.
+        $ownSubmission = ReportSubmission::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
             ->orderByDesc('submitted_at')
             ->first();
 
-        $isSubmitted = (bool) $submission;
-        $submittedAt = $submission?->submitted_at ? $submission->submitted_at->toDateTimeString() : null;
+        $isSubmitted = (bool) $ownSubmission;
+        $submittedAt = $ownSubmission?->submitted_at ? $ownSubmission->submitted_at->toDateTimeString() : null;
 
         if ($submittedAt) {
             $dt = new DateTime($submittedAt, new DateTimeZone('Asia/Manila'));
@@ -198,11 +218,11 @@ class TableController extends Controller
         }
 
         $submittedTables = [];
-        if ($submission && !empty($submission->snapshot_json)) {
-            $snap = $submission->snapshot_json;
+        if ($ownSubmission && !empty($ownSubmission->snapshot_json)) {
+            $snap = $ownSubmission->snapshot_json;
             if (is_array($snap)) {
                 foreach ($snap as $no => $data) {
-                    if (isset($data['status']) && $data['status'] === 'done') {
+                    if (isset($data['status']) && in_array($data['status'], ['done', 'submitted', 'accepted'], true)) {
                         $submittedTables[] = $no;
                     }
                 }
@@ -210,10 +230,8 @@ class TableController extends Controller
         }
 
         // Build statuses from this user's records, merged with institution-mate records.
-        // Higher-priority status wins: accepted > done > draft > not-started.
-        $priority = ['accepted' => 4, 'done' => 3, 'draft' => 2, 'not-started' => 0];
-        $mateIds  = $this->getInstMateIds($userId);
-        $allIds   = array_merge([$userId], $mateIds);
+        // Higher-priority status wins: accepted > done/submitted > draft > not-started.
+        $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'draft' => 2, 'not-started' => 0];
 
         $allRows = ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
@@ -241,7 +259,8 @@ class TableController extends Controller
 
     public function uploadDoc(Request $request): JsonResponse
     {
-        $userId = Auth::id() ?? session('user_id');
+        $cmiParam = $request->input('cmi_user_id');
+        $userId   = $cmiParam ? (int) $cmiParam : (Auth::id() ?? session('user_id'));
 
         // Case 1: Caption update call (doc_id + caption)
         if ($request->has('doc_id') && $request->has('caption')) {
@@ -324,14 +343,15 @@ class TableController extends Controller
 
     public function deleteDoc(Request $request): JsonResponse
     {
-        $docId  = (int) ($request->input('doc_id') ?? $request->input('id') ?? 0);
-        $userId = Auth::id() ?? session('user_id');
+        $docId    = (int) ($request->input('doc_id') ?? $request->input('id') ?? 0);
+        $cmiParam = $request->input('cmi_user_id');
+        $userId   = $cmiParam ? (int) $cmiParam : (Auth::id() ?? session('user_id'));
 
         if ($docId <= 0) {
             return response()->json(['success' => false, 'error' => 'Invalid doc_id']);
         }
 
-        $doc = ReportTableDoc::where('id', $docId)->where('user_id', $userId)->first();
+        $doc = ReportTableDoc::where('id', $docId)->first();
         if ($doc) {
             $doc->delete();
         }

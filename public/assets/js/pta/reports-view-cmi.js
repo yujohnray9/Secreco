@@ -54,7 +54,7 @@ async function renderCMIAllTables(institution) {
       const cmiUserId = cmi?.cmi_user_id || cmi?.user_id || '';
       let actionHtml = '';
       if (rowCount > 0 && cmi) {
-        actionHtml = `<button class="btn btn-xs" onclick='viewCMIRows(${JSON.stringify(cmi)})'>Quick View</button>
+        actionHtml = `
         <a href="/dashboard/cmi/fillup?cmi_user_id=${cmiUserId}&year=${year}&table=${key}" class="btn btn-xs" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-left:4px;">
           ✏️ Fill Up / Edit
         </a>`;

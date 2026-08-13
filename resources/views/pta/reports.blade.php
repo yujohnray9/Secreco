@@ -57,9 +57,7 @@
     </div>
 
     <select class="filter-select" id="rptYearFilter">
-      @for($y = date('Y'); $y >= 2020; $y--)
-        <option value="{{ $y }}" {{ $y == date('Y') ? 'selected' : '' }}>CY {{ $y }}</option>
-      @endfor
+      <option value="">Loading...</option>
     </select>
 
     <!-- Per Table filters -->

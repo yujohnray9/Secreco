@@ -140,7 +140,7 @@
         renumber();
         _images = (data.meta && data.meta.images) ? data.meta.images : [];
         updateBadge();
-        const status = computeStatus(rows);
+        const status = data.status || computeStatus(rows);
         updateStatusBadge(status);
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })

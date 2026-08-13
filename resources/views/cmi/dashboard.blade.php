@@ -118,13 +118,23 @@ document.addEventListener('DOMContentLoaded', async function () {
     const json = await res.json();
 
     if (json.stats) {
-      document.getElementById('statComplete').textContent = json.stats.complete || '1';
-      document.getElementById('statDraft').textContent = json.stats.draft || '1';
-      document.getElementById('statNotStarted').textContent = json.stats.notStarted || '18';
-      document.getElementById('statCorrection').textContent = json.stats.correction || '0';
+      document.getElementById('statComplete').textContent    = json.stats.complete    ?? 0;
+      document.getElementById('statDraft').textContent       = json.stats.draft       ?? 0;
+      document.getElementById('statNotStarted').textContent  = json.stats.notStarted  ?? 0;
+      document.getElementById('statCorrection').textContent  = json.stats.correction  ?? 0;
       if (document.getElementById('statCorrectionMeta')) {
         document.getElementById('statCorrectionMeta').textContent = json.stats.correctionMeta || 'Check remarks';
       }
+
+      // Update 'of X required tables' dynamically
+      const subEl = document.querySelector('.sc-fc-sub');
+      if (subEl && json.stats.totalRequired) subEl.textContent = 'of ' + json.stats.totalRequired + ' required tables';
+
+      // Update % badge dynamically
+      const total = json.stats.totalRequired || 1;
+      const pct   = Math.round(((json.stats.complete || 0) / total) * 100);
+      const badge = document.querySelector('.sc-fc-badge.up');
+      if (badge) badge.textContent = '↑ ' + pct + '%';
     }
 
     if (json.sectionProgress) {
@@ -165,13 +175,8 @@ document.addEventListener('DOMContentLoaded', async function () {
       `).join('');
     } else {
       document.getElementById('recentActivity').innerHTML = `
-        <div style="padding:12px 0;border-bottom:1px solid #f3f4f6;font-size:13px;color:#374151">
-          <div>Saved draft for Table 1 (R&D Projects)</div>
-          <div style="color:#9ca3af;font-size:11px;margin-top:2px">Today at 10:15 AM</div>
-        </div>
-        <div style="padding:12px 0;border-bottom:1px solid #f3f4f6;font-size:13px;color:#374151">
-          <div>Logged in to SecReCo CMI Portal</div>
-          <div style="color:#9ca3af;font-size:11px;margin-top:2px">Yesterday at 2:30 PM</div>
+        <div style="padding:24px 0;text-align:center;color:#9ca3af;font-size:13px">
+          No recent activity yet. Start by filling up your first table.
         </div>
       `;
     }

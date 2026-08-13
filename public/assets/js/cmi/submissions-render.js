@@ -52,14 +52,15 @@
 
       const sectionRows = [];
       section.tables.forEach(t => {
-        if (window.SubState.statuses[t.no] !== 'accepted') return;
+        const st = window.SubState.statuses[t.no];
+        if (!st || !['accepted', 'done', 'submitted', 'returned'].includes(st)) return;
         if (searchTerm && !(
           t.no.toLowerCase().includes(searchTerm) ||
           t.title.toLowerCase().includes(searchTerm)
         )) return;
 
         totalSubmitted++;
-        sectionRows.push(renderRow(t));
+        sectionRows.push(renderRow(t, st));
       });
 
       if (sectionRows.length) {
@@ -104,14 +105,21 @@
   }
 
   /* ── Single data row ── */
-  function renderRow(t) {
+  function renderRow(t, st) {
     const meta = window.SubState.meta[t.no] || {};
     const upd  = meta.updated_at ? formatDate(meta.updated_at) : '—';
+    const statusBadgeMap = {
+      accepted: '<span class="badge" style="background:#ecfdf5;color:#0d9488;font-weight:600;font-size:11.5px">Accepted</span>',
+      returned: '<span class="badge" style="background:#f5f3ff;color:#7c3aed;font-weight:600;font-size:11.5px">Returned</span>',
+      submitted: '<span class="badge badge-green" style="font-size:11.5px">Submitted</span>',
+      done: '<span class="badge badge-green" style="font-size:11.5px">Submitted</span>',
+    };
+    const badgeHtml = statusBadgeMap[st] || '<span class="badge badge-green" style="font-size:11.5px">Submitted</span>';
     return `
       <tr id="sub-row-${t.no}">
         <td style="font-weight:600;white-space:nowrap">${t.no}</td>
         <td style="font-size:13px">${t.title}</td>
-        <td><span class="badge badge-green" style="font-size:11.5px">Submitted</span></td>
+        <td>${badgeHtml}</td>
         <td style="font-size:12px;color:var(--text-muted);white-space:nowrap">${upd}</td>
         <td>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">

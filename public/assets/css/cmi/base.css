@@ -165,6 +165,7 @@ table.merged td.not-submitted{color:var(--text-muted);font-style:italic;backgrou
 .badge-blue{background:var(--info-light);color:var(--info)}
 .badge-gray{background:#f0f0f0;color:var(--text-light)}
 .badge-gold{background:var(--yellow-light);color:#8a6a1f}
+.badge-purple{background:#f5f3ff;color:#7c3aed}
 
 /* ── NOTIF ITEMS ── */
 .notif-item{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
@@ -234,7 +235,7 @@ table.merged td.not-submitted{color:var(--text-muted);font-style:italic;backgrou
   border-bottom:1px solid #f0f0f0;transition:background .15s
 }
 .fill-nav-sub:hover{background:#eef6ee;color:var(--green)}
-.fill-nav-sub.done{color:var(--success)}
+.fill-nav-sub.done,.fill-nav-sub.submitted,.fill-nav-sub.accepted{color:var(--success)}
 .fill-nav-sub.draft{color:var(--warning)}
 .fill-nav-sub.error{color:var(--danger)}
 .fill-nav-sub.not-started{color:var(--text-muted)}

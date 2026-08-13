@@ -210,8 +210,8 @@
         _images = (data.meta && data.meta.images) ? data.meta.images : [];
         updateBadge();
 
-        // status (auto-derived from the rows just loaded)
-        const status = computeStatus(rows);
+        // status (use server status if provided, else auto-derive)
+        const status = data.status || computeStatus(rows);
         updateStatusBadge(status);
         if (data.updated_at) {
           setMsg(`Last saved: ${data.updated_at}`);

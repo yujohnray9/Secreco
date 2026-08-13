@@ -33,12 +33,12 @@ class DatabaseSeeder extends Seeder
         );
         
         $cmiUsers = [
-            ['email' => 'cmi@secreco.ph',   'first_name' => 'Maria',    'last_name' => 'Santos',     'institution' => 'Isabela State University - Echague', 'designation' => 'Research Coordinator'],
-            ['email' => 'cmi2@secreco.ph',  'first_name' => 'Juan',     'last_name' => 'Dela Cruz',  'institution' => 'Cagayan State University',           'designation' => 'CMI Representative'],
-            ['email' => 'cmi3@secreco.ph',  'first_name' => 'Ana',      'last_name' => 'Reyes',      'institution' => 'Nueva Vizcaya State University',     'designation' => 'Science Research Analyst'],
-            ['email' => 'cmi4@secreco.ph',  'first_name' => 'Pedro',    'last_name' => 'Bautista',   'institution' => 'Quirino State University',           'designation' => 'Research Staff'],
-            ['email' => 'cmi5@secreco.ph',  'first_name' => 'Carla',    'last_name' => 'Mendoza',    'institution' => 'Batanes State College',              'designation' => 'Faculty Researcher'],
-            ['email' => 'cmi6@secreco.ph',  'first_name' => 'Roberto',  'last_name' => 'Garcia',     'institution' => 'NVSU - Bayombong',                   'designation' => 'Administrative Officer'],
+            ['email' => 'cmi@gmail.com',   'first_name' => 'Maria',    'last_name' => 'Santos',     'institution' => 'Isabela State University - Echague', 'designation' => 'Research Coordinator'],
+            ['email' => 'cmi2@gmail.com',  'first_name' => 'Juan',     'last_name' => 'Dela Cruz',  'institution' => 'Cagayan State University',           'designation' => 'CMI Representative'],
+            ['email' => 'cmi3@gmail.com',  'first_name' => 'Ana',      'last_name' => 'Reyes',      'institution' => 'Nueva Vizcaya State University',     'designation' => 'Science Research Analyst'],
+            ['email' => 'cmi4@gmail.com',  'first_name' => 'Pedro',    'last_name' => 'Bautista',   'institution' => 'Quirino State University',           'designation' => 'Research Staff'],
+            ['email' => 'cmi5@gmail.com',  'first_name' => 'Carla',    'last_name' => 'Mendoza',    'institution' => 'Batanes State College',              'designation' => 'Faculty Researcher'],
+            ['email' => 'cmi6@gmail.com',  'first_name' => 'Roberto',  'last_name' => 'Garcia',     'institution' => 'NVSU - Bayombong',                   'designation' => 'Administrative Officer'],
         ];
 
         $createdCmiUsers = [];

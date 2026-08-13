@@ -38,7 +38,7 @@ async function loadTableView() {
   const year = getYear();
   const def  = TABLE_DEFS[key];
 
-  el('tableCardTitle').textContent = (def?.label ?? key) + ', CY ' + year;
+  el('tableCardTitle').textContent = def?.label ?? key;
   el('rptSubtitle').textContent    = 'Consolidated Annual Accomplishment Report — CY ' + year;
   el('tableContainer').innerHTML   = '<div class="loading-state">⏳ Loading...</div>';
   closeWordPreview();

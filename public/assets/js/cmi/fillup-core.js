@@ -56,6 +56,8 @@
 
     const STATUS_ICON = {
         done: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',
+        submitted: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',
+        accepted: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',
         draft: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
         error: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
         "not-started":
@@ -120,7 +122,7 @@
         const nav = document.getElementById("fillNav");
         if (!nav) return;
 
-        const VALID = new Set(["done", "draft", "error", "not-started"]);
+        const VALID = new Set(["done", "submitted", "accepted", "draft", "error", "not-started"]);
 
         nav.innerHTML = SECTIONS.map((s) => {
             const items = s.tables
@@ -167,7 +169,8 @@
         def.render(body);
 
         if (_isSubmitted && _submittedTables.includes(no)) {
-            applyLock(no);
+            // Defer lock until after async table loadData() completes
+            setTimeout(() => applyLock(no), 600);
         }
     };
 
@@ -361,7 +364,7 @@
         }
 
         const allNos = Object.keys(TABLE_TITLES);
-        const done = allNos.filter((n) => _status[n] === "done").length;
+        const done = allNos.filter((n) => ['done', 'accepted', 'submitted'].includes(_status[n])).length;
         const draft = allNos.filter((n) => _status[n] === "draft").length;
         const blank = allNos.filter(
             (n) => !_status[n] || _status[n] === "not-started",
@@ -470,14 +473,17 @@
         if (btnSubmit) btnSubmit.addEventListener("click", CMI.submitReport);
 
         const year = window.CMI_REPORTING_YEAR || new Date().getFullYear();
-        fetch("/api/cmi/tables/statuses?year=" + year)
+        const params = new URLSearchParams(window.location.search);
+        const cmiUserId = params.get("cmi_user_id") || "";
+        const cmiQuery = cmiUserId ? "&cmi_user_id=" + encodeURIComponent(cmiUserId) : "";
+
+        fetch("/api/cmi/tables/statuses?year=" + year + cmiQuery)
             .then((r) => r.json())
             .then((data) => {
                 if (data) CMI.setStatuses(data.statuses || {}, data);
             })
             .catch(() => {})
             .finally(() => {
-                const params = new URLSearchParams(window.location.search);
                 const initialTable = (params.get("table") || params.get("t") || "T1").toUpperCase();
                 CMI.showTable(initialTable);
             });

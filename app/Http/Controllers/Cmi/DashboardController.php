@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cmi;
 use App\Http\Controllers\Controller;
 use App\Models\ReportTable;
 use App\Models\Submission;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,13 +35,32 @@ class DashboardController extends Controller
         $totalRequired = count($allTableKeys);
 
         $userId = Auth::id() ?? session('user_id');
-        $rows = ReportTable::where('user_id', $userId)
+
+        // Get institution-mate IDs (CMI users with the same institution)
+        $me = User::find($userId);
+        $mateIds = [];
+        if ($me && !empty(trim((string) $me->institution))) {
+            $mateIds = User::where('institution', $me->institution)
+                ->where('id', '!=', $userId)
+                ->where('role', '!=', 'pta')
+                ->pluck('id')
+                ->toArray();
+        }
+        $allUserIds = array_merge([$userId], $mateIds);
+
+        // Build a merged tableMap: best status across all institution users
+        $priority = ['accepted' => 4, 'done' => 3, 'draft' => 2, 'not-started' => 0];
+        $allRows  = ReportTable::whereIn('user_id', $allUserIds)
             ->where('reporting_year', $reportingYear)
-            ->get(['table_no', 'status', 'updated_at']);
+            ->get(['user_id', 'table_no', 'status', 'updated_at']);
 
         $tableMap = [];
-        foreach ($rows as $row) {
-            $tableMap[strtoupper($row->table_no)] = $row->toArray();
+        foreach ($allRows as $row) {
+            $key = strtoupper($row->table_no);
+            $cur = $tableMap[$key]['status'] ?? 'not-started';
+            if (($priority[$row->status] ?? 0) >= ($priority[$cur] ?? 0)) {
+                $tableMap[$key] = $row->toArray();
+            }
         }
 
         $complete   = 0;
@@ -49,7 +69,7 @@ class DashboardController extends Controller
 
         foreach ($allTableKeys as $t) {
             $status = $tableMap[$t]['status'] ?? 'not-started';
-            if ($status === 'done') {
+            if ($status === 'done' || $status === 'accepted') {
                 $complete++;
             } elseif ($status === 'draft') {
                 $draft++;

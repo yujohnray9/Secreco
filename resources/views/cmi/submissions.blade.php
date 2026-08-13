@@ -42,9 +42,7 @@
     <div id="submissions-summary"></div>
     <input class="search-input" id="subSearch" placeholder="Search table number or title..."/>
     <select class="filter-select" id="subYearFilter">
-      @for($y = date('Y'); $y >= 2020; $y--)
-        <option value="{{ $y }}" {{ date('Y') == $y ? 'selected' : '' }}>CY {{ $y }}</option>
-      @endfor
+      <option value="">Loading...</option>
     </select>
     <select class="filter-select" id="subSectionFilter">
       <option value="">All Sections</option>

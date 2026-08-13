@@ -23,7 +23,7 @@ function renderT2a(data) {
   data.forEach(cmi => {
     const s = cmi.table_status;
 
-    if (s === 'done' || s === 'submitted') {
+    if (s === 'done' || s === 'submitted' || s === 'accepted') {
       const meta  = cmi.meta || {};
       const date  = meta.date  || '—';
       const venue = meta.venue || '—';

@@ -34,7 +34,7 @@
 
     // Compute summary counts before building rows
     const total         = SECTIONS.reduce((n, s) => n + s.tables.length, 0);
-    const done          = Object.values(statuses).filter(s => s === 'done').length;
+    const done          = Object.values(statuses).filter(s => ['done', 'submitted', 'accepted'].includes(s)).length;
     const draft         = Object.values(statuses).filter(s => s === 'draft').length;
     const errors        = Object.values(statuses).filter(s => s === 'error').length;
     // "Not Started" = tables with no row yet + rows saved as 'not-started'
@@ -70,9 +70,9 @@
     const cfg = STATUS_CFG[st] || STATUS_CFG['not-started'];
     const upd = updatedAt[t.no] ? formatDate(updatedAt[t.no]) : '—';
 
-    // Completed tables live in My Submissions — send user there (highlighted)
-    // instead of back into the fillup form.
-    const href = (st === 'done')
+    // Completed/submitted/accepted/returned tables live in My Submissions
+    const SUBMISSIONS_STATUSES = ['done', 'submitted', 'accepted', 'returned'];
+    const href = SUBMISSIONS_STATUSES.includes(st)
       ? `${SUBMISSIONS_URL}?t=${t.no}`
       : `${FILLUP_URL}?t=${t.no}`;
 

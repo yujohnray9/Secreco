@@ -26,9 +26,7 @@
       <div style="display:flex;align-items:center;gap:8px">
         <label style="font-size:13px;font-weight:600;color:#374151">Year:</label>
         <select id="fillupYearSel" style="border:1px solid #d1d5db;border-radius:8px;padding:7px 14px;font-size:13px;color:#374151;background:#fff;cursor:pointer;outline:none;">
-          @for($y = date('Y'); $y >= 2020; $y--)
-            <option value="{{ $y }}" {{ date('Y') == $y ? 'selected' : '' }}>CY {{ $y }}</option>
-          @endfor
+          <option value="">Loading...</option>
         </select>
       </div>
       <button class="btn-submit-report" id="btn-save-draft" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
@@ -99,7 +97,11 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(r => r.json())
       .then(data => {
         if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
-          const activeYr = data.active_year || window.CMI_REPORTING_YEAR || new Date().getFullYear();
+          // Prefer URL param year, then active_year from API
+          const preferredYr = window.CMI_REPORTING_YEAR;
+          const activeYr = (preferredYr && data.years.includes(preferredYr))
+            ? preferredYr
+            : (data.active_year || data.years[0]);
           window.CMI_REPORTING_YEAR = activeYr;
           yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
           if (subtitle) subtitle.textContent = 'CY ' + activeYr + ' Annual Accomplishment Report — All Sections & Tables';

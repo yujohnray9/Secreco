@@ -20,15 +20,13 @@
   <div class="pg-filter-row">
     <label style="font-size:13px;font-weight:600;color:#374151">Year:</label>
     <select class="filter-select" id="draftsYearSel">
-      @for($y = date('Y'); $y >= 2020; $y--)
-        <option value="{{ $y }}" {{ date('Y') == $y ? 'selected' : '' }}>CY {{ $y }}</option>
-      @endfor
+      <option value="">Loading...</option>
     </select>
   </div>
 
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title">Draft Tables — <span id="draftsYearLabel">CY {{ date('Y') }}</span></div>
+      <div class="card-title">Draft Tables — <span id="draftsYearLabel">...</span></div>
     </div>
     <div class="tbl-wrap">
       <table class="dt" id="draftsTable">
@@ -91,6 +89,21 @@ async function loadDrafts() {
 }
 
 document.getElementById('draftsYearSel').addEventListener('change', loadDrafts);
-document.addEventListener('DOMContentLoaded', loadDrafts);
+document.addEventListener('DOMContentLoaded', function() {
+  // Populate year dropdown from Manage Format activated years
+  fetch('/api/formats')
+    .then(r => r.json())
+    .then(data => {
+      const sel = document.getElementById('draftsYearSel');
+      if (sel && data && data.years && data.years.length > 0) {
+        const activeYr = data.active_year || data.years[0];
+        sel.innerHTML = data.years.map(y =>
+          `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`
+        ).join('');
+      }
+    })
+    .catch(() => {})
+    .finally(() => loadDrafts());
+});
 </script>
 @endsection

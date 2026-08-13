@@ -102,7 +102,7 @@ class SubmissionController extends Controller
                 $foundTr = null;
                 $foundUser = $primaryUser;
 
-                $statusPriority = ['accepted' => 4, 'returned' => 3, 'done' => 2, 'submitted' => 2, 'draft' => 1, 'not-started' => 0];
+                $statusPriority = ['accepted' => 4, 'done' => 4, 'submitted' => 4, 'returned' => 3, 'draft' => 2, 'not-started' => 0];
 
                 foreach ($instUsers as $u) {
                     $key = $u->id . '_' . $tNo;
