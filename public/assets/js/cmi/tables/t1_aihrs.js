@@ -68,7 +68,7 @@
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       
         <button class="btn t-docs-btn" onclick="T1.openDocs()">
-          📎 Documentation <span id="t1_docs_count" class="t-docs-badge" style="display:none">0</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documentation <span id="t1_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
         <span id="t1_status_badge" style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:10px;display:none"></span>
         <span id="t1_status_msg" style="font-size:12px;color:var(--text-muted)"></span>
@@ -95,7 +95,7 @@
     `;
     if (removable) {
       tr.querySelector('.t1-total-cell').insertAdjacentHTML('afterend',
-        `<td style="text-align:center"><button class="row-remove-btn" onclick="this.closest('tr').remove();T1._recalcAll()">🗑</button></td>`);
+        `<td style="text-align:center"><button class="row-remove-btn" onclick="this.closest('tr').remove();T1._recalcAll()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td>`);
       // add extra th if needed (done via CSS: hide last th for non-removable rows)
     }
     // auto-calc on input
@@ -124,14 +124,14 @@
   ───────────────────────────────────────── */
   function collectRows() {
     return [...document.querySelectorAll('#t1_rows tr')].map(tr => {
-      const inp = [...tr.querySelectorAll('input[type=text],input[type=number]')];
+      const nums = tr.querySelectorAll('.t1-num');
       return {
-        date:       inp[0]?.value || '',
-        agency:     inp[1]?.value || '',
-        new_:       inp[2]?.value || '',
-        ongoing:    inp[3]?.value || '',
-        completed:  inp[4]?.value || '',
-        terminated: inp[5]?.value || '',
+        date:       tr.querySelector('.t1-date')?.value || '',
+        agency:     tr.querySelector('.t1-agency')?.value || '',
+        new_:       nums[0]?.value || '',
+        ongoing:    nums[1]?.value || '',
+        completed:  nums[2]?.value || '',
+        terminated: nums[3]?.value || '',
       };
     });
   }
@@ -261,9 +261,9 @@
     .then(res => {
       if (res.success) {
         const msgs = {
-          'done':        '✅ Table 1 saved — all rows complete!',
-          'draft':       '💾 Table 1 saved — some rows still need a date and at least one count.',
-          'not-started': '💾 Table 1 saved.',
+          'done':        'Table 1 saved — all rows complete!',
+          'draft':       'Table 1 saved — some rows still need a date and at least one count.',
+          'not-started': 'Table 1 saved.',
         };
         toast(msgs[status] || msgs['not-started']);
         setMsg(`Saved · ${new Date().toLocaleTimeString()}`);

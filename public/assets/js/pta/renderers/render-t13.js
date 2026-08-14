@@ -14,14 +14,12 @@ function renderT13(data) {
     const badge    = STATUS_BADGE[cmi.table_status] ?? STATUS_BADGE['not-started'];
     const docsHtml = renderDocsSection(cmi.docs);
     const rows = cmi.rows || [];
-    const touched = rows.filter(r => (r.remarks || '').trim() !== '').length;
 
     out += `
       <div class="rpt-cmi-block" style="margin-bottom:18px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
           <strong>${esc(cmi.institution)}</strong>
-          ${badge}
-          <span style="font-size:11px;color:var(--text-muted)">${touched} of ${rows.length || 6} with remarks · Last updated: ${esc(cmi.updated_at ?? '—')}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${rows.length} item(s) · Last updated: ${esc(cmi.updated_at ?? '—')}</span>
         </div>
         ${docsHtml || ''}
         ${rows.length ? `

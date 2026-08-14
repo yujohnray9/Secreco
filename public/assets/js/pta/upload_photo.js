@@ -104,7 +104,7 @@ async function uploadCroppedPhoto(blob) {
 // ── REMOVE PHOTO ──
 function confirmRemovePhoto(e) {
   e.preventDefault();
-  showConfirm('🗑 Remove Photo', 'Remove your profile photo? This will reset it to the default avatar.', removePhoto);
+  showConfirm('Remove Photo', 'Remove your profile photo? This will reset it to the default avatar.', removePhoto);
 }
 
 async function removePhoto() {

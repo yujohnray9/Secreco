@@ -187,7 +187,7 @@
                   caption  : captionEl ? captionEl.value : '',
                 });
                 renderEditAttachments();
-                _setAttachStatus('✅ Uploaded successfully.', false);
+                _setAttachStatus('Uploaded successfully.', false);
                 setTimeout(() => _setAttachStatus('Optional — only attach if you have a file to add.', false), 3000);
                 return;
               }

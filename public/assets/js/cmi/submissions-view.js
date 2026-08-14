@@ -86,7 +86,7 @@
     const images = Array.isArray(metaData.images) ? metaData.images : [];
     if (images.length) {
       html += '<div class="view-attachments" style="margin-bottom:14px">';
-      html += '<div class="view-meta-label" style="margin-bottom:6px">📎 Attachments</div>';
+      html += '<div class="view-meta-label" style="margin-bottom:6px"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Attachments</div>';
       html += '<div style="display:flex;gap:10px;flex-wrap:wrap">';
       images.forEach(img => {
         const path  = img.file_path || '';

@@ -356,13 +356,6 @@
         });
     }
     CMI.submitReport = function () {
-        // Save current active table open on screen first
-        const active = window._cmiActiveTable || 'T1';
-        const winModule = window[active] || window[active.toUpperCase()] || window[active.toLowerCase()];
-        if (winModule && typeof winModule.save === 'function') {
-            winModule.save('done');
-        }
-
         const allNos = Object.keys(TABLE_TITLES);
         const done = allNos.filter((n) => ['done', 'accepted', 'submitted'].includes(_status[n])).length;
         const draft = allNos.filter((n) => _status[n] === "draft").length;
@@ -426,6 +419,13 @@
             btn.innerHTML = '<span class="btn-spinner"></span> Submitting...';
         }
 
+        // Formally save the active table as 'done' now that user confirmed final submit
+        const active = window._cmiActiveTable || 'T1';
+        const winModule = window[active] || window[active.toUpperCase()] || window[active.toLowerCase()];
+        if (winModule && typeof winModule.save === 'function') {
+            winModule.save('done');
+        }
+
         const yr = window.CMI_REPORTING_YEAR || new Date().getFullYear();
         const allNos = Object.keys(TABLE_TITLES);
 
@@ -441,7 +441,7 @@
             if (wrap) wrap.innerHTML = "";
 
             if (res.success) {
-                toast("✅ Report submitted successfully! It is now pending PTA review.");
+                toast("Report submitted successfully! It is now pending PTA review.");
                 _isSubmitted = true;
                 _submittedAt = res.submitted_at || new Date().toISOString();
                 _submittedTables = allNos.filter((n) => _status[n] === "done" || _status[n] === "draft");

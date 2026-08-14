@@ -17,16 +17,17 @@ function renderDocsSection(docs) {
 
 // ── DOCUMENTATION SECTION (per-CMI block, used by renderT1) ──
 function renderCMIDocsBlock(institution, docs) {
-  const thumbsHtml = docs?.length
-    ? `<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0;">
+  if (!docs?.length) {
+    return '';
+  }
+  const thumbsHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0;">
         ${docs.map(d => {
           const src = d.file_path ? ('/' + d.file_path.replace(/^\//, '')) : '';
           if (!src) return '';
           return `<img src="${src}" width="72" height="72" onerror="this.style.display='none'" onclick="openLightbox('${src}', '${esc(d.caption || '')}')" title="${esc(d.caption || 'View image')}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;display:block;"/>`;
         }).join('')}
       </div>
-      ${docs[0]?.caption ? `<p style="margin:5px 0 0;font-size:8.5pt;font-style:italic;color:#555;font-family:Calibri,Arial,sans-serif;">"${esc(docs[0].caption)}"</p>` : ''}`
-    : `<p style="margin:4px 0 0;font-size:8.5pt;color:#aaa;font-style:italic;font-family:Calibri,Arial,sans-serif;">No attachments submitted.</p>`;
+      ${docs[0]?.caption ? `<p style="margin:5px 0 0;font-size:8.5pt;font-style:italic;color:#555;font-family:Calibri,Arial,sans-serif;">"${esc(docs[0].caption)}"</p>` : ''}`;
 
   return `<div style="margin-bottom:14pt;">
     <p style="margin:0 0 5px;font-size:9pt;font-weight:600;color:#1b4d2e;font-family:Calibri,Arial,sans-serif;">

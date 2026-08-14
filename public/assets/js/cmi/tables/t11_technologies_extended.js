@@ -57,7 +57,7 @@
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn t-docs-btn" onclick="T11.openDocs()">
-          📎 Documentation <span id="t11_docs_count" class="t-docs-badge" style="display:none">0</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documentation <span id="t11_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
         <span id="t11_status_badge" style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:10px;display:none"></span>
         <span id="t11_status_msg" style="font-size:12px;color:var(--text-muted)"></span>
@@ -82,7 +82,7 @@
       <td><input type="text" class="t11-agency"  placeholder="Implementing Agency"   value="${esc(data.agency||'')}"/></td>
       ${modalityCells}
       <td style="text-align:center">
-        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T11._renumber()">🗑</button>` : ''}
+        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T11._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
     `;
     return tr;
@@ -195,9 +195,9 @@
 
     const status = computeStatus(rows);
     const msgs = {
-      'done':        '✅ Table 11 saved — all rows complete!',
-      'draft':       '💾 Table 11 saved — some rows still incomplete.',
-      'not-started': '💾 Table 11 saved.',
+      'done':        'Table 11 saved — all rows complete!',
+      'draft':       'Table 11 saved — some rows still incomplete.',
+      'not-started': 'Table 11 saved.',
     };
 
     setMsg('Saving…');

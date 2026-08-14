@@ -32,7 +32,8 @@
           const activeYr = data.active_year || new Date().getFullYear();
           const yearSel  = document.getElementById('subYearFilter');
           if (yearSel) {
-            yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+            const uniqueYears = [...new Set(data.years.map(Number))].sort((a,b) => b - a);
+            yearSel.innerHTML = uniqueYears.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
             window.SubState.selectedYear = activeYr;
           }
         }

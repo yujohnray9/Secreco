@@ -189,7 +189,7 @@
 
     <!-- Temp password display after creation -->
     <div class="temp-pw-box" id="tempPwBox">
-      <div class="temp-pw-label">✅ User created! Temporary password (share securely):</div>
+      <div class="temp-pw-label">User created! Temporary password (share securely):</div>
       <div class="temp-pw-val" id="tempPwVal"></div>
       <div style="font-size:11px;color:#9ca3af;margin-top:6px">The user must change this password after first login.</div>
     </div>

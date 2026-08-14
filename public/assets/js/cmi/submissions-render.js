@@ -16,18 +16,7 @@
 
   /* ── Populate year filter ── */
   function populateYearFilter() {
-    const sel = document.getElementById('subYearFilter');
-    if (!sel || sel.dataset.populated) return;
-    const currentYear = new Date().getFullYear();
-    const years = [currentYear, currentYear + 1];
-    years.forEach(y => {
-      const opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = 'CY ' + y;
-      if (y === window.SubState.selectedYear) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    sel.dataset.populated = '1';
+    // Year filter is populated dynamically from /api/formats in submissions.js
   }
 
   /* ── Main table render ── */
@@ -123,7 +112,9 @@
         <td style="font-size:12px;color:var(--text-muted);white-space:nowrap">${upd}</td>
         <td>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm btn-outline" data-view-table="${t.no}">👁 View</button>
+            <button class="btn btn-sm btn-outline" data-view-table="${t.no}">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:4px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+            </button>
           </div>
         </td>
       </tr>`;

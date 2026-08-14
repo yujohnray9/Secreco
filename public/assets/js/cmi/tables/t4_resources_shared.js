@@ -100,7 +100,7 @@
       <td><input type="text" class="t4-amount" placeholder="e.g. ₱ 50,000" value="${esc(data.amount||'')}"/></td>
       <td><input type="text" class="t4-remarks" placeholder="Remarks" value="${esc(data.remarks||'')}"/></td>
       <td style="text-align:center">
-        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T4._renumber()">🗑</button>` : ''}
+        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T4._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
     `;
     return tr;
@@ -153,12 +153,19 @@
       });
   }
 
-  function save() {
+  function save(requestedStatus) {
     const rows = collectRows();
     const fields = ['donor', 'activity', 'amount', 'remarks'];
     if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
-    const status = computeStatus(rows);
+    let status = 'draft';
+    if (requestedStatus === 'done') {
+      status = 'done';
+    } else if (requestedStatus === 'draft' || window._cmiSavingDraft) {
+      status = 'draft';
+    } else {
+      status = computeStatus(rows);
+    }
 
     setMsg('Saving…');
     fetch(API_SAVE, {
@@ -170,9 +177,9 @@
     .then(res => {
       if (res.success) {
         const msgs = {
-          done:        '✅ Table 4 saved — all rows complete!',
-          draft:       '💾 Table 4 saved — some rows still need a donor, activity, and amount.',
-          'not-started':'💾 Table 4 saved.',
+          done:        'Table 4 saved — all rows complete!',
+          draft:       'Table 4 saved — some rows still need a donor, activity, and amount.',
+          'not-started':'Table 4 saved.',
         };
         toast(msgs[status] || msgs['not-started']);
         setMsg(`Saved · ${new Date().toLocaleTimeString()}`);

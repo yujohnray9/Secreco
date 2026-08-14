@@ -33,13 +33,6 @@ function renderT1(data) {
       });
 
       docRows += renderCMIDocsBlock(cmi.institution, cmi.docs);
-
-    } else {
-      const label = s === 'not-started' ? 'not yet submitted' : esc(s);
-      pending += `
-        <tr>
-          <td class="not-submitted" colspan="7">${esc(cmi.institution)} — ${label}</td>
-        </tr>`;
     }
   });
 
@@ -70,7 +63,6 @@ function renderT1(data) {
       </thead>
       <tbody>
         ${submitted || '<tr><td colspan="7" class="not-submitted">No submissions yet.</td></tr>'}
-        ${pending}
       </tbody>
     </table>
     ${docsSection}`;

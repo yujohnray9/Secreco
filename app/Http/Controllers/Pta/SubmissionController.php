@@ -139,6 +139,11 @@ class SubmissionController extends Controller
                     continue;
                 }
 
+                // Exclude not-started tables by default unless explicitly filtered
+                if ($st === 'not-started' && $status !== 'not-started') {
+                    continue;
+                }
+
                 $key = $foundUser->id . '_' . $tNo;
                 $submittedAt = ($foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null) ?? ($submissionDates[$foundUser->id] ?? ($foundTr?->created_at ? $foundTr->created_at->toDateTimeString() : null));
 

@@ -77,7 +77,7 @@
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-primary" onclick="T2a.save()">Save</button>
         <button class="btn t-docs-btn" onclick="T2a.openDocs()">
-          📎 Documentation <span id="t2a_docs_count" class="t-docs-badge" style="display:none">0</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documentation <span id="t2a_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
         <span id="t2a_status_badge" style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:10px;display:none"></span>
         <span id="t2a_status_msg" style="font-size:12px;color:var(--text-muted)"></span>
@@ -108,7 +108,7 @@
       <td><input type="text" class="t2a-researcher" placeholder="Researcher(s)" value="${esc(data.researcher||'')}"/></td>
       <td><textarea class="t2a-recommendations" placeholder="Major recommendations" rows="2" style="width:100%;resize:vertical">${esc(data.recommendations||'')}</textarea></td>
       <td><input type="text" class="t2a-winners" placeholder="Winners" value="${esc(data.winners||'')}"/></td>
-      <td style="text-align:center">${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T2a._renumber('${catKey}')">🗑</button>` : ''}</td>
+      <td style="text-align:center">${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T2a._renumber('${catKey}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}</td>
     `;
     return tr;
   }
@@ -259,7 +259,7 @@
   /* ─────────────────────────────────────────
      SAVE
   ───────────────────────────────────────── */
-  function save() {
+  function save(requestedStatus) {
     const rows = collectRows();
     const meta = {
       date:   document.getElementById('t2a_date')?.value  || '',
@@ -271,7 +271,14 @@
     const fields = ['title', 'agency', 'researcher', 'recommendations', 'winners'];
     if (!CMIUtils.guardEmptySave(rows, fields, { date: meta.date, venue: meta.venue })) return;
 
-    const status = computeStatus(rows, meta);
+    let status = 'draft';
+    if (requestedStatus === 'done') {
+      status = 'done';
+    } else if (requestedStatus === 'draft' || window._cmiSavingDraft) {
+      status = 'draft';
+    } else {
+      status = computeStatus(rows, meta);
+    }
 
     const payload = {
       table_no: TABLE_NO,
@@ -290,9 +297,9 @@
     .then(res => {
       if (res.success) {
         const msgs = {
-          done:        '✅ Table 2a saved — all rows complete!',
-          draft:       '💾 Table 2a saved — some entries still need title, agency, researcher, and recommendations.',
-          'not-started':'💾 Table 2a saved.',
+          done:        'Table 2a saved — all rows complete!',
+          draft:       'Table 2a saved — some entries still need title, agency, researcher, and recommendations.',
+          'not-started':'Table 2a saved.',
         };
         toast(msgs[status] || msgs['not-started']);
         setMsg(`Saved · ${new Date().toLocaleTimeString()}`);

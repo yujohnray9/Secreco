@@ -88,7 +88,7 @@ async function approveUser(id, name) {
   pendingUsers = pendingUsers.filter(u => u.id !== id);
   renderPending();
   fetchAllUsers(); // refresh main table
-  toast(`✅ ${name} approved and notified`);
+  toast(`${name} approved and notified`);
 }
 
 async function rejectUser(id, name) {
@@ -227,7 +227,7 @@ async function saveEditUser() {
   filteredUsers = [...allUsers];
   renderUsers();
   closeModal('modalEditUser');
-  toast('✅ User updated successfully!');
+  toast('User updated successfully!');
 }
 
 // ── ADD USER ──
@@ -257,7 +257,7 @@ async function addUser() {
 
   closeModal('modalAddUser');
   fetchAllUsers();
-  toast('✅ User created and invite sent!');
+  toast('User created and invite sent!');
 }
 
 // ── TOGGLE STATUS ──
@@ -266,7 +266,7 @@ function openToggleStatus(id, name, targetStatus) {
   document.getElementById('toggleStatusUserId').value = id;
   document.getElementById('toggleStatusValue').value = targetStatus;
   
-  document.getElementById('toggleStatusTitle').textContent = isDeactivating ? '⚠️ Deactivate User' : '✅ Activate User';
+  document.getElementById('toggleStatusTitle').textContent = isDeactivating ? '⚠️ Deactivate User' : 'Activate User';
   document.getElementById('toggleStatusDesc').textContent = isDeactivating
     ? `Are you sure you want to deactivate ${name}? They will no longer be able to log in.`
     : `Are you sure you want to activate ${name}? They will regain access to the system.`;
@@ -298,7 +298,7 @@ async function toggleUserStatus() {
   renderUsers();
   closeModal('modalToggleStatus');
   
-  toast(isDeactivating ? `🔒 ${u?.name || 'User'} has been deactivated` : `✅ ${u?.name || 'User'} is now active`);
+  toast(isDeactivating ? `🔒 ${u?.name || 'User'} has been deactivated` : `${u?.name || 'User'} is now active`);
 }
 
 // ── BOOT ──

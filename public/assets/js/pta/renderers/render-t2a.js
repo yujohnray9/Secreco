@@ -78,13 +78,6 @@ function renderT2a(data) {
       });
 
       docRows += renderCMIDocsBlock(cmi.institution, cmi.docs);
-
-    } else {
-      const label = s === 'not-started' ? 'not yet submitted' : esc(s);
-      allRows += `
-        <tr>
-          <td class="not-submitted" colspan="6">${esc(cmi.institution)} — ${label}</td>
-        </tr>`;
     }
   });
 

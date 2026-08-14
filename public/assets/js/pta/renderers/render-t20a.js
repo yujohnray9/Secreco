@@ -20,7 +20,6 @@ function renderT20a(data) {
       <div class="rpt-cmi-block" style="margin-bottom:18px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
           <strong>${esc(cmi.institution)}</strong>
-          ${badge}
           <span style="font-size:11px;color:var(--text-muted)">${items.length} item(s) · Last updated: ${esc(cmi.updated_at ?? '—')}</span>
         </div>
         ${docsHtml || ''}

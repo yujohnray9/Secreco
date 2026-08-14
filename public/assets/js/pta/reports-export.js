@@ -552,7 +552,7 @@ async function exportToDOCX(logos = {}) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✅ DOCX downloaded successfully!');
+  toast('DOCX downloaded successfully!');
 }
 
 // ── LEGACY .doc export (kept as fallback) ────────────────────
@@ -602,5 +602,5 @@ function exportToWord(logos = {}) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✅ Word file downloaded!');
+  toast('Word file downloaded!');
 }

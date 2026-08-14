@@ -394,7 +394,7 @@ window.uploadPtaModalDoc = async function(input) {
     });
     const json = await res.json();
     if (json.success && json.files) {
-      showToast('✅ Attachment uploaded successfully!');
+      showToast('Attachment uploaded successfully!');
       const gallery = document.getElementById('ptaModalDocsGallery');
       const noDocsMsg = document.getElementById('ptaNoDocsMsg');
       if (noDocsMsg) noDocsMsg.remove();
@@ -438,7 +438,7 @@ window.deletePtaModalDoc = async function(docId) {
     });
     const json = await res.json();
     if (json.success) {
-      showToast('✅ Attachment deleted.');
+      showToast('Attachment deleted.');
       const card = document.getElementById(`pta-doc-card-${docId}`);
       if (card) card.remove();
 

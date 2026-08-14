@@ -58,33 +58,33 @@ Route::prefix('cmi')->middleware(['auth.custom', 'role:cmi,pta'])->group(functio
 
 /*
 |--------------------------------------------------------------------------
-| PTA Routes (Requires Auth & PTA Role)
+| PTA & Viewer Read-Only Routes (Requires Auth & PTA or Viewer Role)
 |--------------------------------------------------------------------------
 */
-Route::prefix('pta')->middleware(['auth.custom', 'role:pta'])->group(function () {
+Route::prefix('pta')->middleware(['auth.custom', 'role:pta,viewer'])->group(function () {
     Route::get('/dashboard/stats', [PtaDashboardController::class, 'getStats']);
 
     Route::get('/submissions', [PtaSubmissionController::class, 'index']);
-    Route::post('/submissions/accept', [PtaSubmissionController::class, 'accept']);
-    Route::post('/submissions/request-correction', [PtaSubmissionController::class, 'requestCorrection']);
-    Route::post('/submissions/delete', [PtaSubmissionController::class, 'delete']);
-    Route::post('/submissions/update-table', [PtaSubmissionController::class, 'updateTable']);
+    Route::post('/submissions/accept', [PtaSubmissionController::class, 'accept'])->middleware('role:pta');
+    Route::post('/submissions/request-correction', [PtaSubmissionController::class, 'requestCorrection'])->middleware('role:pta');
+    Route::post('/submissions/delete', [PtaSubmissionController::class, 'delete'])->middleware('role:pta');
+    Route::post('/submissions/update-table', [PtaSubmissionController::class, 'updateTable'])->middleware('role:pta');
 
     Route::get('/users', [PtaUserController::class, 'index']);
     Route::get('/users/pending', [PtaUserController::class, 'getPending']);
-    Route::post('/users/create', [PtaUserController::class, 'create']);
-    Route::post('/users/approve', [PtaUserController::class, 'approve']);
-    Route::post('/users/approve-user', [UserApprovalController::class, 'approveUser']);
-    Route::post('/users/toggle-user-status', [UserApprovalController::class, 'toggleUserStatus']);
+    Route::post('/users/create', [PtaUserController::class, 'create'])->middleware('role:pta');
+    Route::post('/users/approve', [PtaUserController::class, 'approve'])->middleware('role:pta');
+    Route::post('/users/approve-user', [UserApprovalController::class, 'approveUser'])->middleware('role:pta');
+    Route::post('/users/toggle-user-status', [UserApprovalController::class, 'toggleUserStatus'])->middleware('role:pta');
 
     Route::get('/institutions', [PtaInstitutionController::class, 'index']);
 
     Route::get('/formats', [PtaFormatController::class, 'index']);
-    Route::post('/formats/save', [PtaFormatController::class, 'save']);
+    Route::post('/formats/save', [PtaFormatController::class, 'save'])->middleware('role:pta');
 
     Route::get('/reports/consolidated', [PtaReportController::class, 'getConsolidated']);
 
-    Route::post('/settings/save', [PtaSettingsController::class, 'saveSettings']);
+    Route::post('/settings/save', [PtaSettingsController::class, 'saveSettings'])->middleware('role:pta');
     Route::get('/settings/audit', [PtaSettingsController::class, 'getAudit']);
 
     Route::post('/profile/upload-photo', [PtaProfileController::class, 'uploadPhoto']);

@@ -48,38 +48,35 @@ table.merged, table.rpt-table, .fc-table, table.dt {
   border-collapse: collapse;
   width: 100%;
   font-family: inherit;
+  margin-bottom: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-table.merged th, table.rpt-table th, .fc-table th, table.dt th {
-  background: #10b981;
-  color: #ffffff;
+table.merged th, table.rpt-table th, .fc-table th, table.dt th,
+table.merged th.group, table.rpt-table th.group, .fc-table th.group, table.dt th.group {
+  background: #10b981 !important;
+  color: #ffffff !important;
   text-align: center;
-  border: 1px solid #059669;
+  border: 1px solid #059669 !important;
   padding: 9px 12px;
   font-size: 12px;
   font-weight: 700;
   vertical-align: middle;
 }
-table.merged th.group, table.rpt-table th.group {
-  background: #10b981;
-  color: #ffffff;
+table.merged th.sub, table.rpt-table th.sub, .fc-table th.sub, table.dt th.sub {
+  background: #ecfdf5 !important;
+  color: #065f46 !important;
   text-align: center;
-  border: 1px solid #059669;
-  padding: 9px 12px;
-  font-size: 12px;
-  font-weight: 700;
-}
-table.merged th.sub, table.rpt-table th.sub {
-  background: #ecfdf5;
-  color: #065f46;
-  text-align: center;
-  border: 1px solid #a7f3d0;
+  border: 1px solid #a7f3d0 !important;
   padding: 7px 10px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
-table.merged td, table.rpt-table td {
+table.merged td, table.rpt-table td, .fc-table td, table.dt td {
   padding: 9px 12px;
   border: 1px solid #e5e7eb;
   font-size: 12px;
@@ -87,10 +84,16 @@ table.merged td, table.rpt-table td {
   text-align: center;
   color: #374151;
 }
-table.merged td:nth-child(2), table.rpt-table td:nth-child(2) {
+table.merged tbody tr:nth-child(even), table.rpt-table tbody tr:nth-child(even), .fc-table tbody tr:nth-child(even), table.dt tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+table.merged tbody tr:hover, table.rpt-table tbody tr:hover, .fc-table tbody tr:hover, table.dt tbody tr:hover {
+  background: #f3f4f6;
+}
+table.merged td:nth-child(2), table.rpt-table td:nth-child(2), .fc-table td:nth-child(2), table.dt td:nth-child(2) {
   text-align: left;
 }
-table.merged td.not-submitted, table.rpt-table td.not-submitted {
+table.merged td.not-submitted, table.rpt-table td.not-submitted, .fc-table td.not-submitted, table.dt td.not-submitted {
   color: var(--text-muted);
   font-style: italic;
   background: #fafafa;

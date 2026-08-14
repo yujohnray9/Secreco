@@ -95,7 +95,7 @@
       <td><input type="text" class="t3-duration" placeholder="e.g. Jan–Dec 2025" value="${esc(data.duration||'')}"/></td>
       <td><input type="text" class="t3-fund" placeholder="e.g. DOST, PCAARRD" value="${esc(data.fund||'')}"/></td>
       <td style="text-align:center">
-        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T3._renumber()">🗑</button>` : ''}
+        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T3._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
     `;
     return tr;
@@ -153,12 +153,19 @@
   }
 
   /* ─── SAVE ─── */
-  function save() {
+  function save(requestedStatus) {
     const rows = collectRows();
-    const fields = ['project', 'status', 'duration', 'fund'];
+    const fields = ['title', 'agency', 'commodity', 'sites', 'status'];
     if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
-    const status = computeStatus(rows);
+    let status = 'draft';
+    if (requestedStatus === 'done') {
+      status = 'done';
+    } else if (requestedStatus === 'draft' || window._cmiSavingDraft) {
+      status = 'draft';
+    } else {
+      status = computeStatus(rows);
+    }
 
     setMsg('Saving…');
     fetch(API_SAVE, {
@@ -170,9 +177,9 @@
     .then(res => {
       if (res.success) {
         const msgs = {
-          done:        '✅ Table 3 saved — all rows complete!',
-          draft:       '💾 Table 3 saved — some rows still need title, status, duration, and fund source.',
-          'not-started':'💾 Table 3 saved.',
+          done:        'Table 3 saved — all rows complete!',
+          draft:       'Table 3 saved — some rows still need title, status, duration, and fund source.',
+          'not-started':'Table 3 saved.',
         };
         toast(msgs[status] || msgs['not-started']);
         setMsg(`Saved · ${new Date().toLocaleTimeString()}`);

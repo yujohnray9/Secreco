@@ -114,7 +114,7 @@
             </tr></thead>
             <tbody>`;
         catRows.forEach((r, i) => {
-          const statusStr = r.approved ? '✅ Approved' : r.for_revision ? '✏️ For Revision' : r.disapproved ? '❌ Disapproved' : '—';
+          const statusStr = r.approved ? 'Approved' : r.for_revision ? '✏️ For Revision' : r.disapproved ? '❌ Disapproved' : '—';
           const statusColor = r.approved ? 'var(--green)' : r.for_revision ? '#b06b00' : r.disapproved ? '#c0392b' : '#777';
           html += `<tr>
             <td style="text-align:center">${i + 1}.</td>

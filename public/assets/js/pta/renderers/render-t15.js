@@ -17,14 +17,13 @@ function renderT15(data) {
     const rows = cmi.rows || [];
     const touched = rows.filter(r =>
       ['item', 'location', 'expense', 'funds'].some(k => (r[k] || '').trim() !== '')
-    ).length;
+    );
 
     out += `
       <div class="rpt-cmi-block" style="margin-bottom:18px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
           <strong>${esc(cmi.institution)}</strong>
-          ${badge}
-          <span style="font-size:11px;color:var(--text-muted)">${touched} of ${rows.length || 5} categories filled · Last updated: ${esc(cmi.updated_at ?? '—')}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${items.length} item(s) · Last updated: ${esc(cmi.updated_at ?? '—')}</span>
         </div>
         ${docsHtml || ''}
         ${rows.length ? `

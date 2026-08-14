@@ -158,7 +158,7 @@ function confirmRemovePhoto(event){
         const removeLink = document.getElementById('removePhotoLink');
         if(removeLink) removeLink.classList.add('hidden');
 
-        toast('✅ Profile photo removed');
+        toast('Profile photo removed');
       } else {
         toast('⚠️ ' + (data.message || 'Failed to remove photo'));
       }

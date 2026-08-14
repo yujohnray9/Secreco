@@ -47,6 +47,24 @@
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </button>
   </div>
+<!-- GLOBAL CONFIRM MODAL -->
+<div class="modal-overlay" id="globalConfirmModal">
+  <div class="modal-fc-box">
+    <div class="modal-fc-icon-wrap type-green" id="gModalIconWrap">
+      <svg id="gModalIcon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="modal-fc-title" id="gModalTitle">Confirmation</div>
+    <div class="modal-fc-desc" id="gModalDesc">Are you sure you want to proceed?</div>
+    <input type="text" class="modal-fc-input" id="gModalInput" style="display:none" placeholder="Enter reason or details..."/>
+    <div class="modal-fc-actions">
+      <button class="modal-fc-btn modal-fc-btn-cancel" onclick="closeGlobalModal()">Cancel</button>
+      <button class="modal-fc-btn modal-fc-btn-green" id="gModalConfirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
 </header>
 
 <script src="/assets/js/pta/core.js?v=3"></script>
@@ -64,6 +82,61 @@ window.showToast = window.toast = window.toast || function(msg) {
     setTimeout(() => t.remove(), 300);
   }, 3500);
 };
+
+let globalConfirmCallback = null;
+
+function closeGlobalModal() {
+  const m = document.getElementById('globalConfirmModal');
+  if (m) m.classList.remove('open');
+  globalConfirmCallback = null;
+}
+
+function showConfirmModal(opts) {
+  const title       = opts.title || 'Confirmation';
+  const desc        = opts.message || 'Are you sure you want to proceed?';
+  const confirmText = opts.confirmText || 'Confirm';
+  const type        = opts.type || 'green';
+  const onConfirm   = opts.onConfirm || null;
+
+  document.getElementById('gModalTitle').textContent = title;
+  document.getElementById('gModalDesc').textContent  = desc;
+  document.getElementById('gModalInput').style.display = 'none';
+
+  const iconWrap = document.getElementById('gModalIconWrap');
+  iconWrap.className = 'modal-fc-icon-wrap type-' + type;
+
+  const btn = document.getElementById('gModalConfirmBtn');
+  btn.className = 'modal-fc-btn modal-fc-btn-' + type;
+  btn.textContent = confirmText;
+
+  const iconSvg = document.getElementById('gModalIcon');
+  if (type === 'green') {
+    iconSvg.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  } else if (type === 'red') {
+    iconSvg.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+  } else if (type === 'orange') {
+    iconSvg.innerHTML = '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
+  } else {
+    iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
+  }
+
+  btn.onclick = async function() {
+    btn.disabled = true;
+    const oldText = confirmText;
+    btn.innerHTML = '<span class="btn-spinner"></span> Processing...';
+    try {
+      if (onConfirm) await onConfirm();
+    } catch(e) {
+      console.error(e);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+      closeGlobalModal();
+    }
+  };
+
+  document.getElementById('globalConfirmModal').classList.add('open');
+}
 
 function confirmSignOut() {
   showConfirmModal({

@@ -18,13 +18,11 @@ function renderGeneric(data) {
     rows += `
       <tr>
         <td>
-          ${esc(cmi.institution)}
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+            <strong>${esc(cmi.institution)}</strong>
+            <span style="font-size:11px;color:var(--text-muted)">${count} item(s) · Last updated: ${esc(cmi.updated_at ?? '—')}</span>
+          </div>
           ${docsHtml ? `<br>${docsHtml}` : ''}
-        </td>
-        <td>${badge}</td>
-        <td style="text-align:center">${count || '—'}</td>
-        <td style="font-size:11px;color:var(--text-muted)">${esc(cmi.updated_at ?? '—')}</td>
-        <td>
           ${count > 0
             ? `<button class="btn btn-xs" onclick='viewCMIRows(${JSON.stringify(cmi)})'>View Rows</button>`
             : '—'}

@@ -129,7 +129,7 @@ async function markAllRead() {
     renderSummary(_allNotifications);
     renderNotifications(_allNotifications);
     updateBellBadge(0);
-    if (typeof toast === 'function') toast('✅ All notifications marked as read');
+    if (typeof toast === 'function') toast('All notifications marked as read');
 }
 
 // ── BELL BADGE ────────────────────────────────────────────────

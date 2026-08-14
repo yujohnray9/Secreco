@@ -112,7 +112,7 @@
 
             broadcastProfileUpdate({ name: savedName, designation: data.designation });
 
-            if (typeof toast === 'function') toast('✅ Profile updated');
+            if (typeof toast === 'function') toast('Profile updated');
           } else {
             showInfoMsg('error', data.message || 'Failed to save.');
           }
@@ -160,7 +160,7 @@
             ['pwCurrent','pwNew','pwConfirm'].forEach(id => setVal(id, ''));
             const s = document.getElementById('pwStrength');
             if (s) { s.textContent = ''; s.className = 'pw-strength'; }
-            if (typeof toast === 'function') toast('✅ Password updated');
+            if (typeof toast === 'function') toast('Password updated');
           } else {
             showPwMsg('error', data.message || 'Failed to change password.');
           }

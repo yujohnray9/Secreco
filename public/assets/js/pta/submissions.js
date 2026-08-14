@@ -258,7 +258,7 @@ function filterSubs(){
       rows: rows
     });
 
-    if (typeof toast === 'function') toast('✅ ' + _tableNo + ' updated successfully.');
+    if (typeof toast === 'function') toast('' + _tableNo + ' updated successfully.');
     closeEditModal();
   };
 

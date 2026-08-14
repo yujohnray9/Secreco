@@ -81,7 +81,7 @@
       <td><input type="number" placeholder="0"/></td>
       <td><input type="number" placeholder="0"/></td>
       <td><input type="number" placeholder="0"/></td>
-      <td style="text-align:center"><button class="row-remove-btn" onclick="this.closest('tr').remove()">🗑</button></td>`;
+      <td style="text-align:center"><button class="row-remove-btn" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td>`;
   }
 
   /* ─────────────────────────────────────────
