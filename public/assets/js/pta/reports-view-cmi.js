@@ -67,7 +67,6 @@ async function renderCMIAllTables(institution) {
       rows += `<tr>
         <td><strong>${key}</strong></td>
         <td>${esc(title)}</td>
-        <td>${badge}</td>
         <td style="text-align:center">${rowCount || '—'}</td>
         <td style="font-size:11px;color:var(--text-muted)">${esc(cmi?.updated_at ?? '—')}</td>
         <td>${actionHtml}</td>
@@ -77,7 +76,7 @@ async function renderCMIAllTables(institution) {
     el('cmiContainer').innerHTML = `
       <table class="dt" style="width:100%">
         <thead>
-          <tr><th>Table</th><th>Title</th><th>Status</th><th>Rows</th><th>Updated</th><th>Action</th></tr>
+          <tr><th>Table</th><th>Title</th><th>Rows</th><th>Updated</th><th>Action</th></tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>`;

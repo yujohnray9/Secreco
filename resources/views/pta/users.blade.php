@@ -179,7 +179,31 @@
       </div>
       <div class="form-group" id="addUserInstGroup">
         <label class="form-label">Institution</label>
-        <input class="form-input" id="addUserInstitution" placeholder="e.g. Isabela State University"/>
+        <select class="form-select" id="addUserInstitution">
+          <option value="">— Select institution —</option>
+          <option value="Isabela State University - Echague">Isabela State University - Echague</option>
+          <option value="Isabela State University - Cabagan">Isabela State University - Cabagan</option>
+          <option value="Batanes State College">Batanes State College</option>
+          <option value="Cagayan State University">Cagayan State University</option>
+          <option value="Nueva Vizcaya State University">Nueva Vizcaya State University</option>
+          <option value="Quirino State University">Quirino State University</option>
+          <option value="University of La Salette">University of La Salette</option>
+          <option value="DA - Agricultural Training Institute Region II">DA - Agricultural Training Institute Region II</option>
+          <option value="DA - Regional Field Office 2">DA - Regional Field Office 2</option>
+          <option value="Bureau of Fisheries &amp; Aquatic Resources - R2">Bureau of Fisheries &amp; Aquatic Resources - R2</option>
+          <option value="Department of Environment and Natural Resources - Region II">Department of Environment and Natural Resources - Region II</option>
+          <option value="Department of Science and Technology - Region II">Department of Science and Technology - Region II</option>
+          <option value="Department of Trade and Industry - Region II">Department of Trade and Industry - Region II</option>
+          <option value="Department of Economy, Planning and Development - Region II">Department of Economy, Planning and Development - Region II</option>
+          <option value="National Tobacco Administration">National Tobacco Administration</option>
+          <option value="DA - Philippine Rice Research Institute - Isabela">DA - Philippine Rice Research Institute - Isabela</option>
+          <option value="Philippine Council for Agriculture, Aquatic and Natural Resources Research and Development">Philippine Council for Agriculture, Aquatic and Natural Resources Research and Development</option>
+          <option value="DA - Bureau of Agricultural Research">DA - Bureau of Agricultural Research</option>
+          <option value="Watershed &amp; Water Resources Research Development and Extension Center">Watershed &amp; Water Resources Research Development and Extension Center</option>
+          <option value="Mabuwaya Foundation Inc.">Mabuwaya Foundation Inc.</option>
+          <option value="Government City of Santiago">Government City of Santiago</option>
+          <option value="Commission on Higher Education - Regional Office 2">Commission on Higher Education - Regional Office 2</option>
+        </select>
       </div>
     </div>
     <div class="form-group">
@@ -254,7 +278,7 @@ async function submitAddUser() {
 
   const btn = document.getElementById('addUserSubmitBtn');
   btn.disabled = true;
-  btn.textContent = 'Creating…';
+  btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 0.8s linear infinite;display:inline-block;vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg> Creating...`;
 
   try {
     const res  = await fetch('/api/pta/users/create', {
@@ -274,8 +298,18 @@ async function submitAddUser() {
       document.getElementById('tempPwVal').textContent = json.temp_password;
       document.getElementById('tempPwBox').style.display = 'block';
       showToast('User created successfully!');
+      btn.disabled = false;
       btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Done`;
-      btn.onclick = function() { closeModal('modalAddUser'); };
+      btn.onclick = function() {
+        btn.disabled = true;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 0.8s linear infinite;display:inline-block;vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg> Closing...`;
+        setTimeout(() => {
+          closeModal('modalAddUser');
+          btn.disabled = false;
+          btn.onclick = submitAddUser;
+          btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create User`;
+        }, 300);
+      };
       loadUsers();
     } else {
       showToast(json.error || json.message || 'Failed to create user.');

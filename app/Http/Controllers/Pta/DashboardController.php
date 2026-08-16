@@ -50,7 +50,7 @@ class DashboardController extends Controller
         foreach ($cmiList as $cmi) {
             $uid       = $cmi->id;
             $uTables   = $tablesByUser[$uid] ?? [];
-            $done      = count(array_filter($uTables, fn($t) => $t->status === 'done'));
+            $done      = count(array_filter($uTables, fn($t) => in_array($t->status, ['done', 'submitted', 'accepted'], true)));
             $hasTables = count($uTables) > 0;
 
             $sub       = $latestSub[$uid] ?? null;
@@ -84,13 +84,7 @@ class DashboardController extends Controller
             ];
         }
 
-        $sectionMap = [
-            'R&D Mgt. & Coordination' => ['T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b'],
-            'Strategic R&D'           => ['T8a', 'T8b', 'T9', 'T10', 'T11', 'T12'],
-            'Results Utilization'     => ['T13', 'T14', 'T15', 'T16'],
-            'Capability & Governance' => ['T17', 'T18', 'T19'],
-            'Policy Analysis'         => ['T20a', 'T20b'],
-        ];
+        $sectionMap = config('secreco.sections');
 
         $sectionProgress = [];
         foreach ($sectionMap as $sectionLabel => $tableKeys) {
@@ -100,8 +94,10 @@ class DashboardController extends Controller
                 continue;
             }
             $doneCount = 0;
+            $cleanTableKeys = array_map(fn($k) => strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $k)), $tableKeys);
             foreach ($allTables as $row) {
-                if (in_array($row->table_no, $tableKeys, true) && $row->status === 'done') {
+                $cleanRowTable = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $row->table_no));
+                if (in_array($cleanRowTable, $cleanTableKeys, true) && in_array($row->status, ['done', 'submitted', 'accepted'], true)) {
                     $doneCount++;
                 }
             }

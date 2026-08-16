@@ -76,7 +76,7 @@
 @section('scripts')
 <script>
   const urlParams = new URLSearchParams(window.location.search);
-  const paramYear = parseInt(urlParams.get('year')) || {{ date('Y') }};
+  const paramYear = urlParams.has('year') ? parseInt(urlParams.get('year')) : null;
   const paramCmiUser = parseInt(urlParams.get('cmi_user_id')) || {{ $targetUserId ?? 0 }};
 
   window.CMI_AGENCY_NAME = @json($userInst ?? session('user_inst') ?? '');
@@ -90,6 +90,18 @@ document.addEventListener('DOMContentLoaded', function() {
   const yearSel  = document.getElementById('fillupYearSel');
   const subtitle = document.getElementById('fillupSubtitle');
   const saveDraftBtn = document.getElementById('btn-save-draft');
+  const params   = new URLSearchParams(window.location.search);
+
+  function normalizeTableKey(str) {
+    if (!str) return 'T1';
+    const s = String(str).trim();
+    const m = s.match(/^(T\d+)([a-zA-Z])?$/i);
+    if (m) {
+      return m[1].toUpperCase() + (m[2] ? m[2].toLowerCase() : '');
+    }
+    return s;
+  }
+  const initialTable = normalizeTableKey(params.get('table') || params.get('t') || window._cmiActiveTable || 'T1');
 
   if (yearSel) {
     // Load format years from Manage Formats
@@ -97,18 +109,39 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(r => r.json())
       .then(data => {
         if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
-          // Prefer URL param year, then active_year from API
-          const preferredYr = window.CMI_REPORTING_YEAR;
-          const activeYr = (preferredYr && data.years.includes(preferredYr))
-            ? preferredYr
-            : (data.active_year || data.years[0]);
+          const urlHasYear = params.has('year');
+          const activeYr = (urlHasYear && params.get('year'))
+            ? parseInt(params.get('year'))
+            : (data.active_year || data.years[0] || new Date().getFullYear());
+
           window.CMI_REPORTING_YEAR = activeYr;
           yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+          yearSel.value = activeYr;
           if (subtitle) subtitle.textContent = 'CY ' + activeYr + ' Annual Accomplishment Report — All Sections & Tables';
-          fetch('/api/cmi/tables/statuses?year=' + activeYr)
+
+          // Render initial table with synchronized reporting year
+          if (typeof CMI !== 'undefined' && typeof CMI.showTable === 'function') {
+            CMI.showTable(initialTable);
+          }
+
+          // Fetch format templates and statuses sequentially for active year
+          fetch('/api/formats?year=' + activeYr)
+            .then(r => r.json())
+            .then(fmtData => {
+              if (fmtData && Array.isArray(fmtData.templates) && typeof CMI !== 'undefined') {
+                CMI.setFormatTemplates(fmtData.templates);
+              }
+              const cmiUserId = params.get('cmi_user_id') || '';
+              const cmiQuery = cmiUserId ? '&cmi_user_id=' + encodeURIComponent(cmiUserId) : '';
+              return fetch('/api/cmi/tables/statuses?year=' + activeYr + cmiQuery);
+            })
             .then(r => r.json())
             .then(stData => {
-              if (stData && typeof CMI !== 'undefined') CMI.setStatuses(stData.statuses || {}, stData);
+              if (stData && typeof CMI !== 'undefined') {
+                CMI.setStatuses(stData.statuses || {}, stData);
+                const curActive = window._cmiActiveTable || initialTable;
+                CMI.showTable(curActive);
+              }
             }).catch(() => {});
         }
       }).catch(() => {});
@@ -121,8 +154,15 @@ document.addEventListener('DOMContentLoaded', function() {
       const body = document.getElementById('fillBody');
       if (body) body.innerHTML = '<div style="padding:32px;text-align:center;color:#9ca3af">Loading CY ' + selectedYear + ' data...</div>';
 
-      // Reload statuses for selected year then re-show current table
-      fetch('/api/cmi/tables/statuses?year=' + selectedYear)
+      // Reload format templates and statuses for selected year then re-show current table
+      fetch('/api/formats?year=' + selectedYear)
+        .then(r => r.json())
+        .then(fmtData => {
+          if (fmtData && Array.isArray(fmtData.templates) && typeof CMI !== 'undefined') {
+            CMI.setFormatTemplates(fmtData.templates);
+          }
+          return fetch('/api/cmi/tables/statuses?year=' + selectedYear);
+        })
         .then(r => r.json())
         .then(data => {
           if (typeof CMI !== 'undefined') CMI.setStatuses(data ? data.statuses : {}, data);

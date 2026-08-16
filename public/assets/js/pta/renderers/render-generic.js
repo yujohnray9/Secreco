@@ -20,25 +20,21 @@ function renderGeneric(data) {
         <td>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
             <strong>${esc(cmi.institution)}</strong>
-            <span style="font-size:11px;color:var(--text-muted)">${count} item(s) · Last updated: ${esc(cmi.updated_at ?? '—')}</span>
           </div>
           ${docsHtml ? `<br>${docsHtml}` : ''}
-          ${count > 0
-            ? `<button class="btn btn-xs" onclick='viewCMIRows(${JSON.stringify(cmi)})'>View Rows</button>`
-            : '—'}
         </td>
+        <td style="text-align:center;font-weight:700;color:var(--green)">${count || '—'}</td>
+        <td style="font-size:11px;color:var(--text-muted)">${esc(cmi.updated_at ?? '—')}</td>
       </tr>`;
   });
 
   return `
-    <table class="dt" style="width:100%">
+    <table class="rpt-table merged" style="width:100%">
       <thead>
         <tr>
           <th>Institution</th>
-          <th>Status</th>
-          <th>Rows</th>
-          <th>Last Updated</th>
-          <th>Action</th>
+          <th style="width:100px;text-align:center">Rows</th>
+          <th style="width:140px">Last Updated</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>

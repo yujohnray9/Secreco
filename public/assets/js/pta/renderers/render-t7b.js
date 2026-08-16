@@ -22,7 +22,6 @@
         <thead>
           <tr>
             <th style="width:200px">Institution</th>
-            <th style="width:80px">Status</th>
             <th style="width:110px">Developed / Enhanced</th>
             <th style="width:110px">Maintained</th>
             <th style="width:80px">Total</th>
@@ -46,7 +45,6 @@
       html += `
         <tr>
           <td>${esc(inst.institution || '—')}</td>
-          <td>${statusBadge(inst.status)}</td>
           <td style="text-align:center">${byCat.developed || '—'}</td>
           <td style="text-align:center">${byCat.maintained || '—'}</td>
           <td style="text-align:center;font-weight:700;color:var(--green)">${total || '—'}</td>
@@ -58,7 +56,7 @@
         </tbody>
         <tfoot>
           <tr style="font-weight:700;background:var(--bg-soft)">
-            <td colspan="2" style="text-align:right;padding-right:12px">TOTAL</td>
+            <td style="text-align:right;padding-right:12px">TOTAL</td>
             <td style="text-align:center;color:var(--green)">${colTotals.developed || '—'}</td>
             <td style="text-align:center;color:var(--green)">${colTotals.maintained || '—'}</td>
             <td style="text-align:center;color:var(--green)">${grandAll || '—'}</td>

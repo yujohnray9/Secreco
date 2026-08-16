@@ -1,5 +1,5 @@
 /**
- * t4_resources_shared.js — Table 4: Resources Shared, CY 2025 (January – December).
+ * t4_resources_shared.js — Table 4: Resources Shared.
  * Columns: Donor/Source | Activity/Project | Amount Shared | Remarks
  * Includes: Activity/Project note with enumerated options.
  */
@@ -32,7 +32,7 @@
     return `
     <div class="t-page" id="t4_wrap">
       <div class="t-hdr">
-        <div class="t-title">Table 4. Resources Shared, CY 2025 (January – December).</div>
+        <div class="t-title">Table 4. Resources Shared.</div>
       </div>
 
       <div class="tbl-wrap" style="margin:14px 0">
@@ -60,6 +60,7 @@
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="T4.save()" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
         <button class="btn t-docs-btn" onclick="T4.openDocs()">
            Documentation <span id="t4_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
@@ -139,7 +140,7 @@
         const rows = (data.rows && data.rows.length) ? data.rows : [{}];
         rows.forEach((row, i) => tbody.appendChild(makeRow(row, i > 0)));
         renumber();
-        _images = (data.meta && data.meta.images) ? data.meta.images : [];
+        _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
         const status = data.status || computeStatus(rows);
         updateStatusBadge(status);
@@ -158,14 +159,7 @@
     const fields = ['donor', 'activity', 'amount', 'remarks'];
     if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
-    let status = 'draft';
-    if (requestedStatus === 'done') {
-      status = 'done';
-    } else if (requestedStatus === 'draft' || window._cmiSavingDraft) {
-      status = 'draft';
-    } else {
-      status = computeStatus(rows);
-    }
+    const status   = (requestedStatus === 'draft') ? 'draft' : 'done';
 
     setMsg('Saving…');
     fetch(API_SAVE, {

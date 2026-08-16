@@ -1,6 +1,6 @@
 /**
  * t10_tt_projects.js — Table 10: List of Technology Transfer Program/Projects
- * Packaged, Approved, and Implemented, CY 2025 (January – December).
+ * Packaged, Approved, and Implemented.
  *
  * Complex header — two logical row states per entry:
  *   Row A: Program/Project Title | Agency Proponent | Regional Priority Addressed |
@@ -37,7 +37,7 @@
     return `
     <div class="t-page" id="t10_wrap">
       <div class="t-hdr">
-        <div class="t-title">Table 10. List of Technology Transfer Program/ Projects Packaged, Approved, and Implemented, CY 2025 (January – December).</div>
+        <div class="t-title">Table 10. List of Technology Transfer Program/ Projects Packaged, Approved, and Implemented.</div>
       </div>
 
       <div class="tbl-wrap" style="margin:14px 0">
@@ -72,6 +72,7 @@
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="T10.save()" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
         <button class="btn t-docs-btn" onclick="T10.openDocs()">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documentation <span id="t10_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
@@ -214,7 +215,7 @@
           renumber(cat.key);
         });
 
-        _images = (data.meta && data.meta.images) ? data.meta.images : [];
+        _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
         const status = computeStatus(saved.length ? saved : []);
         updateStatusBadge(status);
@@ -231,7 +232,7 @@
       });
   }
 
-  function save() {
+  function save(requestedStatus) {
     const rows = collectRows();
 
     const textFields = ['title', 'agency', 'priority', 'duration', 'budget', 'fund'];
@@ -242,7 +243,7 @@
       return;
     }
 
-    const status = computeStatus(rows);
+    const status = (requestedStatus === 'draft') ? 'draft' : 'done';
 
     setMsg('Saving…');
     fetch(API_SAVE, {

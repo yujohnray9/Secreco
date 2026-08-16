@@ -34,7 +34,7 @@
 
       <!-- Header -->
       <div class="t-hdr">
-        <div class="t-title">Table 2a. Summary of Regional Symposium on R&amp;D Highlights, CY 2025.</div>
+        <div class="t-title">Table 2a. Summary of Regional Symposium on R&amp;D Highlights.</div>
       </div>
 
       <!-- Date / Venue -->
@@ -75,7 +75,7 @@
 
       <!-- Actions -->
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="T2a.save()">Save</button>
+        <button class="btn btn-sm" onclick="T2a.save()" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
         <button class="btn t-docs-btn" onclick="T2a.openDocs()">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documentation <span id="t2a_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
@@ -236,7 +236,7 @@
         if (venueEl) venueEl.value = meta.venue || '';
 
         // documentation
-        _images = meta.images || [];
+        _images = (data.docs && data.docs.length) ? data.docs : (meta.images || []);
         updateBadge();
 
         // status (use server status if provided, else auto-derive)
@@ -271,14 +271,7 @@
     const fields = ['title', 'agency', 'researcher', 'recommendations', 'winners'];
     if (!CMIUtils.guardEmptySave(rows, fields, { date: meta.date, venue: meta.venue })) return;
 
-    let status = 'draft';
-    if (requestedStatus === 'done') {
-      status = 'done';
-    } else if (requestedStatus === 'draft' || window._cmiSavingDraft) {
-      status = 'draft';
-    } else {
-      status = computeStatus(rows, meta);
-    }
+    const status   = (requestedStatus === 'draft') ? 'draft' : 'done';
 
     const payload = {
       table_no: TABLE_NO,

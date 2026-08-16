@@ -20,18 +20,11 @@ class DashboardController extends Controller
         $sections = config('secreco.sections');
         $tableLabels = config('secreco.table_labels');
 
-        $templates = \App\Models\FormatTemplate::where('year', $reportingYear)->get();
-        if ($templates->count() > 0) {
-            $allTableKeys = array_unique($templates->pluck('table_no')->map(fn($t) => strtoupper($t))->all());
-        } else {
-            $allTableKeys = [];
-            foreach ($sections as $tables) {
-                foreach ($tables as $t) {
-                    $allTableKeys[] = strtoupper($t);
-                }
-            }
-            $allTableKeys = array_unique($allTableKeys);
-        }
+        $allTableKeys = config('secreco.all_tables', [
+            'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
+            'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
+            'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b',
+        ]);
         $totalRequired = count($allTableKeys);
 
         $userId = Auth::id() ?? session('user_id');
@@ -49,17 +42,17 @@ class DashboardController extends Controller
         $allUserIds = array_merge([$userId], $mateIds);
 
         // Build a merged tableMap: best status across all institution users
-        $priority = ['accepted' => 4, 'done' => 3, 'draft' => 2, 'not-started' => 0];
+        $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'draft' => 2, 'not-started' => 0];
         $allRows  = ReportTable::whereIn('user_id', $allUserIds)
             ->where('reporting_year', $reportingYear)
             ->get(['user_id', 'table_no', 'status', 'updated_at']);
 
         $tableMap = [];
         foreach ($allRows as $row) {
-            $key = strtoupper($row->table_no);
-            $cur = $tableMap[$key]['status'] ?? 'not-started';
-            if (($priority[$row->status] ?? 0) >= ($priority[$cur] ?? 0)) {
-                $tableMap[$key] = $row->toArray();
+            $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $row->table_no));
+            $curStatus = $tableMap[$cleanKey]['status'] ?? 'not-started';
+            if (($priority[$row->status] ?? 0) >= ($priority[$curStatus] ?? 0)) {
+                $tableMap[$cleanKey] = $row->toArray();
             }
         }
 
@@ -68,8 +61,9 @@ class DashboardController extends Controller
         $notStarted = 0;
 
         foreach ($allTableKeys as $t) {
-            $status = $tableMap[$t]['status'] ?? 'not-started';
-            if ($status === 'done' || $status === 'accepted') {
+            $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $t));
+            $status   = $tableMap[$cleanKey]['status'] ?? 'not-started';
+            if (in_array($status, ['done', 'submitted', 'accepted'], true)) {
                 $complete++;
             } elseif ($status === 'draft') {
                 $draft++;
@@ -93,8 +87,9 @@ class DashboardController extends Controller
             $done     = 0;
             $hasDraft = false;
             foreach ($tables as $t) {
-                $status = $tableMap[strtoupper($t)]['status'] ?? 'not-started';
-                if ($status === 'done') {
+                $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $t));
+                $status   = $tableMap[$cleanKey]['status'] ?? 'not-started';
+                if (in_array($status, ['done', 'submitted', 'accepted'], true)) {
                     $done++;
                 } elseif ($status === 'draft') {
                     $hasDraft = true;

@@ -1,6 +1,5 @@
 /**
- * t13_tech_promotion.js — Table 13: List of Technology Promotion Approaches,
- * CY 2025 (January – December).
+ * t13_tech_promotion.js — Table 13: List of Technology Promotion Approaches.
  * Columns: IEC and IMC Approaches (fixed rows) | Remarks
  */
 
@@ -38,7 +37,7 @@
     return `
     <div class="t-page" id="t13_wrap">
       <div class="t-hdr">
-        <div class="t-title">Table 13. List of Technology Promotion Approaches, CY 2025 (January – December).</div>
+        <div class="t-title">Table 13. List of Technology Promotion Approaches.</div>
       </div>
 
       <div class="tbl-wrap" style="margin:14px 0">
@@ -54,6 +53,7 @@
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="T13.save()" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
         <button class="btn t-docs-btn" onclick="T13.openDocs()">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documentation <span id="t13_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
@@ -80,7 +80,7 @@
             if (ta) ta.value = row.remarks || '';
           });
         }
-        _images = (data.meta && data.meta.images) ? data.meta.images : [];
+        _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
         const status = computeStatus(collectRows());
         updateStatusBadge(status);
@@ -113,12 +113,12 @@
     badge.style.color = c.fg;
   }
 
-  function save() {
+  function save(requestedStatus) {
     const rows = collectRows();
     const fields = ['remarks'];
     if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
-    const status = computeStatus(rows);
+    const status = (requestedStatus === 'draft') ? 'draft' : 'done';
     const msgs = { 'done': 'Table 13 saved — all rows complete!', 'draft': 'Table 13 saved — some rows still incomplete.', 'not-started': 'Table 13 saved.' };
 
     setMsg('Saving…');

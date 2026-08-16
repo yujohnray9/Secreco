@@ -91,11 +91,54 @@
         _registry[def.no] = def;
     };
 
+    let _activeSections = SECTIONS;
+    let _activeTitles = Object.assign({}, TABLE_TITLES);
+    let _templateDefs = {};
+
+    CMI.setFormatTemplates = function (templates) {
+        // Always start with deep copy of default SECTIONS so all 24 standard tables are preserved
+        const sections = SECTIONS.map(s => ({
+            label: s.label,
+            tables: [...s.tables]
+        }));
+        const titles = Object.assign({}, TABLE_TITLES);
+        _templateDefs = {};
+
+        if (Array.isArray(templates) && templates.length > 0) {
+            templates.forEach(function (t) {
+                const secName = t.section || "General";
+                let secObj = sections.find(s => s.label === secName);
+                if (!secObj) {
+                    secObj = { label: secName, tables: [] };
+                    sections.push(secObj);
+                }
+                if (!secObj.tables.includes(t.table_no)) {
+                    secObj.tables.push(t.table_no);
+                }
+
+                let shortTitle = t.title || t.table_no;
+                if (shortTitle.match(/^Table\s+[A-Za-z0-9.]+\s*[–-]?\s*/i)) {
+                    shortTitle = shortTitle.replace(/^Table\s+[A-Za-z0-9.]+\s*[–-]?\s*/i, "").trim();
+                }
+                titles[t.table_no] = shortTitle || t.title || t.table_no;
+                _templateDefs[t.table_no] = t;
+            });
+        }
+
+        _activeSections = sections;
+        _activeTitles = titles;
+        renderFillNav();
+    };
+
     CMI.setStatuses = function (statuses, meta = null) {
         for (let k in _status) delete _status[k];
         Object.assign(_status, statuses || {});
 
-        if (meta && meta.submitted) {
+        if (meta && Array.isArray(meta.templates)) {
+            CMI.setFormatTemplates(meta.templates);
+        }
+
+        if (meta && meta.submitted && Array.isArray(meta.submitted_tables) && meta.submitted_tables.length > 0) {
             _isSubmitted = true;
             _submittedAt = meta.submitted_at || null;
             _submittedTables = meta.submitted_tables || [];
@@ -123,15 +166,16 @@
         if (!nav) return;
 
         const VALID = new Set(["done", "submitted", "accepted", "draft", "error", "not-started"]);
+        const sections = _activeSections && _activeSections.length > 0 ? _activeSections : SECTIONS;
 
-        nav.innerHTML = SECTIONS.map((s) => {
+        nav.innerHTML = sections.map((s) => {
             const items = s.tables
                 .map((no) => {
-                    const raw = _status[no];
+                    const raw = _status[no] || _status[no.toUpperCase()] || _status[no.toLowerCase()];
                     const st = VALID.has(raw) ? raw : "not-started";
-                    const ttl = TABLE_TITLES[no] || no;
+                    const ttl = _activeTitles[no] || TABLE_TITLES[no] || no;
                     const active =
-                        window._cmiActiveTable === no ? " active" : "";
+                        (window._cmiActiveTable && String(window._cmiActiveTable).toLowerCase() === String(no).toLowerCase()) ? " active" : "";
                     return (
                         `<div class="fill-nav-sub ${st}${active}" onclick="CMI.showTable('${no}')">` +
                         `${STATUS_ICON[st] ?? STATUS_ICON["not-started"]} ${no} — ${ttl}</div>`
@@ -150,29 +194,260 @@
      TABLE SWITCHING
   ───────────────────────────────────────── */
     CMI.showTable = function (no) {
-        const def = _registry[no];
+        if (!no) return;
         const body = document.getElementById("fillBody");
         if (!body) return;
 
+        let def = _registry[no] || _registry[no.toUpperCase()] || _registry[no.toLowerCase()];
         if (!def) {
+            const matchKey = Object.keys(_registry).find(k => k.toLowerCase() === String(no).toLowerCase());
+            if (matchKey) def = _registry[matchKey];
+        }
+
+        if (!def) {
+            let tDef = _templateDefs[no] || _templateDefs[no.toUpperCase()] || _templateDefs[no.toLowerCase()];
+            if (!tDef) {
+                const matchT = Object.keys(_templateDefs).find(k => k.toLowerCase() === String(no).toLowerCase());
+                if (matchT) tDef = _templateDefs[matchT];
+            }
+            if (tDef) {
+                const canonicalNo = tDef.table_no;
+                window._cmiActiveTable = canonicalNo;
+                renderFillNav();
+                renderDynamicTable(canonicalNo, tDef, body);
+                if (_isSubmitted && (_submittedTables.includes(canonicalNo) || _submittedTables.includes(no))) {
+                    setTimeout(() => applyLock(canonicalNo), 600);
+                }
+                return;
+            }
+
             body.innerHTML =
                 `<div style="padding:32px;color:var(--text-muted);font-size:14px">` +
                 `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:6px;vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` +
-                `Table <strong>${no}</strong> is not yet implemented.</div>`;
+                `Table <strong>${no}</strong> is not defined for this year.</div>`;
             window._cmiActiveTable = no;
             renderFillNav();
             return;
         }
 
-        window._cmiActiveTable = no;
+        const canonicalNo = def.no || no;
+        window._cmiActiveTable = canonicalNo;
         renderFillNav();
         def.render(body);
 
-        if (_isSubmitted && _submittedTables.includes(no)) {
+        if (_isSubmitted && (_submittedTables.includes(canonicalNo) || _submittedTables.includes(no))) {
             // Defer lock until after async table loadData() completes
-            setTimeout(() => applyLock(no), 600);
+            setTimeout(() => applyLock(canonicalNo), 600);
         }
     };
+
+    /* ─────────────────────────────────────────
+     DYNAMIC TABLE RENDERER FOR FORMAT TEMPLATES
+  ───────────────────────────────────────── */
+    function renderDynamicTable(tableNo, tDef, container) {
+        const title = tDef.title || `Table ${tableNo}`;
+        let cols = [];
+        if (Array.isArray(tDef.columns_json)) {
+            cols = tDef.columns_json;
+        } else if (typeof tDef.columns_json === "string") {
+            try { cols = JSON.parse(tDef.columns_json); } catch (e) { cols = []; }
+        }
+
+        if (!cols || cols.length === 0) {
+            cols = [
+                { name: "Title / Description", type: "text" },
+                { name: "Agency / Institution", type: "text" },
+                { name: "Amount / Value", type: "number" },
+                { name: "Remarks", type: "text" }
+            ];
+        }
+
+        function escHtml(s) {
+            return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        const ths = cols.map(c => {
+            const name = typeof c === "string" ? c : (c.name || c.label || "Column");
+            return `<th class="group">${escHtml(name)}</th>`;
+        }).join("") + `<th class="group" style="width:40px;text-align:center"></th>`;
+
+        container.innerHTML = `
+        <div class="t-page" id="dyn_${tableNo}_wrap">
+          <div class="t-hdr">
+            <div class="t-title">${escHtml(title)}</div>
+          </div>
+          <div class="tbl-wrap" style="margin:14px 0">
+            <table class="merged" style="width:100%;min-width:560px">
+              <thead>
+                <tr>
+                  <th class="group" style="width:40px;text-align:center">#</th>
+                  ${ths}
+                </tr>
+              </thead>
+              <tbody id="dyn_${tableNo}_rows"></tbody>
+            </table>
+          </div>
+          <div class="t-footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-sm" id="dyn_${tableNo}_add_btn" type="button">+ Add Row</button>
+              <button class="btn btn-sm" id="dyn_${tableNo}_save_btn" type="button" data-action="save" style="background:#2e7d32;color:#fff;border:none">Save</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="btn t-docs-btn" id="dyn_${tableNo}_docs_btn" type="button">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documentation <span id="dyn_${tableNo}_docs_count" class="t-docs-badge" style="display:none">0</span>
+              </button>
+              <span id="dyn_${tableNo}_status_badge" style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:10px;display:none"></span>
+              <span id="dyn_${tableNo}_status_msg" style="font-size:12px;color:var(--text-muted)"></span>
+            </div>
+          </div>
+        </div>`;
+
+        function makeRowHTML(dataObj, idx) {
+            const tds = cols.map(c => {
+                const colKey = typeof c === "string" ? c : (c.key || c.name || "col");
+                const colType = typeof c === "string" ? "text" : (c.type || "text");
+                const val = escHtml(dataObj ? (dataObj[colKey] ?? dataObj[c.name] ?? "") : "");
+                if (colType === "number") {
+                    return `<td><input type="number" class="dyn-col-val" data-key="${escHtml(colKey)}" step="any" placeholder="0" value="${val}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:6px"/></td>`;
+                } else if (colType === "date") {
+                    return `<td><input type="date" class="dyn-col-val" data-key="${escHtml(colKey)}" value="${val}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:6px"/></td>`;
+                } else {
+                    return `<td><input type="text" class="dyn-col-val" data-key="${escHtml(colKey)}" placeholder="${escHtml(c.name || colKey)}" value="${val}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:6px"/></td>`;
+                }
+            }).join("");
+
+            return `
+            <tr>
+              <td class="dyn-row-no" style="text-align:center;font-weight:600;font-size:13px">${idx + 1}</td>
+              ${tds}
+              <td style="text-align:center">
+                <button type="button" class="row-remove-btn" onclick="this.closest('tr').remove(); CMI.renumberDynRows('${tableNo}');">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                </button>
+              </td>
+            </tr>`;
+        }
+
+        const tbody = document.getElementById(`dyn_${tableNo}_rows`);
+        const addBtn = document.getElementById(`dyn_${tableNo}_add_btn`);
+        const saveBtn = document.getElementById(`dyn_${tableNo}_save_btn`);
+        const docsBtn = document.getElementById(`dyn_${tableNo}_docs_btn`);
+        const msgEl = document.getElementById(`dyn_${tableNo}_status_msg`);
+
+        addBtn.addEventListener("click", function () {
+            const count = tbody.querySelectorAll("tr").length;
+            tbody.insertAdjacentHTML("beforeend", makeRowHTML({}, count));
+        });
+
+        docsBtn.addEventListener("click", function () {
+            if (typeof openDocsModal === "function") {
+                openDocsModal(tableNo, title);
+            }
+        });
+
+        function performDynamicSave(requestedStatus) {
+            const trs = tbody.querySelectorAll("tr");
+            const rows = [];
+            trs.forEach(tr => {
+                const r = {};
+                tr.querySelectorAll(".dyn-col-val").forEach(inp => {
+                    const k = inp.getAttribute("data-key");
+                    if (k) r[k] = inp.value;
+                });
+                rows.push(r);
+            });
+
+            let hasData = false;
+            rows.forEach(r => {
+                for (let k in r) {
+                    if (String(r[k] || '').trim() !== '') { hasData = true; break; }
+                }
+            });
+            const computedStatus = (requestedStatus === 'draft') ? 'draft' : (hasData ? 'done' : 'not-started');
+
+            if (msgEl) msgEl.textContent = "Saving...";
+            const payload = {
+                table_no: tableNo,
+                year: window.CMI_REPORTING_YEAR || new Date().getFullYear(),
+                cmi_user_id: window.CMI_TARGET_USER_ID || 0,
+                status: computedStatus,
+                rows: rows
+            };
+
+            fetch(API_SAVE, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.ok || res.success) {
+                    if (msgEl) msgEl.textContent = computedStatus === 'draft' ? "Saved draft" : "Saved (Complete)";
+                    CMI.updateStatus(tableNo, computedStatus);
+                    if (typeof showToast === "function") showToast("Table data saved successfully.");
+                } else {
+                    if (msgEl) msgEl.textContent = "Error saving";
+                    if (typeof showToast === "function") showToast(res.message || "Failed to save data.");
+                }
+            })
+            .catch(() => {
+                if (msgEl) msgEl.textContent = "Error saving";
+                if (typeof showToast === "function") showToast("Error saving data.");
+            });
+        }
+
+        saveBtn.addEventListener("click", function () {
+            performDynamicSave('done');
+        });
+
+        // Load existing row data
+        const yr = window.CMI_REPORTING_YEAR || new Date().getFullYear();
+        const targetUser = window.CMI_TARGET_USER_ID ? `&cmi_user_id=${window.CMI_TARGET_USER_ID}` : "";
+        fetch(`/api/cmi/tables/load?table_no=${tableNo}&year=${yr}${targetUser}`)
+            .then(r => r.json())
+            .then(res => {
+                const rowsData = (res && Array.isArray(res.rows) && res.rows.length > 0) ? res.rows : [{}];
+                tbody.innerHTML = rowsData.map((r, i) => makeRowHTML(r, i)).join("");
+                if (res && res.status) {
+                    CMI.updateStatus(tableNo, res.status);
+                }
+                if (res && res.docs && typeof updateDocsBadge === "function") {
+                    updateDocsBadge(tableNo, res.docs.length);
+                }
+            })
+            .catch(() => {
+                tbody.innerHTML = makeRowHTML({}, 0);
+            });
+    }
+
+    CMI.renumberDynRows = function (tableNo) {
+        const tbody = document.getElementById(`dyn_${tableNo}_rows`);
+        if (!tbody) return;
+        tbody.querySelectorAll("tr").forEach((tr, i) => {
+            const numCell = tr.querySelector(".dyn-row-no");
+            if (numCell) numCell.textContent = i + 1;
+        });
+    };
+
+    /* ─────────────────────────────────────────
+     HELPER: ACTIVE TABLE NOS
+  ───────────────────────────────────────── */
+    function getActiveTableNos() {
+        const sections = _activeSections && _activeSections.length > 0 ? _activeSections : SECTIONS;
+        const allNos = [];
+        sections.forEach(function (s) {
+            if (Array.isArray(s.tables)) {
+                s.tables.forEach(function (n) {
+                    if (!allNos.includes(n)) allNos.push(n);
+                });
+            }
+        });
+        if (allNos.length === 0) {
+            const titlesObj = _activeTitles && Object.keys(_activeTitles).length > 0 ? _activeTitles : TABLE_TITLES;
+            allNos.push(...Object.keys(titlesObj));
+        }
+        return allNos;
+    }
 
     /* ─────────────────────────────────────────
      LOCK — per table, only if in submitted snapshot
@@ -181,7 +456,22 @@
         const body = document.getElementById("fillBody");
         if (!body) return;
 
-        if (!_submittedTables.includes(tableNo)) return;
+        if (!_submittedTables.includes(tableNo) || !_isSubmitted) {
+            const banner = body.querySelector("#cmi-submitted-banner");
+            if (banner) banner.remove();
+            body.querySelectorAll("input, select, textarea").forEach((el) => {
+                el.disabled = false;
+                el.style.background = "";
+                el.style.color = "";
+                el.style.cursor = "";
+            });
+            body.querySelectorAll("button").forEach((el) => {
+                if (el.style.display === "none") {
+                    el.style.display = "";
+                }
+            });
+            return;
+        }
 
         body.querySelectorAll("input, select, textarea").forEach((el) => {
             el.disabled = true;
@@ -191,7 +481,10 @@
         });
 
         body.querySelectorAll("button[onclick]").forEach((el) => {
-            el.style.display = "none";
+            const onclickAttr = el.getAttribute("onclick") || "";
+            if (!el.classList.contains("t-docs-btn") && !onclickAttr.includes("openDocs")) {
+                el.style.display = "none";
+            }
         });
 
         if (!body.querySelector("#cmi-submitted-banner")) {
@@ -218,11 +511,8 @@
           <polyline points="20 6 9 17 4 12"/>
         </svg>
         <div>
-          <strong style="font-size:13.5px">Report Already Submitted</strong><br>
-          <span style="font-size:12px;color:#388e3c">
-            This table was submitted on <strong>${date}</strong>.
-            No further edits are allowed. Go to <em>My Submissions</em> to view or edit.
-          </span>
+          <strong>Annual Accomplishment Report Submitted</strong><br>
+          <span style="font-size:12px;opacity:.85">Submitted on ${date}. This table is read-only.</span>
         </div>`;
             body.insertBefore(banner, body.firstChild);
         }
@@ -471,21 +761,5 @@
 
         const btnSubmit = document.getElementById("btn-submit");
         if (btnSubmit) btnSubmit.addEventListener("click", CMI.submitReport);
-
-        const year = window.CMI_REPORTING_YEAR || new Date().getFullYear();
-        const params = new URLSearchParams(window.location.search);
-        const cmiUserId = params.get("cmi_user_id") || "";
-        const cmiQuery = cmiUserId ? "&cmi_user_id=" + encodeURIComponent(cmiUserId) : "";
-
-        fetch("/api/cmi/tables/statuses?year=" + year + cmiQuery)
-            .then((r) => r.json())
-            .then((data) => {
-                if (data) CMI.setStatuses(data.statuses || {}, data);
-            })
-            .catch(() => {})
-            .finally(() => {
-                const initialTable = (params.get("table") || params.get("t") || "T1").toUpperCase();
-                CMI.showTable(initialTable);
-            });
     });
 })();

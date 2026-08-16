@@ -30,7 +30,6 @@
         <thead>
           <tr>
             <th rowspan="2" style="width:200px">Institution</th>
-            <th rowspan="2" style="width:80px">Status</th>
             ${CATEGORIES.map(c => `<th>${esc(c.label)}</th>`).join('')}
             <th rowspan="2" style="width:90px">Grand Total</th>
             <th rowspan="2" style="width:110px">Last Updated</th>
@@ -58,7 +57,6 @@
       html += `
         <tr>
           <td>${esc(inst.institution || '—')}</td>
-          <td>${statusBadge(inst.status)}</td>
           ${CATEGORIES.map(c => `<td style="text-align:center">${bycat[c.key] || '—'}</td>`).join('')}
           <td style="text-align:center;font-weight:700;color:var(--green)">${instTotal || '—'}</td>
           <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
@@ -70,7 +68,7 @@
         </tbody>
         <tfoot>
           <tr style="font-weight:700;background:var(--bg-soft)">
-            <td colspan="2" style="text-align:right;padding-right:12px">TOTAL</td>
+            <td style="text-align:right;padding-right:12px">TOTAL</td>
             ${CATEGORIES.map(c => `<td style="text-align:center;color:var(--green)">${colTotals[c.key] || '—'}</td>`).join('')}
             <td style="text-align:center;color:var(--green)">${grandAll || '—'}</td>
             <td></td>

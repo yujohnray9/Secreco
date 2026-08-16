@@ -25,7 +25,6 @@
         <thead>
           <tr>
             <th rowspan="2" style="width:200px">Institution</th>
-            <th rowspan="2" style="width:80px">Status</th>
             <th colspan="2">Proposals Packaged</th>
             <th colspan="3">Projects Approved &amp; Implemented</th>
             <th rowspan="2" style="width:80px">Total</th>
@@ -62,7 +61,6 @@
       html += `
         <tr>
           <td>${esc(inst.institution || '—')}</td>
-          <td>${statusBadge(inst.status)}</td>
           <td style="text-align:center">${packed.length || '—'}</td>
           <td style="text-align:center">${iApproved || '—'}</td>
           <td style="text-align:center">${iRevision || '—'}</td>
@@ -77,7 +75,7 @@
         </tbody>
         <tfoot>
           <tr style="font-weight:700;background:var(--bg-soft)">
-            <td colspan="2" style="text-align:right;padding-right:12px">TOTAL</td>
+            <td style="text-align:right;padding-right:12px">TOTAL</td>
             <td style="text-align:center;color:var(--green)">${totals.packaged || '—'}</td>
             <td style="text-align:center;color:var(--green)">${totals.impl_approved || '—'}</td>
             <td style="text-align:center;color:var(--green)">${totals.impl_revision || '—'}</td>

@@ -42,7 +42,7 @@
       const sectionRows = [];
       section.tables.forEach(t => {
         const st = window.SubState.statuses[t.no];
-        if (!st || !['accepted', 'done', 'submitted', 'returned'].includes(st)) return;
+        if (st !== 'accepted') return;
         if (searchTerm && !(
           t.no.toLowerCase().includes(searchTerm) ||
           t.title.toLowerCase().includes(searchTerm)
@@ -72,8 +72,8 @@
       tbody.innerHTML = `
         <tr><td colspan="5" style="text-align:center;padding:44px 20px;color:var(--text-muted)">
           <div style="font-size:28px;margin-bottom:10px">📭</div>
-          <div style="font-weight:600;margin-bottom:6px">No submitted tables yet${searchTerm || sectionFilter ? ' matching your filters' : ''}</div>
-          <div style="font-size:12px">Tables you mark as Complete in Fill Up Report will appear here.</div>
+          <div style="font-weight:600;margin-bottom:6px">No accepted tables yet${searchTerm || sectionFilter ? ' matching your filters' : ''}</div>
+          <div style="font-size:12px">Tables accepted by PTA will appear here.</div>
         </td></tr>`;
       return;
     }

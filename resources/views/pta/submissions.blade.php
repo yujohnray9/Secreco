@@ -308,8 +308,39 @@ window.viewDataModal = function(idx) {
   const wrap = document.getElementById('vdTableWrap');
   let html = '';
 
+  const DEFAULT_TABLE_KEYS = {
+    'T1':  ['date', 'agency', 'new_', 'ongoing', 'completed', 'terminated'],
+    'T2A': ['title', 'agency', 'researcher', 'recommendations', 'winners'],
+    'T2B': ['agency', 'count', 'remarks'],
+    'T3':  ['project', 'status', 'duration', 'fund'],
+    'T4':  ['donor', 'activity', 'amount', 'remarks'],
+    'T5':  ['donor', 'activity', 'amount', 'remarks'],
+    'T6':  ['agency', 'address', 'year', 'nature'],
+    'T7A': ['type', 'date', 'purpose'],
+    'T7B': ['type', 'date', 'purpose'],
+    'T8A': ['title', 'researcher', 'agency', 'duration', 'funds', 'commodity'],
+    'T8B': ['program', 'project', 'agency', 'duration', 'budget', 'source', 'role'],
+    'T9':  ['title', 'source', 'agency', 'researcher', 'impact'],
+    'T10': ['title', 'agency', 'priority', 'duration', 'budget', 'fund'],
+    'T11': ['tech', 'project', 'agency'],
+    'T12': ['tech', 'owner', 'precomm', 'licensor', 'startup', 'spinoff'],
+    'T13': ['remarks'],
+    'T14': ['title', 'venue', 'participants', 'expenditures', 'funds'],
+    'T15': ['item', 'location', 'expense', 'funds'],
+    'T16': ['award', 'recipient', 'sponsor', 'event', 'venue', 'date'],
+    'T17': ['type', 'venue', 'host'],
+    'T18': ['cmi', 'amount'],
+    'T19': ['initiative', 'date'],
+    'T20A': ['project', 'agency', 'author', 'description', 'findings'],
+    'T20B': ['agency', 'description'],
+  };
+  window._DEFAULT_TABLE_KEYS = DEFAULT_TABLE_KEYS;
+
   let rows = (r.rows && r.rows.length > 0) ? JSON.parse(JSON.stringify(r.rows)) : [{}];
-  let keys = rows.length > 0 && Object.keys(rows[0]).length > 0 ? Object.keys(rows[0]) : ['Date', 'Agency', 'New', 'Ongoing', 'Completed', 'Terminated'];
+  const tNoUpper = (r.table_no || '').toUpperCase();
+  let keys = (rows.length > 0 && Object.keys(rows[0]).length > 0 && !Object.keys(rows[0]).includes('field1'))
+    ? Object.keys(rows[0])
+    : (DEFAULT_TABLE_KEYS[tNoUpper] || ['field1', 'field2', 'field3', 'field4']);
 
   html += `<div style="font-size:12.5px;color:#374151;margin-bottom:12px;background:#ecfdf5;padding:10px 14px;border-radius:8px;border:1px solid #a7f3d0;">
     <strong>PTA Admin Access:</strong> You can edit cell values or add missing rows below, then click <strong>Save / Submit Updates</strong> to update this submission.
@@ -357,9 +388,10 @@ window.viewDataModal = function(idx) {
       <div id="ptaModalDocsGallery" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px">
         ${docsList.map(d => {
           const src = '/' + (d.file_path || '').replace(/^\//, '');
+          const dId = d.id || d.doc_id;
           return `
-            <div id="pta-doc-card-${d.id}" style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative">
-              <button type="button" onclick="deletePtaModalDoc(${d.id})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
+            <div id="pta-doc-card-${dId}" style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative">
+              <button type="button" onclick="deletePtaModalDoc(${dId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
               <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${d.caption||'View photo'}"/>
               <div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.caption || 'Attached photo'}</div>
             </div>`;
@@ -403,11 +435,12 @@ window.uploadPtaModalDoc = async function(input) {
       json.files.forEach(f => {
         r.docs.push(f);
         const src = '/' + (f.file_path || '').replace(/^\//, '');
+        const fId = f.id || f.doc_id;
         const card = document.createElement('div');
-        card.id = `pta-doc-card-${f.id}`;
+        card.id = `pta-doc-card-${fId}`;
         card.style.cssText = 'border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative';
         card.innerHTML = `
-          <button type="button" onclick="deletePtaModalDoc(${f.id})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
+          <button type="button" onclick="deletePtaModalDoc(${fId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
           <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${f.caption||'View photo'}"/>
           <div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.caption || 'Attached photo'}</div>`;
         gallery.appendChild(card);
@@ -462,9 +495,15 @@ window.addPtaEditRow = function() {
   const tbody = document.getElementById('ptaEditTbody');
   if (!tbody) return;
   const firstRow = tbody.querySelector('tr');
-  let keys = ['field1', 'field2', 'field3', 'field4'];
+  let keys = [];
   if (firstRow) {
     keys = [...firstRow.querySelectorAll('.pta-cell-inp')].map(inp => inp.dataset.key);
+  }
+  if ((!keys || !keys.length) && currentEditSubIdx >= 0) {
+    const r = cachedSubRows[currentEditSubIdx];
+    const tNo = (r?.table_no || '').toUpperCase();
+    const map = window._DEFAULT_TABLE_KEYS || {};
+    keys = map[tNo] || ['field1', 'field2', 'field3', 'field4'];
   }
   const rowCount = tbody.rows.length + 1;
   const tr = document.createElement('tr');

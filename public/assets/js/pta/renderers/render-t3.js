@@ -18,7 +18,6 @@
         <thead>
           <tr>
             <th style="width:200px">Institution</th>
-            <th style="width:80px">Status</th>
             <th style="width:80px">Ongoing</th>
             <th style="width:80px">Completed</th>
             <th style="width:80px">Total Projects</th>
@@ -39,7 +38,6 @@
       html += `
         <tr>
           <td>${esc(inst.institution || '—')}</td>
-          <td>${statusBadge(inst.status)}</td>
           <td style="text-align:center">${ongoing || '—'}</td>
           <td style="text-align:center">${completed || '—'}</td>
           <td style="text-align:center;font-weight:700;color:var(--green)">${rows.length || '—'}</td>
@@ -51,7 +49,7 @@
         </tbody>
         <tfoot>
           <tr style="font-weight:700;background:var(--bg-soft)">
-            <td colspan="2" style="text-align:right;padding-right:12px">TOTAL</td>
+            <td style="text-align:right;padding-right:12px">TOTAL</td>
             <td style="text-align:center;color:var(--green)">${totOngoing || '—'}</td>
             <td style="text-align:center;color:var(--green)">${totCompleted || '—'}</td>
             <td style="text-align:center;color:var(--green)">${(totOngoing + totCompleted) || '—'}</td>

@@ -1,6 +1,6 @@
 /**
  * t3_projects_monitored.js — Table 3: List of Projects and Activities
- * Monitored and Evaluated, CY 2025 (January – December).
+ * Monitored and Evaluated.
  * Simple flat table: addable rows, save draft (status auto-derived), docs modal.
  */
 
@@ -23,7 +23,7 @@
     return `
     <div class="t-page" id="t3_wrap">
       <div class="t-hdr">
-        <div class="t-title">Table 3. List of Projects and Activities monitored and evaluated, CY 2025 (January – December).</div>
+        <div class="t-title">Table 3. List of Projects and Activities monitored and evaluated.</div>
       </div>
 
       <div class="tbl-wrap" style="margin:14px 0">
@@ -47,6 +47,7 @@
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="T3.save()" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
         <button class="btn t-docs-btn" onclick="T3.openDocs()">
            Documentation <span id="t3_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
@@ -81,19 +82,24 @@
 
   /* ─── ROW ─── */
   function makeRow(data = {}, removable = false) {
+    const valProject  = data.project  || data['Projects and Activities'] || data.field1 || '';
+    const valStatus   = data.status   || data['Ongoing or Completed'] || data.field2 || '';
+    const valDuration = data.duration || data['Duration'] || data.field3 || '';
+    const valFund     = data.fund     || data['Source of Fund'] || data.field4 || '';
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="t3-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t3-project" placeholder="Project / Activity title" value="${esc(data.project||'')}"/></td>
+      <td><input type="text" class="t3-project" placeholder="Project / Activity title" value="${esc(valProject)}"/></td>
       <td>
         <select class="t3-status" style="width:100%">
           <option value="">— select —</option>
-          <option value="Ongoing"    ${data.status==='Ongoing'    ?'selected':''}>Ongoing</option>
-          <option value="Completed"  ${data.status==='Completed'  ?'selected':''}>Completed</option>
+          <option value="Ongoing"    ${valStatus==='Ongoing'    ?'selected':''}>Ongoing</option>
+          <option value="Completed"  ${valStatus==='Completed'  ?'selected':''}>Completed</option>
         </select>
       </td>
-      <td><input type="text" class="t3-duration" placeholder="e.g. Jan–Dec 2025" value="${esc(data.duration||'')}"/></td>
-      <td><input type="text" class="t3-fund" placeholder="e.g. DOST, PCAARRD" value="${esc(data.fund||'')}"/></td>
+      <td><input type="text" class="t3-duration" placeholder="e.g. Jan–Dec 2025" value="${esc(valDuration)}"/></td>
+      <td><input type="text" class="t3-fund" placeholder="e.g. DOST, PCAARRD" value="${esc(valFund)}"/></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T3._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
@@ -138,7 +144,7 @@
           tbody.appendChild(makeRow(row, i > 0));
         });
         renumber();
-        _images = (data.meta && data.meta.images) ? data.meta.images : [];
+        _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
         const status = data.status || computeStatus(rows);
         updateStatusBadge(status);
@@ -158,14 +164,7 @@
     const fields = ['title', 'agency', 'commodity', 'sites', 'status'];
     if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
-    let status = 'draft';
-    if (requestedStatus === 'done') {
-      status = 'done';
-    } else if (requestedStatus === 'draft' || window._cmiSavingDraft) {
-      status = 'draft';
-    } else {
-      status = computeStatus(rows);
-    }
+    const status   = (requestedStatus === 'draft') ? 'draft' : 'done';
 
     setMsg('Saving…');
     fetch(API_SAVE, {

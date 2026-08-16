@@ -111,7 +111,7 @@
     body.innerHTML = `
       <div style="margin-bottom:14px">
         <div style="font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px">Table 1. Summary of Agency In-House Reviews (AIHRs)</div>
-        <div style="font-size:12px;color:var(--text-muted)">conducted by consortium member-agencies, CY 2025 (January – December)</div>
+        <div style="font-size:12px;color:var(--text-muted)">conducted by consortium member-agencies</div>
       </div>
       <div class="tbl-wrap" style="margin-bottom:12px">
         <table class="merged" style="width:100%;min-width:560px">

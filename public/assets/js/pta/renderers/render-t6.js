@@ -39,7 +39,6 @@
         <thead>
           <tr>
             <th rowspan="2" style="width:200px">Institution</th>
-            <th rowspan="2" style="width:80px">Status</th>
             <th colspan="3">Developed / New</th>
             <th colspan="3">Maintained / Sustained</th>
             <th rowspan="2" style="width:80px">Total</th>
@@ -71,7 +70,6 @@
       html += `
         <tr>
           <td>${esc(inst.institution || '—')}</td>
-          <td>${statusBadge(inst.status)}</td>
           ${scopeKeys.map(k => `<td style="text-align:center">${byCat[k] || '—'}</td>`).join('')}
           <td style="text-align:center;font-weight:700;color:var(--green)">${total || '—'}</td>
           <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
@@ -82,7 +80,7 @@
         </tbody>
         <tfoot>
           <tr style="font-weight:700;background:var(--bg-soft)">
-            <td colspan="2" style="text-align:right;padding-right:12px">TOTAL</td>
+            <td style="text-align:right;padding-right:12px">TOTAL</td>
             ${scopeKeys.map(k => `<td style="text-align:center;color:var(--green)">${colTotals[k] || '—'}</td>`).join('')}
             <td style="text-align:center;color:var(--green)">${grandAll || '—'}</td>
             <td></td>

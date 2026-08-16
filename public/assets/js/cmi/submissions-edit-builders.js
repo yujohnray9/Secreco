@@ -117,7 +117,7 @@
   ───────────────────────────────────────── */
   function buildEditAttachmentThumb(img, idx) {
     const path    = img.file_path || '';
-    const docId   = img.doc_id    || '';
+    const docId   = img.doc_id || img.id || '';
     const isImage = /\.(png|jpe?g|gif|webp)$/i.test(path) || /^data:image\//i.test(path);
     const thumb   = isImage
       ? `<img src="${escapeHtml(path)}" alt="attachment"

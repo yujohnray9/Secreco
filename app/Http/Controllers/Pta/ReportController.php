@@ -18,9 +18,9 @@ class ReportController extends Controller
         $table      = trim($request->input('table', 'T1'));
         $tableUpper = strtoupper($table);
 
-        // ── Step 1: Collect all CMI users that have any data for this year ──────
-        // First try from report_submissions (formal submissions)
+        // ── Step 1: Collect ACCEPTED report submissions for this year ──────
         $latestSubIds = ReportSubmission::where('reporting_year', $year)
+            ->where('status', 'accepted')
             ->selectRaw('MAX(id) as max_id')
             ->groupBy('user_id')
             ->pluck('max_id');
@@ -32,30 +32,31 @@ class ReportController extends Controller
             ->with('user')
             ->get();
 
-        // Build a map: user_id => result entry (from submissions)
+        // Build a map: user_id => result entry (from accepted submissions)
         $resultMap = [];
         foreach ($subRows as $row) {
             $snap  = $row->snapshot_json ?? [];
             $uid   = $row->user_id;
             $tData = $snap[$table] ?? $snap[$tableUpper] ?? $snap[strtolower($table)] ?? null;
+            $tStatus = (is_array($tData) && isset($tData['status']) && $tData['status'] === 'accepted') ? 'accepted' : 'not-started';
 
             $resultMap[$uid] = [
                 'user_id'      => $uid,
                 'institution'  => $row->user?->institution ?: $row->user?->name,
                 'submitted_at' => $row->submitted_at ? $row->submitted_at->toDateTimeString() : null,
-                'sub_status'   => $row->status,
-                'table_status' => $tData['status']     ?? 'not-started',
-                'updated_at'   => $tData['updated_at'] ?? null,
-                'rows'         => $tData['rows']        ?? [],
-                'meta'         => $tData['meta']        ?? null,
+                'sub_status'   => 'accepted',
+                'table_status' => $tStatus,
+                'updated_at'   => is_array($tData) ? ($tData['updated_at'] ?? null) : null,
+                'rows'         => is_array($tData) ? ($tData['rows'] ?? []) : [],
+                'meta'         => is_array($tData) ? ($tData['meta'] ?? null) : null,
                 'docs'         => [],
             ];
         }
 
-        // ── Step 2: Also read directly from report_tables (covers data that was
-        //    accepted/done/draft but never went through a formal ReportSubmission) ──
+        // ── Step 2: Read ACCEPTED report_tables directly ──
         $directRows = ReportTable::where('reporting_year', $year)
             ->where('table_no', $tableUpper)
+            ->where('status', 'accepted')
             ->whereHas('user', function ($q) {
                 $q->where('role', 'cmi');
             })
@@ -66,27 +67,24 @@ class ReportController extends Controller
 
         foreach ($directRows as $rt) {
             $uid = $rt->user_id;
-            $st  = $rt->status;
+            $st  = 'accepted';
 
-            // If this user already appears from submissions, only override table data
-            // if the direct row has a higher-priority status
             if (isset($resultMap[$uid])) {
-                $curPriority = $statusPriority[$resultMap[$uid]['table_status']] ?? 0;
-                $newPriority = $statusPriority[$st] ?? 0;
-                if ($newPriority > $curPriority) {
-                    $resultMap[$uid]['table_status'] = $st;
-                    $resultMap[$uid]['updated_at']   = $rt->updated_at ? $rt->updated_at->toDateTimeString() : null;
-                    $resultMap[$uid]['rows']         = $rt->rows_json ?? [];
-                    $resultMap[$uid]['meta']         = $rt->meta_json ?? null;
+                $resultMap[$uid]['table_status'] = 'accepted';
+                $resultMap[$uid]['updated_at']   = $rt->updated_at ? $rt->updated_at->toDateTimeString() : null;
+                if (!empty($rt->rows_json)) {
+                    $resultMap[$uid]['rows'] = $rt->rows_json;
+                }
+                if (!empty($rt->meta_json)) {
+                    $resultMap[$uid]['meta'] = $rt->meta_json;
                 }
             } else {
-                // New user not seen in submissions — add them
                 $resultMap[$uid] = [
                     'user_id'      => $uid,
                     'institution'  => $rt->user?->institution ?: $rt->user?->name,
                     'submitted_at' => null,
-                    'sub_status'   => 'not-submitted',
-                    'table_status' => $st,
+                    'sub_status'   => 'accepted',
+                    'table_status' => 'accepted',
                     'updated_at'   => $rt->updated_at ? $rt->updated_at->toDateTimeString() : null,
                     'rows'         => $rt->rows_json ?? [],
                     'meta'         => $rt->meta_json ?? null,
@@ -127,6 +125,9 @@ class ReportController extends Controller
         foreach ($resultMap as $uid => &$entry) {
             if (isset($allDocs[$uid])) {
                 $entry['docs'] = $allDocs[$uid]->toArray();
+            }
+            if (($entry['table_status'] ?? '') !== 'accepted') {
+                $entry['rows'] = [];
             }
         }
         unset($entry);

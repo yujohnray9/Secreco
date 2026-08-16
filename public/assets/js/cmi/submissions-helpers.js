@@ -39,10 +39,10 @@
   /* ─────────────────────────────────────────
      SUMMARY BADGE
   ───────────────────────────────────────── */
-  function updateSummary(submitted) {
+  function updateSummary(accepted) {
     const el = document.getElementById('submissions-summary');
     if (!el) return;
-    el.innerHTML = `<span class="sub-count-badge"><strong>${submitted}</strong><span>Submitted</span></span>`;
+    el.innerHTML = `<span class="sub-count-badge"><strong>${accepted}</strong><span>Accepted</span></span>`;
   }
 
   /* ─────────────────────────────────────────

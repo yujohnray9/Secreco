@@ -14,33 +14,42 @@ class InstitutionController extends Controller
     public function index(Request $request): JsonResponse
     {
         $year        = (int) ($request->input('year') ?? date('Y'));
-        $totalTables = 20;
+        $totalTables = count(config('secreco.all_tables', [])) ?: 24;
 
         $masterList = config('secreco.institutions');
 
         $cmiUsers = User::where('role', 'cmi')->where('status', 'active')->get();
-        $cmiUserIds = $cmiUsers->pluck('id')->all();
+        $cmiUsersByInst = $cmiUsers->groupBy('institution');
 
-        $submissions = ReportSubmission::where('reporting_year', $year)
-            ->whereIn('user_id', $cmiUserIds)
-            ->orderByDesc('submitted_at')
+        $doneRows = ReportTable::where('reporting_year', $year)
+            ->whereIn('status', ['done', 'submitted', 'accepted'])
+            ->select('user_id', 'table_no')
             ->get()
-            ->unique('user_id')
-            ->keyBy('user_id');
-
-        $doneCounts = ReportTable::where('reporting_year', $year)
-            ->where('status', 'done')
-            ->whereIn('user_id', $cmiUserIds)
-            ->selectRaw('user_id, COUNT(DISTINCT table_no) as cnt')
-            ->groupBy('user_id')
-            ->pluck('cnt', 'user_id');
+            ->groupBy('user_id');
 
         $byInst = [];
-        foreach ($cmiUsers as $u) {
-            $sub = $submissions->get($u->id);
-            $byInst[$u->institution] = [
-                'encoder'      => $u->name,
-                'tables_done'  => (int) ($doneCounts->get($u->id) ?? 0),
+        foreach ($cmiUsersByInst as $instName => $users) {
+            $uIds = $users->pluck('id')->all();
+
+            $sub = ReportSubmission::where('reporting_year', $year)
+                ->whereIn('user_id', $uIds)
+                ->orderByDesc('submitted_at')
+                ->first();
+
+            $distinctTables = [];
+            foreach ($uIds as $uid) {
+                $userTables = $doneRows->get($uid, collect());
+                foreach ($userTables as $row) {
+                    $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $row->table_no));
+                    $distinctTables[$cleanKey] = true;
+                }
+            }
+
+            $encoderNames = $users->pluck('name')->filter()->join(', ');
+
+            $byInst[$instName] = [
+                'encoder'      => $encoderNames ?: '—',
+                'tables_done'  => count($distinctTables),
                 'sub_status'   => $sub?->status,
                 'submitted_at' => $sub?->submitted_at ? $sub->submitted_at->toDateTimeString() : null,
                 'has_cmi'      => true,

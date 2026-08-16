@@ -18,16 +18,17 @@ class ReportController extends Controller
     {
         $userId        = Auth::id() ?? session('user_id');
         $reportingYear = (int) ($request->input('year') ?? $request->input('reporting_year') ?? date('Y'));
-        $allTables     = config('secreco.all_tables', [
+        $fmtTables     = \App\Models\FormatTemplate::where('year', $reportingYear)->orderBy('sort_order', 'asc')->pluck('table_no')->toArray();
+        $allTables     = !empty($fmtTables) ? $fmtTables : config('secreco.all_tables', [
             'T1','T2a','T2b','T3','T4','T5','T6','T7a','T7b',
             'T8a','T8b','T9','T10','T11','T12','T13','T14','T15',
             'T16','T17','T18','T19','T20a','T20b'
         ]);
 
-        // Update ALL tables with content for this user and year to 'done' on submit (except accepted ones)
+        // Update tables with content for this user and year to 'done' on submit (except accepted or deleted ones)
         ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
-            ->where('status', '!=', 'accepted')
+            ->whereNotIn('status', ['accepted', 'deleted'])
             ->get()
             ->each(function ($tbl) {
                 $hasRows = is_array($tbl->rows_json) && count($tbl->rows_json) > 0;
@@ -49,10 +50,14 @@ class ReportController extends Controller
         $snapshot = [];
         foreach ($allTables as $no) {
             if (isset($byTable[$no])) {
+                $st = $byTable[$no]->status;
+                if ($st === 'deleted') {
+                    $st = 'not-started';
+                }
                 $snapshot[$no] = [
-                    'status'     => $byTable[$no]->status,
-                    'meta'       => $byTable[$no]->meta_json,
-                    'rows'       => $byTable[$no]->rows_json,
+                    'status'     => $st,
+                    'meta'       => ($byTable[$no]->status === 'deleted') ? null : $byTable[$no]->meta_json,
+                    'rows'       => ($byTable[$no]->status === 'deleted') ? [] : $byTable[$no]->rows_json,
                     'updated_at' => $byTable[$no]->updated_at ? $byTable[$no]->updated_at->toDateTimeString() : null,
                 ];
             } else {

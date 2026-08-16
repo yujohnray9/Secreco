@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cmi;
 
 use App\Http\Controllers\Controller;
 use App\Models\CmiTableImage;
+use App\Models\FormatTemplate;
 use App\Models\ReportSubmission;
 use App\Models\ReportTable;
 use App\Models\ReportTableDoc;
@@ -31,7 +32,7 @@ class TableController extends Controller
         $mateIds  = $this->getInstMateIds($userId);
         $allIds   = array_merge([$userId], $mateIds);
 
-        $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'draft' => 2, 'not-started' => 0];
+        $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'draft' => 2, 'not-started' => 0, 'deleted' => 0];
         $allRows  = ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->where('table_no', $tableNo)
@@ -69,17 +70,21 @@ class TableController extends Controller
 
         // Docs: load from the user whose row we're showing (may be a mate's row)
         $docOwner = $row->user_id;
+        $candidates = array_unique([$tableNo, 'TABLE ' . $tableNo, 'Table ' . $tableNo, strtolower($tableNo), strtoupper($tableNo)]);
         $images = ReportTableDoc::where('user_id', $docOwner)
             ->where('reporting_year', $reportingYear)
-            ->where('table_no', $tableNo)
+            ->whereIn('table_no', $candidates)
             ->orderBy('sort_order', 'asc')
             ->orderBy('uploaded_at', 'asc')
             ->get(['id', 'file_path', 'caption'])
             ->map(function ($img) {
-                if ($img->file_path) {
-                    $img->file_path = '/' . ltrim($img->file_path, '/');
-                }
-                return $img;
+                $path = $img->file_path ? '/' . ltrim($img->file_path, '/') : '';
+                return [
+                    'id'        => (int) $img->id,
+                    'doc_id'    => (int) $img->id,
+                    'file_path' => $path,
+                    'caption'   => $img->caption ?? '',
+                ];
             });
 
         $meta = $row->meta_json ?? [];
@@ -87,8 +92,13 @@ class TableController extends Controller
             unset($meta['images']);
         }
 
+        $resStatus = $row->status;
+        if ($resStatus === 'deleted') {
+            $resStatus = 'not-started';
+        }
+
         return response()->json([
-            'status'     => $row->status,
+            'status'     => $resStatus,
             'meta'       => $meta,
             'rows'       => $row->rows_json ?? [],
             'updated_at' => $row->updated_at ? $row->updated_at->toDateTimeString() : null,
@@ -202,14 +212,13 @@ class TableController extends Controller
         $mateIds = $this->getInstMateIds($userId);
         $allIds  = array_merge([$userId], $mateIds);
 
-        // Only lock the current user's own form if THEY personally submitted.
-        // Institution-mate submissions should NOT lock other users' forms.
-        $ownSubmission = ReportSubmission::where('user_id', $userId)
+        // Lock if there is an active submission for this user/institution
+        $ownSubmission = ReportSubmission::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
+            ->whereIn('status', ['pending', 'submitted', 'in-progress'])
             ->orderByDesc('submitted_at')
             ->first();
 
-        $isSubmitted = (bool) $ownSubmission;
         $submittedAt = $ownSubmission?->submitted_at ? $ownSubmission->submitted_at->toDateTimeString() : null;
 
         if ($submittedAt) {
@@ -221,7 +230,17 @@ class TableController extends Controller
         if ($ownSubmission && !empty($ownSubmission->snapshot_json)) {
             $snap = $ownSubmission->snapshot_json;
             if (is_array($snap)) {
+                $unlockedTables = ReportTable::whereIn('user_id', $allIds)
+                    ->where('reporting_year', $reportingYear)
+                    ->whereIn('status', ['returned', 'draft', 'not-started', 'deleted'])
+                    ->pluck('table_no')
+                    ->map(fn($t) => strtoupper($t))
+                    ->toArray();
+
                 foreach ($snap as $no => $data) {
+                    if (in_array(strtoupper($no), $unlockedTables, true)) {
+                        continue;
+                    }
                     if (isset($data['status']) && in_array($data['status'], ['done', 'submitted', 'accepted'], true)) {
                         $submittedTables[] = $no;
                     }
@@ -229,9 +248,11 @@ class TableController extends Controller
             }
         }
 
+        $isSubmitted = (bool) $ownSubmission && !empty($submittedTables);
+
         // Build statuses from this user's records, merged with institution-mate records.
         // Higher-priority status wins: accepted > done/submitted > draft > not-started.
-        $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'draft' => 2, 'not-started' => 0];
+        $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'draft' => 2, 'not-started' => 0, 'deleted' => 0];
 
         $allRows = ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
@@ -240,7 +261,7 @@ class TableController extends Controller
         $statuses = [];
         foreach ($allRows as $r) {
             $st = $r->status;
-            if ($st === 'draft' && !$this->hasContent($r->meta_json, $r->rows_json)) {
+            if ($st === 'deleted' || !$this->hasContent($r->meta_json, $r->rows_json)) {
                 $st = 'not-started';
             }
             $cur = $statuses[$r->table_no] ?? 'not-started';
@@ -249,11 +270,17 @@ class TableController extends Controller
             }
         }
 
+        $templates = FormatTemplate::where('year', $reportingYear)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('table_no', 'asc')
+            ->get(['id', 'year', 'table_no', 'title', 'section', 'is_required', 'columns_json', 'sort_order', 'status']);
+
         return response()->json([
             'statuses'         => $statuses,
             'submitted'        => $isSubmitted,
             'submitted_at'     => $submittedAt,
             'submitted_tables' => $submittedTables,
+            'templates'        => $templates,
         ]);
     }
 
@@ -285,7 +312,10 @@ class TableController extends Controller
 
         $rawTable = $request->input('table_no', '');
         $tableKey = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $rawTable));
-        $tableDb  = strtoupper($rawTable);
+        $tableDb  = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $rawTable));
+        if (str_starts_with($tableDb, 'TABLE') && strlen($tableDb) > 5) {
+            $tableDb = substr($tableDb, 5);
+        }
 
         if ($tableKey === '') {
             return response()->json(['success' => false, 'error' => 'Missing table_no']);
@@ -295,7 +325,7 @@ class TableController extends Controller
 
         $maxSort = ReportTableDoc::where('user_id', $userId)
             ->where('reporting_year', $year)
-            ->where('table_no', $tableDb)
+            ->whereIn('table_no', [$tableDb, $rawTable, strtoupper($rawTable)])
             ->max('sort_order');
         $sortOrder = ($maxSort !== null ? $maxSort : -1) + 1;
 
@@ -343,8 +373,9 @@ class TableController extends Controller
 
     public function deleteDoc(Request $request): JsonResponse
     {
-        $docId    = (int) ($request->input('doc_id') ?? $request->input('id') ?? 0);
-        $cmiParam = $request->input('cmi_user_id');
+        $body     = $request->json()->all() ?: $request->all();
+        $docId    = (int) ($body['doc_id'] ?? $body['id'] ?? $request->input('doc_id') ?? $request->input('id') ?? 0);
+        $cmiParam = $body['cmi_user_id'] ?? $request->input('cmi_user_id');
         $userId   = $cmiParam ? (int) $cmiParam : (Auth::id() ?? session('user_id'));
 
         if ($docId <= 0) {

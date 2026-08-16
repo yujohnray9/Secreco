@@ -69,11 +69,20 @@ class SubmissionController extends Controller
                 ->get();
 
             foreach ($docs as $doc) {
-                $key = $doc->user_id . '_' . $doc->table_no;
-                $docsByUserTable[$key][] = [
+                $cleanTable = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $doc->table_no));
+                if (str_starts_with($cleanTable, 'TABLE') && strlen($cleanTable) > 5) {
+                    $cleanTable = substr($cleanTable, 5);
+                }
+                $item = [
+                    'id'        => (int) $doc->id,
+                    'doc_id'    => (int) $doc->id,
                     'file_path' => $doc->file_path,
                     'caption'   => $doc->caption ?? '',
                 ];
+                $docsByUserTable[$doc->user_id . '_' . $doc->table_no][] = $item;
+                if ($cleanTable && $cleanTable !== $doc->table_no) {
+                    $docsByUserTable[$doc->user_id . '_' . $cleanTable][] = $item;
+                }
             }
         }
 
@@ -290,7 +299,7 @@ class SubmissionController extends Controller
             'icon'         => '🔴',
             'color'        => 'red',
             'message'      => $notifMsg,
-            'action_url'   => '/dashboard/cmi/fillup',
+            'action_url'   => "/dashboard/cmi/fillup?table={$tableNo}&year={$year}",
             'action_label' => "Fix {$tableNo}",
             'is_read'      => false,
             'created_at'   => now(),
@@ -319,13 +328,72 @@ class SubmissionController extends Controller
             return response()->json(['ok' => false, 'error' => 'Missing required fields.']);
         }
 
-        ReportTable::where('user_id', $cmiUserId)
-            ->where('reporting_year', $year)
-            ->where('table_no', $tableNo)
-            ->update(['status' => 'deleted', 'updated_at' => now()]);
-
         $cmiUser = User::find($cmiUserId);
         $inst    = $cmiUser?->institution ?: ($cmiUser?->name ?? 'CMI User');
+        $allIds  = [$cmiUserId];
+        if ($cmiUser && !empty(trim((string)$cmiUser->institution))) {
+            $mateIds = User::where('institution', $cmiUser->institution)
+                ->where('role', '!=', 'pta')
+                ->pluck('id')
+                ->toArray();
+            $allIds = array_values(array_unique(array_merge($allIds, $mateIds)));
+        }
+
+        ReportTable::whereIn('user_id', $allIds)
+            ->where('reporting_year', $year)
+            ->where('table_no', $tableNo)
+            ->update([
+                'status'     => 'deleted',
+                'rows_json'  => [],
+                'meta_json'  => [],
+                'updated_at' => now(),
+            ]);
+
+        $subs = ReportSubmission::whereIn('user_id', $allIds)
+            ->where('reporting_year', $year)
+            ->get();
+
+        foreach ($subs as $sub) {
+            $snap = $sub->snapshot_json ?? [];
+            if (is_array($snap)) {
+                $candidates = [$tableNo, strtolower($tableNo), strtoupper($tableNo), 'TABLE ' . $tableNo, 'Table ' . $tableNo];
+                foreach ($candidates as $k) {
+                    if (isset($snap[$k])) {
+                        if (is_array($snap[$k])) {
+                            $snap[$k]['status'] = 'deleted';
+                        }
+                    }
+                }
+
+                $hasSubmittedTable = false;
+                foreach ($snap as $tKey => $tVal) {
+                    $st = is_array($tVal) ? ($tVal['status'] ?? '') : '';
+                    if (in_array($st, ['done', 'submitted', 'accepted'], true)) {
+                        $hasSubmittedTable = true;
+                        break;
+                    }
+                }
+
+                $updateData = ['snapshot_json' => $snap];
+                if (!$hasSubmittedTable) {
+                    $updateData['status'] = 'deleted';
+                }
+                $sub->update($updateData);
+            }
+        }
+
+        Notification::create([
+            'user_id'      => $cmiUserId,
+            'role'         => 'cmi',
+            'type'         => 'deleted',
+            'icon'         => '🗑️',
+            'color'        => 'red',
+            'message'      => "Your CY {$year} Table {$tableNo} submission was deleted by PTA. You may now edit and re-submit it.",
+            'action_url'   => '/dashboard/cmi/fillup',
+            'action_label' => "Fill Up {$tableNo}",
+            'is_read'      => false,
+            'created_at'   => now(),
+        ]);
 
         ActivityLogService::log($ptaUserId, "Deleted submission {$tableNo} from {$inst} (CY {$year})");
 

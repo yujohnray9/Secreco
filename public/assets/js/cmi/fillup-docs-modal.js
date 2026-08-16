@@ -263,11 +263,12 @@
     const img = _images[idx];
     if (!img) return;
 
-    if (img.id) {
+    const docId = img.id || img.doc_id;
+    if (docId) {
       fetch(API_IMG_DEL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: img.id }),
+        body: JSON.stringify({ id: docId, doc_id: docId }),
       })
       .then(async r => {
         const text = await r.text();
