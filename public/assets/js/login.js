@@ -113,6 +113,47 @@ function validateGmailLive(input) {
   }
 }
 
+/* ── OCCUPIED INSTITUTIONS (1 CMI per institution rule) ── */
+let occupiedInstitutions = [];
+
+async function loadOccupiedInstitutions() {
+  try {
+    const res  = await fetch('/api/auth/occupied-institutions');
+    const data = await res.json();
+    if (data.success && Array.isArray(data.occupied)) {
+      occupiedInstitutions = data.occupied;
+      updateRegInstSelectOptions();
+    }
+  } catch(e) {
+    console.error('Error loading occupied institutions:', e);
+  }
+}
+
+function updateRegInstSelectOptions() {
+  const select = document.getElementById('regInstSelect');
+  if (!select) return;
+
+  for (let i = 0; i < select.options.length; i++) {
+    const opt = select.options[i];
+    if (!opt.value) continue;
+
+    if (!opt.dataset.origText) {
+      opt.dataset.origText = opt.text;
+    }
+
+    const isOccupied = occupiedInstitutions.includes(opt.value);
+    if (isOccupied) {
+      opt.disabled = true;
+      opt.text = opt.dataset.origText + ' (Already Registered)';
+      opt.style.color = '#9ca3af';
+    } else {
+      opt.disabled = false;
+      opt.text = opt.dataset.origText;
+      opt.style.color = '';
+    }
+  }
+}
+
 /* ── VIEW TOGGLE ── */
 function showRegister() {
   document.getElementById('loginView').classList.add('hidden');
@@ -123,6 +164,7 @@ function showRegister() {
   otpSent        = false;
   const instField = document.getElementById('regInstField');
   if (instField) instField.style.display = 'none';
+  loadOccupiedInstitutions();
   updateSteps();
 }
 function showLogin() {
@@ -193,7 +235,9 @@ function selectRole(role) {
     if (instSelectWrap) {
       instSelectWrap.style.display = role === 'cmi' ? '' : 'none';
     }
-    if (role !== 'cmi') {
+    if (role === 'cmi') {
+      updateRegInstSelectOptions();
+    } else {
       document.getElementById('regInstSelect').value = '';
     }
   } else {
@@ -226,6 +270,10 @@ function regNext() {
     const inst = document.getElementById('regInstSelect').value;
     if (!inst) {
       showAlert('Please select your institution.', () => document.getElementById('regInstSelect').focus());
+      return;
+    }
+    if (occupiedInstitutions.includes(inst)) {
+      showAlert('This institution already has a CMI Representative account. Only 1 CMI account is allowed per institution.', () => document.getElementById('regInstSelect').focus());
       return;
     }
   }
@@ -792,3 +840,11 @@ function fpResetPassword() {
     })
     .catch(() => _fpShowMsg('fpStep2bError', 'Network error. Please try again.', true));
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadOccupiedInstitutions();
+  initOtpBoxes();
+  if (window.location.hash === '#register') {
+    showRegister();
+  }
+});

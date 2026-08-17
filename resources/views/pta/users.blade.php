@@ -237,6 +237,47 @@ function initials(name) {
   return name ? name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase() : '?';
 }
 
+let ptaOccupiedInstitutions = [];
+
+async function loadPtaOccupiedInstitutions() {
+  try {
+    const res  = await fetch('/api/auth/occupied-institutions');
+    const data = await res.json();
+    if (data.success && Array.isArray(data.occupied)) {
+      ptaOccupiedInstitutions = data.occupied;
+      updateAddUserInstOptions();
+    }
+  } catch(e) {
+    console.error('Error loading occupied institutions:', e);
+  }
+}
+
+function updateAddUserInstOptions() {
+  const select = document.getElementById('addUserInstitution');
+  const role   = document.getElementById('addUserRole')?.value;
+  if (!select) return;
+
+  for (let i = 0; i < select.options.length; i++) {
+    const opt = select.options[i];
+    if (!opt.value) continue;
+
+    if (!opt.dataset.origText) {
+      opt.dataset.origText = opt.text;
+    }
+
+    const isOccupied = role === 'cmi' && ptaOccupiedInstitutions.includes(opt.value);
+    if (isOccupied) {
+      opt.disabled = true;
+      opt.text = opt.dataset.origText + ' (Occupied)';
+      opt.style.color = '#9ca3af';
+    } else {
+      opt.disabled = false;
+      opt.text = opt.dataset.origText;
+      opt.style.color = '';
+    }
+  }
+}
+
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
@@ -258,10 +299,12 @@ function onRoleChange() {
   const role = document.getElementById('addUserRole').value;
   const instGroup = document.getElementById('addUserInstGroup');
   if (instGroup) instGroup.style.display = role === 'cmi' ? '' : 'none';
+  updateAddUserInstOptions();
 }
 
 function openAddUserModal() {
   openModal('modalAddUser');
+  loadPtaOccupiedInstitutions();
   onRoleChange();
 }
 
@@ -275,6 +318,14 @@ async function submitAddUser() {
 
   if (!firstName || !lastName) { showToast('First and last name are required.'); return; }
   if (!email) { showToast('Email is required.'); return; }
+
+  if (role === 'cmi') {
+    if (!inst) { showToast('Institution is required for CMI Representatives.'); return; }
+    if (ptaOccupiedInstitutions.includes(inst)) {
+      showToast('This institution already has a CMI Representative account.');
+      return;
+    }
+  }
 
   const btn = document.getElementById('addUserSubmitBtn');
   btn.disabled = true;
@@ -391,6 +442,7 @@ async function loadUsers() {
         </tr>
       `).join('');
     }
+    loadPtaOccupiedInstitutions();
   } catch(e) { console.error('Users load error:', e); }
 }
 

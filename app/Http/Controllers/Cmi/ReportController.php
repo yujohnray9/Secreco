@@ -33,7 +33,7 @@ class ReportController extends Controller
             ->each(function ($tbl) {
                 $hasRows = is_array($tbl->rows_json) && count($tbl->rows_json) > 0;
                 $hasMeta = is_array($tbl->meta_json) && count($tbl->meta_json) > 0;
-                if ($hasRows || $hasMeta || $tbl->status === 'draft') {
+                if ($tbl->status !== 'done' && ($hasRows || $hasMeta || $tbl->status === 'draft')) {
                     $tbl->update(['status' => 'done', 'updated_at' => now()]);
                 }
             });

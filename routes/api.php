@@ -32,6 +32,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/verify-otp-fp', [AuthController::class, 'verifyOtpFp']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::get('/occupied-institutions', [AuthController::class, 'getOccupiedInstitutions']);
 });
 
 /*

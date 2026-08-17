@@ -37,6 +37,16 @@ class UserApprovalController extends Controller
                         if ($user->status !== 'pending') {
                             return response()->json(['success' => false, 'message' => 'Account is no longer pending.']);
                         }
+                        if ($user->role === 'cmi') {
+                            $activeExists = User::where('role', 'cmi')
+                                ->whereRaw('LOWER(TRIM(institution)) = ?', [mb_strtolower(trim((string)$user->institution))])
+                                ->where('status', 'active')
+                                ->where('id', '!=', $user->id)
+                                ->exists();
+                            if ($activeExists) {
+                                return response()->json(['success' => false, 'message' => "Cannot approve: An active CMI Representative already exists for {$user->institution}."]);
+                            }
+                        }
                         $user->update([
                             'status'      => 'active',
                             'approved_at' => now(),
@@ -92,6 +102,16 @@ class UserApprovalController extends Controller
                         if ($user->status !== 'inactive') {
                             return response()->json(['success' => false, 'message' => 'Account is not currently inactive.']);
                         }
+                        if ($user->role === 'cmi') {
+                            $activeExists = User::where('role', 'cmi')
+                                ->whereRaw('LOWER(TRIM(institution)) = ?', [mb_strtolower(trim((string)$user->institution))])
+                                ->where('status', 'active')
+                                ->where('id', '!=', $user->id)
+                                ->exists();
+                            if ($activeExists) {
+                                return response()->json(['success' => false, 'message' => "Cannot reactivate: An active CMI Representative already exists for {$user->institution}."]);
+                            }
+                        }
                         $user->update(['status' => 'active']);
                         ActivityLogService::log($adminId, "Reactivated account for {$name}");
 
@@ -127,6 +147,17 @@ class UserApprovalController extends Controller
 
         if (!in_array($target->role, ['cmi', 'viewer'], true)) {
             return response()->json(['success' => false, 'message' => 'You cannot manage this account.']);
+        }
+
+        if ($newStatus === 'active' && $target->role === 'cmi') {
+            $activeExists = User::where('role', 'cmi')
+                ->whereRaw('LOWER(TRIM(institution)) = ?', [mb_strtolower(trim((string)$target->institution))])
+                ->where('status', 'active')
+                ->where('id', '!=', $target->id)
+                ->exists();
+            if ($activeExists) {
+                return response()->json(['success' => false, 'message' => "Cannot activate: An active CMI Representative already exists for {$target->institution}."]);
+            }
         }
 
         $target->update(['status' => $newStatus]);

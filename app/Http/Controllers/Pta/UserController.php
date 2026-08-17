@@ -74,6 +74,19 @@ class UserController extends Controller
             return response()->json(['error' => 'Email already registered'], 409);
         }
 
+        if ($dbRole === 'cmi') {
+            if (empty($institution)) {
+                return response()->json(['error' => 'Institution is required for CMI Representatives.'], 400);
+            }
+            $cmiExists = User::where('role', 'cmi')
+                ->whereRaw('LOWER(TRIM(institution)) = ?', [mb_strtolower(trim($institution))])
+                ->whereIn('status', ['active', 'pending'])
+                ->exists();
+            if ($cmiExists) {
+                return response()->json(['error' => 'This institution already has a CMI Representative account (active or pending approval). Only 1 CMI account is allowed per institution.'], 422);
+            }
+        }
+
         $tempPassword = bin2hex(random_bytes(6));
         $hashedPw     = Hash::make($tempPassword);
         $adminId      = Auth::id() ?? session('user_id');
@@ -114,6 +127,17 @@ class UserController extends Controller
                 $pending = User::where('id', $pendingId)->where('status', 'pending')->first();
                 if (!$pending) {
                     return response()->json(['error' => 'Pending user not found'], 404);
+                }
+
+                if ($pending->role === 'cmi') {
+                    $activeExists = User::where('role', 'cmi')
+                        ->whereRaw('LOWER(TRIM(institution)) = ?', [mb_strtolower(trim((string)$pending->institution))])
+                        ->where('status', 'active')
+                        ->where('id', '!=', $pending->id)
+                        ->exists();
+                    if ($activeExists) {
+                        return response()->json(['error' => "Cannot approve: An active CMI Representative already exists for {$pending->institution}."], 422);
+                    }
                 }
 
                 $pending->update([

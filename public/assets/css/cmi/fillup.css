@@ -32,34 +32,45 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
-  font-size: 11px;
-  font-weight: 700;
+  padding: 9px 14px;
+  font-size: 11.5px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .04em;
-  color: var(--green-dark);
-  background: var(--green);
-  color: rgba(255,255,255,.9);
+  letter-spacing: .05em;
+  color: #ffffff;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 8px;
+  margin-top: 12px;
+  margin-bottom: 6px;
 }
-.fill-nav-item:hover { background: #ddeedd; color: var(--green-dark); }
-.fill-nav-item.active { background: var(--green); color: #fff; font-weight: 600; }
-.fill-nav-item .fn-pct { margin-left: auto; font-size: 10px; font-weight: 700; }
+.fill-nav-item:first-child {
+  margin-top: 0;
+}
+.fill-nav-item:hover { background: linear-gradient(135deg, #059669, #047857); color: #ffffff; }
 
 .fill-nav-sub {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px 8px 24px;
-  font-size: 11.5px;
-  color: var(--text);
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #374151;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background .15s, color .15s;
+  margin-bottom: 3px;
+  transition: all .15s ease;
 }
-.fill-nav-sub:hover { background: #eef6ee; color: var(--green); }
-.fill-nav-sub.done, .fill-nav-sub.submitted, .fill-nav-sub.accepted { color: var(--success); }
-.fill-nav-sub.draft { color: var(--warning); }
-.fill-nav-sub.error { color: var(--danger); }
-.fill-nav-sub.not-started { color: var(--text-muted); }
+.fill-nav-sub svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.fill-nav-sub:hover { background: #f0fdf4; color: #15803d; }
+.fill-nav-sub.active { background: #ecfdf5; color: #047857; font-weight: 700; }
+.fill-nav-sub.done, .fill-nav-sub.submitted, .fill-nav-sub.accepted { color: #059669; }
+.fill-nav-sub.draft { color: #d97706; }
+.fill-nav-sub.error { color: #dc2626; }
+.fill-nav-sub.not-started { color: #6b7280; }
 
 .fill-body {
   flex: 1;

@@ -160,7 +160,19 @@ class AuthController extends Controller
         if (empty($email)) $errors[] = 'Email is required.';
         elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Invalid email format.';
         if (!in_array($role, ['pta', 'cmi', 'viewer'])) $errors[] = 'Please select a valid role.';
-        if ($role === 'cmi' && empty($institution)) $errors[] = 'Institution is required.';
+        if ($role === 'cmi') {
+            if (empty($institution)) {
+                $errors[] = 'Institution is required.';
+            } else {
+                $cmiExists = User::where('role', 'cmi')
+                    ->whereRaw('LOWER(TRIM(institution)) = ?', [mb_strtolower(trim($institution))])
+                    ->whereIn('status', ['active', 'pending'])
+                    ->exists();
+                if ($cmiExists) {
+                    $errors[] = 'This institution already has a CMI Representative account (active or pending approval). Only 1 CMI account is allowed per institution.';
+                }
+            }
+        }
         if ($role !== 'pta' && empty($designation)) $errors[] = 'Designation / Position is required.';
         if (strlen($password) < 8) $errors[] = 'Password must be at least 8 characters.';
         if ($password !== $pwConfirm) $errors[] = 'Passwords do not match.';
@@ -297,6 +309,20 @@ class AuthController extends Controller
         $desgValue = !empty($pending->designation) ? $pending->designation : null;
         $status    = ($role === 'pta') ? 'active' : 'pending';
 
+        if ($role === 'cmi') {
+            $cmiExists = User::where('role', 'cmi')
+                ->whereRaw('LOWER(TRIM(institution)) = ?', [mb_strtolower(trim((string)$instValue))])
+                ->whereIn('status', ['active', 'pending'])
+                ->exists();
+            if ($cmiExists) {
+                $pending->delete();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This institution already has a CMI Representative account (active or pending approval). Only 1 CMI account is allowed per institution.'
+                ]);
+            }
+        }
+
         try {
             DB::transaction(function () use ($firstName, $lastName, $email, $hashed, $role, $instValue, $desgValue, $status, $pending) {
                 User::create([
@@ -429,5 +455,21 @@ class AuthController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'Could not update password. Please try again.']);
+    }
+
+    public function getOccupiedInstitutions(): JsonResponse
+    {
+        $occupied = User::where('role', 'cmi')
+            ->whereIn('status', ['active', 'pending'])
+            ->whereNotNull('institution')
+            ->where('institution', '!=', '')
+            ->pluck('institution')
+            ->unique()
+            ->values();
+
+        return response()->json([
+            'success'  => true,
+            'occupied' => $occupied,
+        ]);
     }
 }

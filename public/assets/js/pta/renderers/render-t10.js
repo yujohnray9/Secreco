@@ -28,7 +28,6 @@
             <th colspan="2">Proposals Packaged</th>
             <th colspan="3">Projects Approved &amp; Implemented</th>
             <th rowspan="2" style="width:80px">Total</th>
-            <th rowspan="2" style="width:110px">Last Updated</th>
           </tr>
           <tr>
             <th style="font-size:10px;width:80px">Total</th>
@@ -67,7 +66,6 @@
           <td style="text-align:center">${iDisapproved || '—'}</td>
           <td style="text-align:center">${impl.length || '—'}</td>
           <td style="text-align:center;font-weight:700;color:var(--green)">${total || '—'}</td>
-          <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
         </tr>`;
     });
 
@@ -82,7 +80,6 @@
             <td style="text-align:center;color:var(--green)">${totals.impl_disapproved || '—'}</td>
             <td style="text-align:center;color:var(--green)">${totals.impl_total || '—'}</td>
             <td style="text-align:center;color:var(--green)">${totals.grand || '—'}</td>
-            <td></td>
           </tr>
         </tfoot>
       </table>`;
