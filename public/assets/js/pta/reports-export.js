@@ -166,11 +166,15 @@ function buildExportHTML({ forPreview, logos = {} }) {
 
   const origin   = window.location.origin;
   const rawTable = el('tableContainer')?.innerHTML ?? '';
-  // Fix absolute paths + strip any rogue serif/monospace font-family overrides
+  // Fix absolute paths + strip any rogue serif/monospace font-family overrides + expand details/summary blocks
   const tableHtml = rawTable
     .replace(/src="\//g, `src="${origin}/`)
     .replace(/font-family\s*:[^;"']*/gi, 'font-family:Calibri,Arial,sans-serif')
-    .replace(/color\s*:\s*#(?:1b4d2e|3a7d44|1b5e20|2e7d32|388e3c)[^;"']*/gi, 'color:#1a1a1a');
+    .replace(/color\s*:\s*#(?:1b4d2e|3a7d44|1b5e20|2e7d32|388e3c)[^;"']*/gi, 'color:#1a1a1a')
+    .replace(/<details/gi, '<div class="rpt-detail-block-open"')
+    .replace(/<\/details>/gi, '</div>')
+    .replace(/<summary([^>]*)>/gi, '<div style="font-weight:bold;font-size:11pt;color:#1b4d2e;margin:14px 0 8px;"$1>')
+    .replace(/<\/summary>/gi, '</div>');
 
   const generatedAt = new Date().toLocaleString('en-PH', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -344,11 +348,6 @@ async function exportToDOCX(logos = {}) {
   };
   const logoBuf = await fetchBuf('/assets/img/cvaarrd.png');
 
-  // ── collect table data from DOM ──
-  const domTable = el('tableContainer')?.querySelector('table.merged');
-  const rows = domTable ? [...domTable.querySelectorAll('tbody tr')] : [];
-  const headRows = domTable ? [...domTable.querySelectorAll('thead tr')] : [];
-
   // ── colours ──
   const GREEN  = '1b4d2e';
   const LGREEN = 'd6e8d6';
@@ -370,33 +369,145 @@ async function exportToDOCX(logos = {}) {
     right:  { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
   };
 
-  // ── build header rows ──
-  const docxHeadRows = headRows.map(tr => {
-    const cells = [...tr.querySelectorAll('th')].map(th => new TableCell({
-      children: [new Paragraph({
-        children: [new TextRun({ text: th.innerText.trim(), bold: true, color: GREEN, size: 18, font: { name: 'Calibri' } })],
-        alignment: AlignmentType.CENTER,
-      })],
-      shading: { type: ShadingType.SOLID, color: LGREEN },
-      borders: cellBorder(),
-      columnSpan: +th.getAttribute('colspan') || 1,
-      rowSpan:    +th.getAttribute('rowspan') || 1,
-    }));
-    return new TableRow({ children: cells, tableHeader: true });
-  });
+  const cellText = (node) => {
+    if (!node) return '';
+    return (node.innerText || node.textContent || '').trim();
+  };
 
-  // ── build body rows ──
-  const docxBodyRows = rows.map(tr => {
-    const cells = [...tr.querySelectorAll('td')].map(td => new TableCell({
-      children: [new Paragraph({
-        children: [new TextRun({ text: td.innerText.trim(), size: 18, color: BLACK, font: { name: 'Calibri' } })],
-        alignment: AlignmentType.CENTER,
-      })],
-      borders: cellBorder(),
-      columnSpan: +td.getAttribute('colspan') || 1,
-    }));
-    return new TableRow({ children: cells });
-  });
+  // ── helper: convert any HTML table to a docx.Table ──
+  const buildDocxTableFromDOM = (domTable) => {
+    if (!domTable) return null;
+    const headRows = [...domTable.querySelectorAll('thead tr')];
+    const bodyRows = [...domTable.querySelectorAll('tbody tr')];
+    const footRows = [...domTable.querySelectorAll('tfoot tr')];
+
+    if (headRows.length === 0 && bodyRows.length === 0) {
+      const allTrs = [...domTable.querySelectorAll('tr')];
+      if (!allTrs.length) return null;
+      bodyRows.push(...allTrs);
+    }
+
+    const docxHead = headRows.map(tr => {
+      const cells = [...tr.querySelectorAll('th, td')].map(cell => new TableCell({
+        children: [new Paragraph({
+          children: [new TextRun({ text: cellText(cell), bold: true, color: GREEN, size: 18, font: { name: 'Calibri' } })],
+          alignment: AlignmentType.CENTER,
+        })],
+        shading: { type: ShadingType.SOLID, color: LGREEN },
+        borders: cellBorder(),
+        columnSpan: +cell.getAttribute('colspan') || 1,
+        rowSpan:    +cell.getAttribute('rowspan') || 1,
+      }));
+      return new TableRow({ children: cells, tableHeader: true });
+    });
+
+    const docxBody = bodyRows.map(tr => {
+      const cells = [...tr.querySelectorAll('td, th')].map(cell => {
+        const isBold = cell.tagName === 'TH' || cell.style.fontWeight === 'bold' || cell.style.fontWeight >= '600';
+        return new TableCell({
+          children: [new Paragraph({
+            children: [new TextRun({ text: cellText(cell), bold: isBold, size: 18, color: BLACK, font: { name: 'Calibri' } })],
+            alignment: cell.style.textAlign === 'center' ? AlignmentType.CENTER : (cell.style.textAlign === 'right' ? AlignmentType.RIGHT : AlignmentType.LEFT),
+          })],
+          borders: cellBorder(),
+          columnSpan: +cell.getAttribute('colspan') || 1,
+          rowSpan:    +cell.getAttribute('rowspan') || 1,
+        });
+      });
+      return new TableRow({ children: cells });
+    });
+
+    const docxFoot = footRows.map(tr => {
+      const cells = [...tr.querySelectorAll('td, th')].map(cell => new TableCell({
+        children: [new Paragraph({
+          children: [new TextRun({ text: cellText(cell), bold: true, size: 18, color: GREEN, font: { name: 'Calibri' } })],
+          alignment: cell.style.textAlign === 'center' ? AlignmentType.CENTER : (cell.style.textAlign === 'right' ? AlignmentType.RIGHT : AlignmentType.LEFT),
+        })],
+        shading: { type: ShadingType.SOLID, color: 'f1f8f1' },
+        borders: cellBorder(),
+        columnSpan: +cell.getAttribute('colspan') || 1,
+        rowSpan:    +cell.getAttribute('rowspan') || 1,
+      }));
+      return new TableRow({ children: cells });
+    });
+
+    return new Table({
+      rows: [...docxHead, ...docxBody, ...docxFoot],
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      layout: TableLayoutType.FIXED,
+    });
+  };
+
+  // ── collect all tables & drilldown sections from DOM ──
+  const tableContainer = el('tableContainer');
+  const mainDocxElements = [];
+
+  if (tableContainer) {
+    // 1. Process main summary table(s)
+    const summaryTables = [];
+    const directTables  = [...tableContainer.children].filter(c => c.tagName === 'TABLE' || (c.classList && c.classList.contains('tbl-wrap')));
+    directTables.forEach(c => {
+      if (c.tagName === 'TABLE') summaryTables.push(c);
+      else summaryTables.push(...c.querySelectorAll('table'));
+    });
+
+    if (summaryTables.length === 0) {
+      const firstT = tableContainer.querySelector('table:not(.doc-table)');
+      if (firstT) summaryTables.push(firstT);
+    }
+
+    summaryTables.forEach(st => {
+      const docxT = buildDocxTableFromDOM(st);
+      if (docxT) {
+        mainDocxElements.push(docxT);
+        mainDocxElements.push(new Paragraph({ children: [], spacing: { after: 140 } }));
+      }
+    });
+
+    // 2. Process drilldown detail blocks & sub-tables
+    const detailBlocks = [...tableContainer.querySelectorAll('.rpt-detail-block, details')];
+    if (detailBlocks.length > 0) {
+      detailBlocks.forEach(block => {
+        const summaryEl = block.querySelector('summary');
+        const summaryTxt = cellText(summaryEl);
+        if (summaryTxt) {
+          mainDocxElements.push(new Paragraph({
+            children: [new TextRun({ text: summaryTxt, bold: true, size: 20, color: GREEN, font: { name: 'Calibri' } })],
+            spacing: { before: 200, after: 100 },
+          }));
+        }
+
+        const subTables = [...block.querySelectorAll('table')];
+        subTables.forEach(st => {
+          let prevTitle = '';
+          let prev = st.previousElementSibling;
+          while (prev) {
+            if (prev.tagName === 'DIV' || prev.tagName === 'H4' || prev.tagName === 'H5' || prev.tagName === 'P') {
+              const text = cellText(prev);
+              if (text && text !== summaryTxt) {
+                prevTitle = text;
+                break;
+              }
+            }
+            prev = prev.previousElementSibling;
+          }
+
+          if (prevTitle) {
+            mainDocxElements.push(new Paragraph({
+              children: [new TextRun({ text: prevTitle, bold: true, size: 18, color: BLACK, font: { name: 'Calibri' } })],
+              spacing: { before: 140, after: 60 },
+            }));
+          }
+
+          const docxST = buildDocxTableFromDOM(st);
+          if (docxST) {
+            mainDocxElements.push(docxST);
+            mainDocxElements.push(new Paragraph({ children: [], spacing: { after: 140 } }));
+          }
+        });
+      });
+    }
+  }
 
   // ── build Documentation section ──
   const docSections = [];
@@ -411,8 +522,8 @@ async function exportToDOCX(logos = {}) {
     }));
 
     for (const block of cmiBlocks) {
-      const instName = block.querySelector('p')?.innerText?.trim() ?? '';
-      const caption  = block.querySelector('p:last-of-type')?.innerText?.trim() ?? '';
+      const instName = cellText(block.querySelector('p'));
+      const caption  = cellText(block.querySelector('p:last-of-type'));
       const imgEls   = [...block.querySelectorAll('img')];
 
       docSections.push(new Paragraph({
@@ -460,12 +571,8 @@ async function exportToDOCX(logos = {}) {
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
     }),
-    // Main table
-    ...(docxHeadRows.length || docxBodyRows.length ? [new Table({
-      rows: [...docxHeadRows, ...docxBodyRows],
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      layout: TableLayoutType.FIXED,
-    })] : []),
+    // Main summary table + drilldown sub-tables
+    ...mainDocxElements,
     new Paragraph({ children: [], spacing: { after: 160 } }),
     // Documentation
     ...docSections,
