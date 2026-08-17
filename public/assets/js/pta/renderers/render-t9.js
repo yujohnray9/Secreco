@@ -20,7 +20,6 @@
           <tr>
             <th style="width:200px">Institution</th>
             <th style="width:120px">No. of Technologies</th>
-            <th style="width:110px">Last Updated</th>
           </tr>
         </thead>
         <tbody>`;
@@ -34,7 +33,6 @@
         <tr>
           <td>${esc(inst.institution || '—')}</td>
           <td style="text-align:center;font-weight:700;color:var(--green)">${rows.length || '—'}</td>
-          <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
         </tr>`;
     });
 
@@ -44,7 +42,6 @@
           <tr style="font-weight:700;background:var(--bg-soft)">
             <td style="text-align:right;padding-right:12px">TOTAL</td>
             <td style="text-align:center;color:var(--green)">${grandTotal || '—'}</td>
-            <td></td>
           </tr>
         </tfoot>
       </table>`;

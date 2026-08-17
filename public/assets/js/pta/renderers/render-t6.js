@@ -42,7 +42,6 @@
             <th colspan="3">Developed / New</th>
             <th colspan="3">Maintained / Sustained</th>
             <th rowspan="2" style="width:80px">Total</th>
-            <th rowspan="2" style="width:110px">Last Updated</th>
           </tr>
           <tr>
             <th style="font-size:10px">Local</th>
@@ -72,7 +71,6 @@
           <td>${esc(inst.institution || '—')}</td>
           ${scopeKeys.map(k => `<td style="text-align:center">${byCat[k] || '—'}</td>`).join('')}
           <td style="text-align:center;font-weight:700;color:var(--green)">${total || '—'}</td>
-          <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
         </tr>`;
     });
 
@@ -83,7 +81,6 @@
             <td style="text-align:right;padding-right:12px">TOTAL</td>
             ${scopeKeys.map(k => `<td style="text-align:center;color:var(--green)">${colTotals[k] || '—'}</td>`).join('')}
             <td style="text-align:center;color:var(--green)">${grandAll || '—'}</td>
-            <td></td>
           </tr>
         </tfoot>
       </table>`;

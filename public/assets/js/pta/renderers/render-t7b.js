@@ -25,7 +25,6 @@
             <th style="width:110px">Developed / Enhanced</th>
             <th style="width:110px">Maintained</th>
             <th style="width:80px">Total</th>
-            <th style="width:110px">Last Updated</th>
           </tr>
         </thead>
         <tbody>`;
@@ -48,7 +47,6 @@
           <td style="text-align:center">${byCat.developed || '—'}</td>
           <td style="text-align:center">${byCat.maintained || '—'}</td>
           <td style="text-align:center;font-weight:700;color:var(--green)">${total || '—'}</td>
-          <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
         </tr>`;
     });
 
@@ -60,7 +58,6 @@
             <td style="text-align:center;color:var(--green)">${colTotals.developed || '—'}</td>
             <td style="text-align:center;color:var(--green)">${colTotals.maintained || '—'}</td>
             <td style="text-align:center;color:var(--green)">${grandAll || '—'}</td>
-            <td></td>
           </tr>
         </tfoot>
       </table>`;

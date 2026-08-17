@@ -32,7 +32,6 @@
             <th rowspan="2" style="width:200px">Institution</th>
             ${CATEGORIES.map(c => `<th>${esc(c.label)}</th>`).join('')}
             <th rowspan="2" style="width:90px">Grand Total</th>
-            <th rowspan="2" style="width:110px">Last Updated</th>
           </tr>
           <tr>
             ${CATEGORIES.map(() => '<th style="font-size:10.5px;color:#ffffff !important;font-weight:600;">Participants</th>').join('')}
@@ -59,7 +58,6 @@
           <td>${esc(inst.institution || '—')}</td>
           ${CATEGORIES.map(c => `<td style="text-align:center">${bycat[c.key] || '—'}</td>`).join('')}
           <td style="text-align:center;font-weight:700;color:var(--green)">${instTotal || '—'}</td>
-          <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
         </tr>`;
     });
 
@@ -71,7 +69,6 @@
             <td style="text-align:right;padding-right:12px">TOTAL</td>
             ${CATEGORIES.map(c => `<td style="text-align:center;color:var(--green)">${colTotals[c.key] || '—'}</td>`).join('')}
             <td style="text-align:center;color:var(--green)">${grandAll || '—'}</td>
-            <td></td>
           </tr>
         </tfoot>
       </table>`;

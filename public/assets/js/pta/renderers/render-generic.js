@@ -24,7 +24,6 @@ function renderGeneric(data) {
           ${docsHtml ? `<br>${docsHtml}` : ''}
         </td>
         <td style="text-align:center;font-weight:700;color:var(--green)">${count || '—'}</td>
-        <td style="font-size:11px;color:var(--text-muted)">${esc(cmi.updated_at ?? '—')}</td>
       </tr>`;
   });
 
@@ -34,7 +33,6 @@ function renderGeneric(data) {
         <tr>
           <th>Institution</th>
           <th style="width:100px;text-align:center">Rows</th>
-          <th style="width:140px">Last Updated</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>

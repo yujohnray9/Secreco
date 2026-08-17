@@ -21,7 +21,6 @@
             <th style="width:200px">Institution</th>
             <th style="width:80px">No. of Entries</th>
             <th style="width:140px">Total Amount Shared</th>
-            <th style="width:110px">Last Updated</th>
           </tr>
         </thead>
         <tbody>`;
@@ -38,7 +37,6 @@
           <td>${esc(inst.institution || '—')}</td>
           <td style="text-align:center">${rows.length || '—'}</td>
           <td style="text-align:right;font-weight:700;color:var(--green)">${total > 0 ? fmtAmt(total) : '—'}</td>
-          <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
         </tr>`;
     });
 
@@ -48,7 +46,6 @@
           <tr style="font-weight:700;background:var(--bg-soft)">
             <td colspan="2" style="text-align:right;padding-right:12px">GRAND TOTAL</td>
             <td style="text-align:right;color:var(--green)">${grandTotal > 0 ? fmtAmt(grandTotal) : '—'}</td>
-            <td></td>
           </tr>
         </tfoot>
       </table>`;

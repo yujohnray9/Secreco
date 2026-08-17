@@ -21,7 +21,6 @@
             <th style="width:200px">Institution</th>
             <th style="width:80px">No. of Projects</th>
             <th style="width:150px">Total Budget</th>
-            <th style="width:110px">Last Updated</th>
           </tr>
         </thead>
         <tbody>`;
@@ -39,7 +38,6 @@
           <td>${esc(inst.institution || '—')}</td>
           <td style="text-align:center">${rows.length || '—'}</td>
           <td style="text-align:right;font-weight:700;color:var(--green)">${budget > 0 ? fmtAmt(budget) : '—'}</td>
-          <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
         </tr>`;
     });
 
@@ -50,7 +48,6 @@
             <td style="text-align:right;padding-right:12px">TOTAL</td>
             <td style="text-align:center;color:var(--green)">${grandProjects || '—'}</td>
             <td style="text-align:right;color:var(--green)">${grandBudget > 0 ? fmtAmt(grandBudget) : '—'}</td>
-            <td></td>
           </tr>
         </tfoot>
       </table>`;

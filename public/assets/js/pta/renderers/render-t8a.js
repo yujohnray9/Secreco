@@ -27,7 +27,6 @@
             <th style="width:110px">Proposals Packaged</th>
             <th style="width:130px">Approved &amp; Implemented</th>
             <th style="width:80px">Total</th>
-            <th style="width:110px">Last Updated</th>
           </tr>
         </thead>
         <tbody>`;
@@ -50,7 +49,6 @@
           <td style="text-align:center">${byCat.packaged || '—'}</td>
           <td style="text-align:center">${byCat.implemented || '—'}</td>
           <td style="text-align:center;font-weight:700;color:var(--green)">${total || '—'}</td>
-          <td style="font-size:11px;color:var(--text-muted)">${esc(inst.updated_at || '—')}</td>
         </tr>`;
     });
 
@@ -62,7 +60,6 @@
             <td style="text-align:center;color:var(--green)">${colTotals.packaged || '—'}</td>
             <td style="text-align:center;color:var(--green)">${colTotals.implemented || '—'}</td>
             <td style="text-align:center;color:var(--green)">${grandAll || '—'}</td>
-            <td></td>
           </tr>
         </tfoot>
       </table>`;

@@ -23,7 +23,7 @@ function renderT1(data) {
         submitted += `
           <tr>
             <td>${esc(r.date ?? '')}</td>
-            <td>${esc(cmi.institution)}</td>
+            <td>${esc(r.agency || cmi.institution)}</td>
             <td>${+r.new_       || 0}</td>
             <td>${+r.ongoing    || 0}</td>
             <td>${+r.completed  || 0}</td>
