@@ -243,7 +243,7 @@
         <table class="perm-tbl">
           <thead><tr><th>Permission</th><th>PTA Admin</th><th>CMI Rep</th><th>Viewer</th></tr></thead>
           <tbody>
-            <tr><td>Fill Up / Submit Tables</td><td><span class="perm-chk">✔</span></td><td><span class="perm-chk">✔</span></td><td><span class="perm-crs">✘</span></td></tr>
+            <tr><td>Fill Out / Submit Tables</td><td><span class="perm-chk">✔</span></td><td><span class="perm-chk">✔</span></td><td><span class="perm-crs">✘</span></td></tr>
             <tr><td>View All CMI Submissions</td><td><span class="perm-chk">✔</span></td><td><span class="perm-part">Own only</span></td><td><span class="perm-chk">✔</span></td></tr>
             <tr><td>Accept Submissions</td><td><span class="perm-chk">✔</span></td><td><span class="perm-crs">✘</span></td><td><span class="perm-crs">✘</span></td></tr>
             <tr><td>Request Correction</td><td><span class="perm-chk">✔</span></td><td><span class="perm-crs">✘</span></td><td><span class="perm-crs">✘</span></td></tr>

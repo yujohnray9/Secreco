@@ -6,14 +6,14 @@
   width: 240px;
   min-width: 240px;
   background: #ffffff;
-  border-right: 1px solid #f0f3f6;
+  border-right: 1px solid #ede8de;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
-  padding: 20px 16px;
-  gap: 20px;
+  padding: 24px 16px 20px;
+  gap: 16px;
 }
 
 /* ── Brand Logo Header ── */
@@ -21,118 +21,110 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 8px 12px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 0 4px 16px;
+  border-bottom: 1px solid #ede8de;
 }
 
 .sb-brand-logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: #10b981;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #164e2e;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 18px;
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 20px;
   font-weight: 800;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
   flex-shrink: 0;
 }
 
 .sb-brand-logo img {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
 }
 
 .sb-brand-title {
-  font-family: 'Poppins', sans-serif;
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 16px;
+  font-weight: 800;
   color: #111827;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .sb-brand-sub {
   font-size: 10px;
-  color: #9ca3af;
+  color: #889c90;
   font-weight: 500;
+  margin-top: 1px;
 }
 
 /* ── Navigation Sections ── */
 .nav-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .nav-sec-label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: #9ca3af;
-  padding: 8px 12px 4px;
+  padding: 10px 10px 4px;
 }
 
 /* ── Nav Items ── */
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
   cursor: pointer;
   color: #4b5563;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   transition: all 0.15s ease;
   text-decoration: none;
   white-space: nowrap;
 }
 
+.nav-item::before {
+  content: '•';
+  font-size: 14px;
+  color: #9ca3af;
+  margin-right: 2px;
+}
+
 .nav-item:hover {
-  background: #f8fafc;
-  color: #10b981;
+  background: #f7f9f6;
+  color: #164e2e;
 }
 
 .nav-item.active {
-  background: #ecfdf5;
-  color: #059669;
-  font-weight: 600;
+  background: #e8f3e9;
+  color: #164e2e;
+  font-weight: 700;
+  border-left: 3.5px solid #b8860b;
+}
+
+.nav-item.active::before {
+  color: #164e2e;
 }
 
 .nav-item .nav-ic {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: #9ca3af;
-  transition: color 0.15s ease;
-}
-
-.nav-item.active .nav-ic {
-  color: #10b981;
-}
-
-.nav-item .nav-ic svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  display: none;
 }
 
 /* Badge pill */
 .nav-badge {
   margin-left: auto;
-  background: #f59e0b;
+  background: #b8860b;
   color: #ffffff;
   font-size: 10px;
   font-weight: 700;
@@ -140,63 +132,17 @@
   border-radius: 10px;
 }
 
-/* ── Bottom Help Box (FreshCart Card) ── */
-.sb-help-card {
+/* ── Bottom Consortium Footer Note ── */
+.sb-footer-note {
   margin-top: auto;
-  background: linear-gradient(135deg, #a7f3d0 0%, #34d399 100%);
-  border-radius: 18px;
-  padding: 16px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
-}
-
-.sb-help-card::before {
-  content: '';
-  position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-}
-
-.sb-help-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #064e3b;
-  margin-bottom: 2px;
-}
-
-.sb-help-sub {
-  font-size: 11px;
-  color: #047857;
-  margin-bottom: 12px;
-}
-
-.sb-help-btn {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  background: #059669;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  border-radius: 20px;
-  text-decoration: none;
-  transition: background 0.15s ease;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.2);
-}
-
-.sb-help-btn:hover {
-  background: #047857;
+  padding: 16px 8px 4px;
+  font-size: 10.5px;
+  color: #9ca3af;
+  line-height: 1.4;
+  border-top: 1px solid #ede8de;
 }
 
 /* Hide legacy sidebar elements */
-.sidebar-user, .sb-user-card, .sb-av-lg, .sb-name, .sb-role, .sb-user-center, .sb-inst {
+.sidebar-user, .sb-user-card, .sb-av-lg, .sb-name, .sb-role, .sb-user-center, .sb-inst, .sb-help-card {
   display: none !important;
 }

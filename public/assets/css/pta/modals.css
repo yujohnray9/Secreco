@@ -54,9 +54,9 @@
   justify-content: center;
 }
 .modal-fc-icon-wrap.type-green {
-  background: #ecfdf5;
-  border: 2px solid #a7f3d0;
-  color: #059669;
+  background: #f0f7f2;
+  border: 2px solid #cbe5d5;
+  color: #0a5c36;
 }
 .modal-fc-icon-wrap.type-red {
   background: #fef2f2;
@@ -64,39 +64,39 @@
   color: #dc2626;
 }
 .modal-fc-icon-wrap.type-orange {
-  background: #fff7ed;
-  border: 2px solid #fed7aa;
-  color: #d97706;
+  background: #fdf8eb;
+  border: 2px solid #eddcb8;
+  color: #8c6721;
 }
 .modal-fc-icon-wrap.type-blue {
-  background: #eff6ff;
+  background: #eff7fa;
   border: 2px solid #bfdbfe;
-  color: #2563eb;
+  color: #1b6b8a;
 }
 
 .modal-fc-title {
   font-family: 'Poppins', 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: #064225;
   margin-bottom: 8px;
   letter-spacing: -0.3px;
 }
 
 .modal-fc-desc {
   font-size: 13.5px;
-  color: #6b7280;
+  color: #475c50;
   line-height: 1.5;
   margin-bottom: 20px;
 }
 
 .modal-fc-input {
   width: 100%;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid #e3ebe5;
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 13.5px;
-  color: #111827;
+  color: #14241b;
   background: #fafafa;
   outline: none;
   font-family: inherit;
@@ -105,9 +105,9 @@
   transition: all .15s;
 }
 .modal-fc-input:focus {
-  border-color: #10b981;
+  border-color: #0a5c36;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+  box-shadow: 0 0 0 3px rgba(10, 92, 54, 0.12);
 }
 
 .modal-fc-actions {
@@ -131,20 +131,20 @@
   gap: 6px;
 }
 .modal-fc-btn-cancel {
-  background: #f3f4f6;
-  color: #374151;
+  background: #f0f3f0;
+  color: #475c50;
 }
 .modal-fc-btn-cancel:hover {
-  background: #e5e7eb;
+  background: #e3ebe5;
 }
 
 .modal-fc-btn-green {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #0a5c36, #064225);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 14px rgba(10, 92, 54, 0.35);
 }
 .modal-fc-btn-green:hover {
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  box-shadow: 0 6px 20px rgba(10, 92, 54, 0.45);
   transform: translateY(-1px);
 }
 
@@ -159,12 +159,12 @@
 }
 
 .modal-fc-btn-orange {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: linear-gradient(135deg, #b48a3c, #8c6721);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+  box-shadow: 0 4px 14px rgba(180, 138, 60, 0.35);
 }
 .modal-fc-btn-orange:hover {
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  box-shadow: 0 6px 20px rgba(180, 138, 60, 0.45);
   transform: translateY(-1px);
 }
 

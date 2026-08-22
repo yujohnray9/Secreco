@@ -74,6 +74,27 @@ function renderNotifications(items) {
     card.innerHTML = html;
 }
 
+function getSvgIcon(type, icon) {
+    const t = (type || '').toLowerCase();
+    const ic = (icon || '').toLowerCase();
+    if (t.includes('edit') || ic.includes('edit') || ic === '✏️' || ic === '📝') {
+        return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
+    }
+    if (t === 'red' || t.includes('corr') || t.includes('return') || ic === '🔴' || ic === '↩️') {
+        return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+    }
+    if (t === 'green' || t.includes('accept') || ic === '✅') {
+        return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+    }
+    if (t === 'yellow' || t.includes('user') || ic === '👥') {
+        return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+    }
+    if (ic === '📨' || t.includes('submit')) {
+        return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
+}
+
 function renderItem(n) {
     const timeStr     = formatRelativeTime(n.time);
     const unreadClass = n.unread ? ' notif-unread' : '';
@@ -82,10 +103,11 @@ function renderItem(n) {
         ? `<div class="notif-action"><button class="btn-notif${n.unread ? '' : ' outline'}" onclick="location.href='${esc(n.action)}'">${esc(n.action_label ?? 'View')}</button></div>`
         : '';
     const badgeLabel  = typeBadgeLabel(n.type, n.status);
+    const svgIcon     = getSvgIcon(n.type, n.icon);
 
     return `
     <div class="notif-item${unreadClass}" data-type="${esc(n.type)}">
-        <div class="notif-ic ${esc(n.type)}">${n.icon}</div>
+        <div class="notif-ic ${esc(n.type)}">${svgIcon}</div>
         <div class="notif-body">
             <div class="notif-top">
                 <div class="notif-msg">${esc(n.msg)}</div>

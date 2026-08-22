@@ -449,8 +449,41 @@ class SubmissionController extends Controller
         $latestSub->update(['snapshot_json' => $snap]);
 
         $ptaUserId = Auth::id() ?? session('user_id');
+        $ptaUser   = $ptaUserId ? User::find($ptaUserId) : null;
+        $ptaName   = $ptaUser?->name ?? 'PTA Admin';
         $cmiUser   = User::find($cmiUserId);
         $inst      = $cmiUser?->institution ?: ($cmiUser?->name ?? 'CMI User');
+
+        // Notify CMI user(s) of this institution about the PTA edit
+        try {
+            $targetCmis = User::where('role', 'cmi')
+                ->where(function ($q) use ($cmiUser, $cmiUserId) {
+                    if ($cmiUser && !empty(trim((string) $cmiUser->institution))) {
+                        $q->where('institution', $cmiUser->institution);
+                    } else {
+                        $q->where('id', $cmiUserId);
+                    }
+                })
+                ->get();
+
+            foreach ($targetCmis as $target) {
+                Notification::create([
+                    'user_id'      => $target->id,
+                    'role'         => 'cmi',
+                    'type'         => 'table_edited',
+                    'icon'         => '✏️',
+                    'color'        => 'blue',
+                    'message'      => "Table {$tableNo} (CY {$year}) was edited / updated by PTA ({$ptaName}).",
+                    'action_url'   => "/dashboard/cmi/fillup?table={$tableNo}&year={$year}",
+                    'action_label' => "View {$tableNo}",
+                    'is_read'      => false,
+                    'created_at'   => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to notify CMI on PTA table update: ' . $e->getMessage());
+        }
+
         ActivityLogService::log($ptaUserId, "PTA updated Table {$tableNo} for {$inst} (CY {$year})");
 
         return response()->json(['ok' => true, 'message' => "Table {$tableNo} for {$inst} updated successfully."]);

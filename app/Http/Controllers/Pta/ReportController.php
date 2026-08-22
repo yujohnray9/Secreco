@@ -18,9 +18,8 @@ class ReportController extends Controller
         $table      = trim($request->input('table', 'T1'));
         $tableUpper = strtoupper($table);
 
-        // ── Step 1: Collect ACCEPTED report submissions for this year ──────
+        // ── Step 1: Collect latest report submissions for this year ──────
         $latestSubIds = ReportSubmission::where('reporting_year', $year)
-            ->where('status', 'accepted')
             ->selectRaw('MAX(id) as max_id')
             ->groupBy('user_id')
             ->pluck('max_id');
@@ -32,19 +31,19 @@ class ReportController extends Controller
             ->with('user')
             ->get();
 
-        // Build a map: user_id => result entry (from accepted submissions)
+        // Build a map: user_id => result entry
         $resultMap = [];
         foreach ($subRows as $row) {
             $snap  = $row->snapshot_json ?? [];
             $uid   = $row->user_id;
             $tData = $snap[$table] ?? $snap[$tableUpper] ?? $snap[strtolower($table)] ?? null;
-            $tStatus = (is_array($tData) && isset($tData['status']) && $tData['status'] === 'accepted') ? 'accepted' : 'not-started';
+            $tStatus = is_array($tData) ? ($tData['status'] ?? 'not-started') : 'not-started';
 
             $resultMap[$uid] = [
                 'user_id'      => $uid,
                 'institution'  => $row->user?->institution ?: $row->user?->name,
                 'submitted_at' => $row->submitted_at ? $row->submitted_at->toDateTimeString() : null,
-                'sub_status'   => 'accepted',
+                'sub_status'   => $row->status ?? 'submitted',
                 'table_status' => $tStatus,
                 'updated_at'   => is_array($tData) ? ($tData['updated_at'] ?? null) : null,
                 'rows'         => is_array($tData) ? ($tData['rows'] ?? []) : [],
@@ -53,38 +52,36 @@ class ReportController extends Controller
             ];
         }
 
-        // ── Step 2: Read ACCEPTED report_tables directly ──
+        // ── Step 2: Read active report_tables directly (prefer directly saved rows if newer/filled) ──
         $directRows = ReportTable::where('reporting_year', $year)
             ->where('table_no', $tableUpper)
-            ->where('status', 'accepted')
+            ->whereNotIn('status', ['deleted'])
             ->whereHas('user', function ($q) {
                 $q->where('role', 'cmi');
             })
             ->with('user')
             ->get();
 
-        $statusPriority = ['accepted' => 4, 'done' => 4, 'submitted' => 4, 'returned' => 3, 'draft' => 2, 'not-started' => 0];
+        $statusPriority = ['accepted' => 5, 'done' => 4, 'submitted' => 3, 'draft' => 2, 'not-started' => 0];
 
         foreach ($directRows as $rt) {
             $uid = $rt->user_id;
-            $st  = 'accepted';
+            $st  = $rt->status ?? 'done';
 
             if (isset($resultMap[$uid])) {
-                $resultMap[$uid]['table_status'] = 'accepted';
-                $resultMap[$uid]['updated_at']   = $rt->updated_at ? $rt->updated_at->toDateTimeString() : null;
-                if (!empty($rt->rows_json)) {
-                    $resultMap[$uid]['rows'] = $rt->rows_json;
-                }
-                if (!empty($rt->meta_json)) {
-                    $resultMap[$uid]['meta'] = $rt->meta_json;
+                if (!empty($rt->rows_json) || !empty($rt->meta_json)) {
+                    $resultMap[$uid]['rows'] = $rt->rows_json ?? [];
+                    $resultMap[$uid]['meta'] = $rt->meta_json ?? null;
+                    $resultMap[$uid]['table_status'] = $st;
+                    $resultMap[$uid]['updated_at'] = $rt->updated_at ? $rt->updated_at->toDateTimeString() : $resultMap[$uid]['updated_at'];
                 }
             } else {
                 $resultMap[$uid] = [
                     'user_id'      => $uid,
                     'institution'  => $rt->user?->institution ?: $rt->user?->name,
                     'submitted_at' => null,
-                    'sub_status'   => 'accepted',
-                    'table_status' => 'accepted',
+                    'sub_status'   => $st,
+                    'table_status' => $st,
                     'updated_at'   => $rt->updated_at ? $rt->updated_at->toDateTimeString() : null,
                     'rows'         => $rt->rows_json ?? [],
                     'meta'         => $rt->meta_json ?? null,
@@ -126,23 +123,26 @@ class ReportController extends Controller
             if (isset($allDocs[$uid])) {
                 $entry['docs'] = $allDocs[$uid]->toArray();
             }
-            if (($entry['table_status'] ?? '') !== 'accepted') {
-                $entry['rows'] = [];
-            }
         }
         unset($entry);
 
-        // ── Step 5: De-duplicate by institution (pick best status per institution) ─
+        // ── Step 5: De-duplicate by institution (pick entry with most content / highest priority) ─
         $byInstitution = [];
         foreach ($resultMap as $entry) {
             $inst = $entry['institution'] ?? 'Unknown';
             if (!isset($byInstitution[$inst])) {
                 $byInstitution[$inst] = $entry;
             } else {
-                $cur = $statusPriority[$byInstitution[$inst]['table_status']] ?? 0;
-                $new = $statusPriority[$entry['table_status']] ?? 0;
-                if ($new > $cur) {
+                $curHasRows = !empty($byInstitution[$inst]['rows']);
+                $newHasRows = !empty($entry['rows']);
+                if ($newHasRows && !$curHasRows) {
                     $byInstitution[$inst] = $entry;
+                } elseif ($newHasRows === $curHasRows) {
+                    $cur = $statusPriority[$byInstitution[$inst]['table_status']] ?? 0;
+                    $new = $statusPriority[$entry['table_status']] ?? 0;
+                    if ($new > $cur) {
+                        $byInstitution[$inst] = $entry;
+                    }
                 }
             }
         }

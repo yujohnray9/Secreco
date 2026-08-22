@@ -8,7 +8,7 @@
 
 /* ── FILTER ROW ── */
 .rpt-filter-row {
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: center;
 }
@@ -16,31 +16,32 @@
 /* ── TOGGLE GROUP ── */
 .toggle-group {
   display: flex;
-  background: var(--green-light);
-  border-radius: var(--radius-sm);
+  background: #e8f0e6;
+  border-radius: 24px;
   padding: 3px;
   gap: 2px;
-  border: 1px solid var(--border);
+  border: none;
   flex-shrink: 0;
 }
 .toggle-opt {
   padding: 6px 16px;
-  border-radius: 4px;
+  border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  color: var(--text-light);
-  transition: all .2s;
+  color: #164e2e;
+  transition: all .15s ease;
   white-space: nowrap;
   user-select: none;
 }
 .toggle-opt.active {
-  background: var(--green);
-  color: #fff;
+  background: #164e2e;
+  color: #ffffff;
+  font-weight: 700;
 }
 .toggle-opt:not(.active):hover {
-  background: rgba(61,122,63,.1);
-  color: var(--green);
+  background: rgba(22, 78, 46, 0.08);
+  color: #164e2e;
 }
 
 /* ── MERGED & REPORT TABLES ── */
@@ -50,54 +51,57 @@ table.merged, table.rpt-table, .fc-table, table.dt {
   font-family: inherit;
   margin-bottom: 16px;
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #ede8de;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
 }
 table.merged th, table.rpt-table th, .fc-table th, table.dt th,
 table.merged th.group, table.rpt-table th.group, .fc-table th.group, table.dt th.group {
-  background: #10b981 !important;
+  background: #164e2e !important;
   color: #ffffff !important;
-  text-align: center;
-  border: 1px solid #059669 !important;
-  padding: 9px 12px;
-  font-size: 12px;
+  text-align: left;
+  border: 1px solid #0f3820 !important;
+  padding: 10px 14px;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   vertical-align: middle;
 }
 table.merged th.sub, table.rpt-table th.sub, .fc-table th.sub, table.dt th.sub {
-  background: #ecfdf5 !important;
-  color: #065f46 !important;
-  text-align: center;
-  border: 1px solid #a7f3d0 !important;
-  padding: 7px 10px;
-  font-size: 11px;
+  background: #eaf3eb !important;
+  color: #164e2e !important;
+  text-align: left;
+  border: 1px solid #cbe5d5 !important;
+  padding: 8px 12px;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
 table.merged td, table.rpt-table td, .fc-table td, table.dt td {
-  padding: 9px 12px;
-  border: 1px solid #e5e7eb;
+  padding: 10px 14px;
+  border: 1px solid #ede8de;
   font-size: 12px;
   vertical-align: middle;
-  text-align: center;
+  text-align: left;
   color: #374151;
 }
-table.merged tbody tr:nth-child(even), table.rpt-table tbody tr:nth-child(even), .fc-table tbody tr:nth-child(even), table.dt tbody tr:nth-child(even) {
-  background: #f9fafb;
+table.merged td:first-child, table.rpt-table td:first-child, .fc-table td:first-child, table.dt td:first-child {
+  background: #edf5ee;
+  font-weight: 600;
+  color: #14241b;
+  width: 140px;
 }
 table.merged tbody tr:hover, table.rpt-table tbody tr:hover, .fc-table tbody tr:hover, table.dt tbody tr:hover {
-  background: #f3f4f6;
-}
-table.merged td:nth-child(2), table.rpt-table td:nth-child(2), .fc-table td:nth-child(2), table.dt td:nth-child(2) {
-  text-align: left;
+  background: #fbf8f1;
 }
 table.merged td.not-submitted, table.rpt-table td.not-submitted, .fc-table td.not-submitted, table.dt td.not-submitted {
   color: var(--text-muted);
   font-style: italic;
-  background: #fafafa;
-  text-align: center;
+  background: #ffffff;
+  text-align: left;
 }
 
 /* ── TABLE FOOTER NOTE ── */
@@ -105,7 +109,7 @@ table.merged td.not-submitted, table.rpt-table td.not-submitted, .fc-table td.no
   padding: 12px 18px;
   border-top: 1px solid var(--border);
   font-size: 11px;
-  color: var(--text-muted);
+  color: #889c90;
   font-style: italic;
 }
 

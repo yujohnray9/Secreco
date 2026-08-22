@@ -173,27 +173,63 @@ class TableController extends Controller
             }
         }
 
-        // Notify PTA admins about the table update
+        // Send notifications based on who performed the update
         try {
-            $user = \App\Models\User::find($userId);
-            $inst = $user?->institution ?: ($user?->name ?: 'CMI Representative');
-            $ptaUsers = \App\Models\User::where('role', 'pta')->get();
-            foreach ($ptaUsers as $ptaUser) {
-                \App\Models\Notification::create([
-                    'user_id'      => $ptaUser->id,
-                    'role'         => 'pta',
-                    'type'         => 'submission_updated',
-                    'icon'         => 'edit',
-                    'color'        => 'blue',
-                    'message'      => "{$inst} updated Table {$tableNo}.",
-                    'action_url'   => '/dashboard/pta/submissions',
-                    'action_label' => 'View Submissions',
-                    'is_read'      => false,
-                    'created_at'   => now(),
-                ]);
+            $authId      = Auth::id() ?? session('user_id');
+            $currentUser = $authId ? \App\Models\User::find($authId) : null;
+            $isPtaEditor = ($currentUser && $currentUser->role === 'pta') || (session('user_role') === 'pta');
+
+            if ($isPtaEditor) {
+                // PTA edited / filled up the table on behalf of CMI -> Notify CMI user(s)
+                $targetUser = \App\Models\User::find($userId);
+                $ptaName    = $currentUser?->name ?? 'PTA Admin';
+
+                $cmiUsers = \App\Models\User::where('role', 'cmi')
+                    ->where(function ($q) use ($targetUser, $userId) {
+                        if ($targetUser && !empty(trim((string) $targetUser->institution))) {
+                            $q->where('institution', $targetUser->institution);
+                        } else {
+                            $q->where('id', $userId);
+                        }
+                    })
+                    ->get();
+
+                foreach ($cmiUsers as $cmi) {
+                    \App\Models\Notification::create([
+                        'user_id'      => $cmi->id,
+                        'role'         => 'cmi',
+                        'type'         => 'table_edited',
+                        'icon'         => '✏️',
+                        'color'        => 'blue',
+                        'message'      => "Table {$tableNo} (CY {$reportingYear}) was edited / updated by PTA ({$ptaName}).",
+                        'action_url'   => "/dashboard/cmi/fillup?table={$tableNo}&year={$reportingYear}",
+                        'action_label' => "View {$tableNo}",
+                        'is_read'      => false,
+                        'created_at'   => now(),
+                    ]);
+                }
+            } else {
+                // CMI user updated the table -> Notify PTA admins
+                $user = \App\Models\User::find($userId);
+                $inst = $user?->institution ?: ($user?->name ?: 'CMI Representative');
+                $ptaUsers = \App\Models\User::where('role', 'pta')->get();
+                foreach ($ptaUsers as $ptaUser) {
+                    \App\Models\Notification::create([
+                        'user_id'      => $ptaUser->id,
+                        'role'         => 'pta',
+                        'type'         => 'submission_updated',
+                        'icon'         => 'edit',
+                        'color'        => 'blue',
+                        'message'      => "{$inst} updated Table {$tableNo}.",
+                        'action_url'   => '/dashboard/pta/submissions',
+                        'action_label' => 'View Submissions',
+                        'is_read'      => false,
+                        'created_at'   => now(),
+                    ]);
+                }
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Failed to notify PTA on table update: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Failed to send notification on table update: ' . $e->getMessage());
         }
 
         return response()->json([

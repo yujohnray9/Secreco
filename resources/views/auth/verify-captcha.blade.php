@@ -225,7 +225,7 @@
 const AUTH_LOGIN_URL = '/api/auth/login';
 /* ── TYPING ANIMATION ── */
 (function() {
-  const text = 'SecReCo';
+  const text = 'CVAARRD';
   const el = document.getElementById('typedTitle');
   const cursor = document.getElementById('cursor');
   let i = 0;

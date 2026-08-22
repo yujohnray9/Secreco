@@ -17,21 +17,36 @@
 .badge-blue   { background:#eff6ff; color:#2563eb; }
 
 /* ── Notification Item ── */
-.notif-list { display:flex; flex-direction:column; gap:6px; padding:16px 0; }
-.notif-item { display:flex; align-items:flex-start; gap:14px; padding:14px 16px; border-radius:12px; background:#fff; border:1px solid #f0f0f0; transition:background .15s; }
+.notif-list { display:flex; flex-direction:column; gap:8px; padding:16px 0; }
+.notif-item { display:flex; align-items:flex-start; gap:14px; padding:14px 16px; border-radius:12px; background:#fff; border:1px solid #f0f0f0; transition:background .15s, border-color .15s; }
 .notif-item:hover { background:#f9fafe; }
 .notif-item.unread { background:#f0fdf4; border-color:#a7f3d0; }
-.notif-icon { width:40px; height:40px; border-radius:10px; background:#ecfdf5; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.notif-icon svg { color:#10b981; }
+
+.notif-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.notif-icon.blue   { background:#eff6ff; color:#2563eb; border:1px solid #dbeafe; }
+.notif-icon.green  { background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; }
+.notif-icon.red    { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+.notif-icon.yellow { background:#fffbeb; color:#d97706; border:1px solid #fde68a; }
+
 .notif-body { flex:1; min-width:0; }
 .notif-msg  { font-size:13.5px; color:#1f2937; font-weight:500; line-height:1.45; }
-.notif-time { font-size:11.5px; color:#9ca3af; margin-top:3px; }
-.notif-action { flex-shrink:0; }
-.btn-sm-fc { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; border:none; cursor:pointer; transition:all .15s; }
+.notif-item.unread .notif-msg { font-weight:600; color:#111827; }
+.notif-time { font-size:11.5px; color:#9ca3af; margin-top:4px; display:flex; align-items:center; gap:5px; }
+.notif-time svg { width:12px; height:12px; }
+
+.notif-action { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.btn-sm-fc { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; border:none; cursor:pointer; text-decoration:none; transition:all .15s; }
 .btn-sm-view { background:#ecfdf5; color:#059669; }
 .btn-sm-view:hover { background:#d1fae5; }
+.btn-sm-read { background:#e5e7eb; color:#374151; }
+.btn-sm-read:hover { background:#d1d5db; }
+.btn-sm-del { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+.btn-sm-del:hover { background:#fee2e2; }
+
 .btn-mark-read { border:1.5px solid #10b981; background:#fff; color:#10b981; border-radius:10px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:7px; }
 .btn-mark-read:hover { background:#ecfdf5; }
+.btn-delete-all { border:1.5px solid #ef4444; background:#fff; color:#ef4444; border-radius:10px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:7px; transition:all .15s; }
+.btn-delete-all:hover { background:#fef2f2; }
 </style>
 @endsection
 
@@ -50,7 +65,7 @@
         </svg>
         Mark All as Read
       </button>
-      <button type="button" class="btn-delete-all" id="btnDeleteAll" style="border:1.5px solid #ef4444;background:#fff;color:#ef4444;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;">
+      <button type="button" class="btn-delete-all" id="btnDeleteAll">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
         </svg>
@@ -81,11 +96,56 @@
 
 @section('scripts')
 <script>
-const notifIconMap = {
-  default: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
-  user:    `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-  submit:  `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
-};
+function getPtaNotifSvg(type, notifType, icon) {
+  const t = ((notifType || '') + ' ' + (type || '')).toLowerCase();
+  const ic = (icon || '').toLowerCase();
+
+  // 1. Edit / Update
+  if (t.includes('edit') || t.includes('update') || ic.includes('edit') || ic.includes('pencil') || ic === '✏️' || ic === '📝') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
+  }
+
+  // 2. Correction / Returned / Urgent
+  if (t.includes('corr') || t.includes('return') || t.includes('flag') || t === 'red' || ic.includes('alert') || ic === '🔴' || ic === '↩️') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+  }
+
+  // 3. Accepted / Approved
+  if (t.includes('accept') || t.includes('approv') || t === 'green' || ic.includes('check') || ic === '✅') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+  }
+
+  // 4. Submitted / Sent / Mail
+  if (t.includes('submit') || ic.includes('mail') || ic.includes('send') || ic === '📨') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`;
+  }
+
+  // 5. User / Account / Registrations
+  if (t.includes('user') || ic.includes('user') || ic === '👥') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+  }
+
+  // 6. Delete / Trash
+  if (t.includes('delete') || ic.includes('trash') || ic === '🗑️') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
+  }
+
+  // 7. Year Activation / Calendar
+  if (t.includes('year') || t.includes('activ') || ic.includes('calendar') || ic === '🎉') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+  }
+
+  // Default: Document / Log
+  return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
+}
+
+function getPtaColorClass(type, notifType) {
+  const t = ((notifType || '') + ' ' + (type || '')).toLowerCase();
+  if (t.includes('corr') || t.includes('return') || t.includes('red') || t.includes('delete')) return 'red';
+  if (t.includes('accept') || t.includes('green') || t.includes('activ')) return 'green';
+  if (t.includes('user') || t.includes('yellow') || t.includes('pend')) return 'yellow';
+  return 'blue';
+}
 
 async function updateBellBadge(unreadCount) {
   const dot = document.querySelector('.notif-dot');
@@ -127,30 +187,50 @@ async function loadNotifs() {
     }
 
     if (notifs.length === 0) {
-      container.innerHTML = `<div style="padding:48px;text-align:center;color:#9ca3af">
-        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 12px">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>No notifications.
-      </div>`;
+      container.innerHTML = `
+        <div style="padding:48px 24px;text-align:center;color:#9ca3af">
+          <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 12px">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <div style="font-size:14px;font-weight:600;color:#6b7280">No notifications yet</div>
+          <div style="font-size:12px;color:#9ca3af;margin-top:3px">All user submissions and registration queues are clear.</div>
+        </div>`;
       return;
     }
 
-    const iconType = n => n.type?.includes('user') ? 'user' : n.type?.includes('submit') ? 'submit' : 'default';
-
-    container.innerHTML = `<div class="notif-list">${notifs.map(n => `
+    container.innerHTML = `<div class="notif-list">${notifs.map(n => {
+      const colorClass = getPtaColorClass(n.type, n.notif_type);
+      const svgIcon = getPtaNotifSvg(n.type, n.notif_type, n.icon);
+      return `
       <div class="notif-item ${n.unread ? 'unread' : ''}">
-        <div class="notif-icon">${notifIconMap[iconType(n)]}</div>
+        <div class="notif-icon ${colorClass}">${svgIcon}</div>
         <div class="notif-body">
           <div class="notif-msg">${n.msg}</div>
-          <div class="notif-time">${n.time ? n.time.substring(0,16).replace('T',' ') : ''}</div>
+          <div class="notif-time">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            ${n.time ? n.time.substring(0,16).replace('T',' ') : 'Just now'}
+          </div>
         </div>
-        <div class="notif-action" style="display:flex;align-items:center;gap:6px">
-          ${n.unread ? `<button type="button" class="btn-sm-fc" onclick="markPtaItemRead(${n.id || 'null'}, '${n.key || ''}')" style="background:#e5e7eb;color:#374151">Mark read</button>` : ''}
-          ${n.action ? `<a href="${n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action}" class="btn-sm-fc btn-sm-view">${n.action_label || 'View'}</a>` : ''}
-          <button type="button" class="btn-sm-fc" onclick="deletePtaNotifItem(${n.id || 'null'}, '${n.key || ''}')" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca">Delete</button>
+        <div class="notif-action">
+          ${n.unread ? `
+            <button type="button" class="btn-sm-fc btn-sm-read" onclick="markPtaItemRead(${n.id || 'null'}, '${n.key || ''}')" title="Mark as read">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Mark read
+            </button>` : ''}
+          ${n.action ? `
+            <a href="${n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action}" class="btn-sm-fc btn-sm-view">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              ${n.action_label || 'View'}
+            </a>` : ''}
+          <button type="button" class="btn-sm-fc btn-sm-del" onclick="deletePtaNotifItem(${n.id || 'null'}, '${n.key || ''}')" title="Delete notification">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            Delete
+          </button>
         </div>
-      </div>
-    `).join('')}</div>`;
+      </div>`;
+    }).join('')}</div>`;
   } catch(e) { console.error('Notif load error:', e); }
 }
 

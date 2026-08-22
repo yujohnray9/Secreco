@@ -38,15 +38,16 @@
   text-transform: uppercase;
   letter-spacing: .05em;
   color: #ffffff;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #0a5c36, #064225);
   border-radius: 8px;
   margin-top: 12px;
   margin-bottom: 6px;
+  box-shadow: 0 2px 6px rgba(10, 92, 54, 0.2);
 }
 .fill-nav-item:first-child {
   margin-top: 0;
 }
-.fill-nav-item:hover { background: linear-gradient(135deg, #059669, #047857); color: #ffffff; }
+.fill-nav-item:hover { background: linear-gradient(135deg, #064225, #042e1a); color: #ffffff; }
 
 .fill-nav-sub {
   display: flex;
@@ -65,12 +66,12 @@
   margin-top: 2px;
   flex-shrink: 0;
 }
-.fill-nav-sub:hover { background: #f0fdf4; color: #15803d; }
-.fill-nav-sub.active { background: #ecfdf5; color: #047857; font-weight: 700; }
-.fill-nav-sub.done, .fill-nav-sub.submitted, .fill-nav-sub.accepted { color: #059669; }
-.fill-nav-sub.draft { color: #d97706; }
+.fill-nav-sub:hover { background: #f0f7f2; color: #0a5c36; }
+.fill-nav-sub.active { background: #f0f7f2; color: #0a5c36; font-weight: 700; border-left: 3px solid #b48a3c; }
+.fill-nav-sub.done, .fill-nav-sub.submitted, .fill-nav-sub.accepted { color: #0a5c36; }
+.fill-nav-sub.draft { color: #b48a3c; }
 .fill-nav-sub.error { color: #dc2626; }
-.fill-nav-sub.not-started { color: #6b7280; }
+.fill-nav-sub.not-started { color: #889c90; }
 
 .fill-body {
   flex: 1;
@@ -90,29 +91,29 @@
 
 /* ── MERGED HEADER TABLE (for table-entry forms) ── */
 table.merged th {
-  background: #10b981;
+  background: #0a5c36;
   color: #fff;
   text-align: center;
-  border: 1px solid #059669;
+  border: 1px solid #064225;
   padding: 9px 12px;
   font-size: 12px;
   font-weight: 700;
   vertical-align: middle;
 }
 table.merged th.group {
-  background: #10b981;
+  background: #0a5c36;
   color: #fff;
   text-align: center;
-  border: 1px solid #059669;
+  border: 1px solid #064225;
   padding: 9px 12px;
   font-size: 12px;
   font-weight: 700;
 }
 table.merged th.sub {
-  background: #ecfdf5;
-  color: #065f46;
+  background: #f0f7f2;
+  color: #064225;
   text-align: center;
-  border: 1px solid #a7f3d0;
+  border: 1px solid #cbe5d5;
   padding: 7px 10px;
   font-size: 11px;
   font-weight: 700;
@@ -121,7 +122,7 @@ table.merged th.sub {
 }
 table.merged td {
   padding: 8px 10px;
-  border: 1px solid #c8c8c8;
+  border: 1px solid #e3ebe5;
   font-size: 11px;
   vertical-align: middle;
 }

@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════
-   DASHBOARD — FreshCart / SecReCo Dashboard Styles
+    DASHBOARD — CVAARRD / SecReCo Dashboard Styles
 ════════════════════════════════════════════ */
 
 .dashboard-grid {
@@ -17,19 +17,20 @@
 
 .stat-card-fc {
   background: #ffffff;
-  border-radius: 20px;
+  border-radius: 14px;
   padding: 22px 24px;
-  border: 1px solid #f0f3f6;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  border: 1px solid #ede8de;
+  border-top: 3.5px solid #164e2e;
+  box-shadow: 0 4px 18px rgba(22, 78, 46, 0.03);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card-fc:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+  box-shadow: 0 8px 24px rgba(22, 78, 46, 0.08);
 }
 
 .sc-fc-head {
@@ -39,59 +40,70 @@
 }
 
 .sc-fc-title {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: #4b5563;
+  color: #475569;
 }
 
 .sc-fc-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 15px;
   flex-shrink: 0;
+  background: #e8f5e9;
+  color: #164e2e;
 }
 
-.sc-fc-icon.icon-blue { background: #eff6ff; color: #3b82f6; }
-.sc-fc-icon.icon-green { background: #ecfdf5; color: #10b981; }
-.sc-fc-icon.icon-orange { background: #fff7ed; color: #f97316; }
-.sc-fc-icon.icon-purple { background: #f3e8ff; color: #a855f7; }
+.sc-fc-icon.icon-blue   { background: #e8f5e9; color: #164e2e; }
+.sc-fc-icon.icon-green  { background: #e8f5e9; color: #164e2e; }
+.sc-fc-icon.icon-orange { background: #e8f5e9; color: #164e2e; }
+.sc-fc-icon.icon-purple { background: #e8f5e9; color: #164e2e; }
 
 .sc-fc-body {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .sc-fc-val {
-  font-family: 'Poppins', sans-serif;
-  font-size: 28px;
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 38px;
   font-weight: 800;
   color: #111827;
   line-height: 1;
+  margin: 2px 0 6px;
 }
 
 .sc-fc-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 3px 8px;
+  padding: 3px 10px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
+  width: fit-content;
+  background: #f5ebd6;
+  color: #8a6318;
 }
 
 .sc-fc-badge.up {
-  background: #ecfdf5;
-  color: #059669;
+  background: #f5ebd6;
+  color: #8a6318;
+}
+
+.sc-fc-badge.badge-reports, .stat-card-fc:nth-child(2) .sc-fc-badge {
+  background: #e2efe4;
+  color: #164e2e;
 }
 
 .sc-fc-badge.down {
-  background: #fef2f2;
-  color: #ef4444;
+  background: #f5ebd6;
+  color: #8a6318;
 }
 
 .sc-fc-foot {
@@ -102,29 +114,29 @@
 }
 
 .sc-fc-sub {
-  font-size: 11.5px;
-  color: #9ca3af;
+  font-size: 12px;
+  color: #889c90;
 }
 
 .sc-fc-arrow {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid #f0f3f6;
+  border: 1px solid #ede8de;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: #6b8072;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .sc-fc-arrow:hover {
-  background: #10b981;
+  background: #164e2e;
   color: #ffffff;
-  border-color: #10b981;
+  border-color: #164e2e;
 }
 
 /* ── Middle Row (Line & Bar Charts) ── */
@@ -136,9 +148,9 @@
 
 .card-fc {
   background: #ffffff;
-  border-radius: 20px;
-  border: 1px solid #f0f3f6;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  border-radius: 14px;
+  border: 1px solid #ede8de;
+  box-shadow: 0 4px 20px rgba(22, 78, 46, 0.03);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -152,26 +164,70 @@
 }
 
 .card-fc-title {
-  font-family: 'Poppins', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 18px;
+  font-weight: 800;
   color: #111827;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-fc-subtitle {
+  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  color: #889c90;
+}
+
+/* Capsule filter toggle */
+.toggle-capsule {
+  background: #e8f0e6;
+  border-radius: 24px;
+  padding: 3px;
+  display: inline-flex;
+  gap: 2px;
+  border: none;
+}
+
+.toggle-capsule-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #164e2e;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.toggle-capsule-btn.active {
+  background: #164e2e;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .card-fc-filter {
   padding: 6px 14px;
   border-radius: 20px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #ede8de;
   background: #ffffff;
   font-size: 12px;
   font-weight: 600;
-  color: #4b5563;
+  color: #475569;
   outline: none;
   cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.card-fc-filter:focus {
+  border-color: #164e2e;
 }
 
 .card-fc-dots {
-  color: #9ca3af;
+  color: #889c90;
   font-size: 18px;
   cursor: pointer;
 }
@@ -200,18 +256,18 @@
 .progress-label {
   font-size: 13.5px;
   font-weight: 600;
-  color: #374151;
+  color: #14241b;
 }
 
 .progress-pct {
   font-size: 13.5px;
   font-weight: 700;
-  color: #10b981;
+  color: #0a5c36;
 }
 
 .progress-track {
   height: 12px;
-  background: #f3f4f6;
+  background: #eef3ef;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -219,7 +275,7 @@
 .progress-fill {
   height: 100%;
   border-radius: 10px;
-  background: linear-gradient(90deg, #34d399 0%, #10b981 100%);
+  background: linear-gradient(90deg, #b48a3c 0%, #0a5c36 100%);
   transition: width 0.4s ease;
 }
 
