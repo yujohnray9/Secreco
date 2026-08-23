@@ -93,10 +93,10 @@
             <div style="font-size:13px;color:#6b7280;margin-top:3px" id="trendSubtitle">Last 7 days activity</div>
           </div>
           <!-- Weekly / Monthly / Annually filter -->
-          <div class="toggle-capsule">
-            <button id="btnW" class="toggle-capsule-btn active" onclick="filterTrend('weekly')">Weekly</button>
-            <button id="btnM" class="toggle-capsule-btn" onclick="filterTrend('monthly')">Monthly</button>
-            <button id="btnA" class="toggle-capsule-btn" onclick="filterTrend('annually')">Annually</button>
+          <div style="display:flex;gap:3px;background:#f3f4f6;border-radius:8px;padding:3px;align-items:center">
+            <button id="btnW" onclick="filterTrend('weekly')" style="background:#10b981;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s">Weekly</button>
+            <button id="btnM" onclick="filterTrend('monthly')" style="background:none;color:#6b7280;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s">Monthly</button>
+            <button id="btnA" onclick="filterTrend('annually')" style="background:none;color:#6b7280;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s">Annually</button>
           </div>
         </div>
         <div style="height:260px;position:relative">
@@ -172,8 +172,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     function buildTrendChart(labels, values) {
       const ctx = document.getElementById('growthTrendChart').getContext('2d');
       const grad = ctx.createLinearGradient(0, 0, 0, 260);
-      grad.addColorStop(0, 'rgba(22, 78, 46, 0.25)');
-      grad.addColorStop(1, 'rgba(22, 78, 46, 0.01)');
+      grad.addColorStop(0, 'rgba(16,185,129,0.35)');
+      grad.addColorStop(1, 'rgba(16,185,129,0)');
       if (trendChartInst) trendChartInst.destroy();
       trendChartInst = new Chart(ctx, {
         type: 'line',
@@ -182,16 +182,13 @@ document.addEventListener('DOMContentLoaded', async function () {
           datasets: [{
             label: 'Submissions',
             data: values,
-            borderColor: '#164e2e',
-            borderWidth: 2.5,
+            borderColor: '#10b981',
+            borderWidth: 3,
             backgroundColor: grad,
             fill: true,
-            tension: 0.35,
-            pointBackgroundColor: '#b8860b',
-            pointBorderColor: '#164e2e',
-            pointBorderWidth: 1.5,
-            pointRadius: 4,
-            pointHoverRadius: 6
+            tension: 0.4,
+            pointBackgroundColor: '#10b981',
+            pointRadius: 4
           }]
         },
         options: {
@@ -200,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           plugins: { legend: { display: false } },
           scales: {
             x: { grid: { display: false } },
-            y: { grid: { color: '#ede8de' }, ticks: { precision: 0 } }
+            y: { grid: { color: '#f3f4f6' }, ticks: { precision: 0 } }
           }
         }
       });
@@ -210,12 +207,12 @@ document.addEventListener('DOMContentLoaded', async function () {
       const btns = { weekly:'btnW', monthly:'btnM', annually:'btnA' };
       Object.values(btns).forEach(id => {
         const b = document.getElementById(id);
-        b.style.background = 'transparent';
-        b.style.color = '#164e2e';
+        b.style.background = 'none';
+        b.style.color = '#6b7280';
         b.style.fontWeight = '600';
       });
       const active = document.getElementById(btns[period]);
-      if (active) { active.style.background = '#164e2e'; active.style.color = '#ffffff'; active.style.fontWeight = '700'; }
+      if (active) { active.style.background = '#10b981'; active.style.color = '#fff'; active.style.fontWeight = '700'; }
 
       const subs = { weekly: 'Last 7 days activity', monthly: `Monthly trends CY ${new Date().getFullYear()}`, annually: `Annual accomplishments (${annualLabels[0]}–${annualLabels[annualLabels.length-1]})` };
       const el = document.getElementById('trendSubtitle');
@@ -231,6 +228,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // 2. Bar Chart (Status Comparison from DB)
     const ctxBar = document.getElementById('frequencyBarChart').getContext('2d');
+    const gradBar = ctxBar.createLinearGradient(0, 0, 0, 260);
+    gradBar.addColorStop(0, '#10b981');
+    gradBar.addColorStop(1, '#a7f3d0');
+
     const s = json.stats || {};
     new Chart(ctxBar, {
       type: 'bar',
@@ -238,9 +239,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         labels: ['Submitted', 'In Progress', 'Accepted', 'Returned'],
         datasets: [{
           data: [s.submitted || 0, s.in_progress || 0, s.accepted || 0, s.returned || 0],
-          backgroundColor: ['#164e2e', '#b8860b', '#0f3820', '#dc2626'],
-          borderRadius: 6,
-          barThickness: 28
+          backgroundColor: ['#10b981', '#f59e0b', '#059669', '#ef4444'],
+          borderRadius: 8,
+          barThickness: 32
         }]
       },
       options: {
@@ -249,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         plugins: { legend: { display: false } },
         scales: {
           x: { grid: { display: false } },
-          y: { grid: { color: '#ede8de' }, ticks: { precision: 0 } }
+          y: { ticks: { precision: 0 } }
         }
       }
     });

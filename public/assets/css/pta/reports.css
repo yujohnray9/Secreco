@@ -8,7 +8,7 @@
 
 /* ── FILTER ROW ── */
 .rpt-filter-row {
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   align-items: center;
 }
@@ -16,32 +16,31 @@
 /* ── TOGGLE GROUP ── */
 .toggle-group {
   display: flex;
-  background: #e8f0e6;
-  border-radius: 24px;
+  background: var(--green-light);
+  border-radius: var(--radius-sm);
   padding: 3px;
   gap: 2px;
-  border: none;
+  border: 1px solid var(--border);
   flex-shrink: 0;
 }
 .toggle-opt {
   padding: 6px 16px;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  color: #164e2e;
-  transition: all .15s ease;
+  color: var(--text-light);
+  transition: all .2s;
   white-space: nowrap;
   user-select: none;
 }
 .toggle-opt.active {
-  background: #164e2e;
-  color: #ffffff;
-  font-weight: 700;
+  background: var(--green);
+  color: #fff;
 }
 .toggle-opt:not(.active):hover {
-  background: rgba(22, 78, 46, 0.08);
-  color: #164e2e;
+  background: rgba(61,122,63,.1);
+  color: var(--green);
 }
 
 /* ── MERGED & REPORT TABLES ── */
@@ -51,57 +50,54 @@ table.merged, table.rpt-table, .fc-table, table.dt {
   font-family: inherit;
   margin-bottom: 16px;
   background: #ffffff;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #ede8de;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 table.merged th, table.rpt-table th, .fc-table th, table.dt th,
 table.merged th.group, table.rpt-table th.group, .fc-table th.group, table.dt th.group {
-  background: #164e2e !important;
+  background: #10b981 !important;
   color: #ffffff !important;
-  text-align: left;
-  border: 1px solid #0f3820 !important;
-  padding: 10px 14px;
-  font-size: 11px;
+  text-align: center;
+  border: 1px solid #059669 !important;
+  padding: 9px 12px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   vertical-align: middle;
 }
 table.merged th.sub, table.rpt-table th.sub, .fc-table th.sub, table.dt th.sub {
-  background: #eaf3eb !important;
-  color: #164e2e !important;
-  text-align: left;
-  border: 1px solid #cbe5d5 !important;
-  padding: 8px 12px;
-  font-size: 10.5px;
+  background: #ecfdf5 !important;
+  color: #065f46 !important;
+  text-align: center;
+  border: 1px solid #a7f3d0 !important;
+  padding: 7px 10px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
 table.merged td, table.rpt-table td, .fc-table td, table.dt td {
-  padding: 10px 14px;
-  border: 1px solid #ede8de;
+  padding: 9px 12px;
+  border: 1px solid #e5e7eb;
   font-size: 12px;
   vertical-align: middle;
-  text-align: left;
+  text-align: center;
   color: #374151;
 }
-table.merged td:first-child, table.rpt-table td:first-child, .fc-table td:first-child, table.dt td:first-child {
-  background: #edf5ee;
-  font-weight: 600;
-  color: #14241b;
-  width: 140px;
+table.merged tbody tr:nth-child(even), table.rpt-table tbody tr:nth-child(even), .fc-table tbody tr:nth-child(even), table.dt tbody tr:nth-child(even) {
+  background: #f9fafb;
 }
 table.merged tbody tr:hover, table.rpt-table tbody tr:hover, .fc-table tbody tr:hover, table.dt tbody tr:hover {
-  background: #fbf8f1;
+  background: #f3f4f6;
+}
+table.merged td:nth-child(2), table.rpt-table td:nth-child(2), .fc-table td:nth-child(2), table.dt td:nth-child(2) {
+  text-align: left;
 }
 table.merged td.not-submitted, table.rpt-table td.not-submitted, .fc-table td.not-submitted, table.dt td.not-submitted {
   color: var(--text-muted);
   font-style: italic;
-  background: #ffffff;
-  text-align: left;
+  background: #fafafa;
+  text-align: center;
 }
 
 /* ── TABLE FOOTER NOTE ── */
@@ -109,7 +105,7 @@ table.merged td.not-submitted, table.rpt-table td.not-submitted, .fc-table td.no
   padding: 12px 18px;
   border-top: 1px solid var(--border);
   font-size: 11px;
-  color: #889c90;
+  color: var(--text-muted);
   font-style: italic;
 }
 

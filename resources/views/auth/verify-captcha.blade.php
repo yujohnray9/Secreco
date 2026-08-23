@@ -134,8 +134,8 @@
       <p class="hero-label">Welcome to</p>
       <h1 class="hero-title"><span id="typedTitle"></span><span class="cursor" id="cursor"></span></h1>
       <p class="hero-tagline">
-        The Secure Reporting and Consolidation System<br/>
-        for CVAARRD and Partner Institutions in Region II.
+        A Secure Reporting and Consolidation System<br/>
+        for CVAARRD Consortium.
       </p>
       <div class="hero-underline"></div>
     </div>
@@ -211,7 +211,7 @@
 
 <!-- FOOTER -->
 <footer>
-  <span>© 2026 CVAARRD Consortium Office. All rights reserved.</span>
+  <span>© 2026 CVAARRD Consortium. All rights reserved.</span>
   <div class="foot-links">
     <a href="#">Privacy Policy</a>
     <span class="foot-sep">|</span>

@@ -167,7 +167,7 @@
     </div>
     <div class="form-group">
       <label class="form-label">Email Address <span style="color:#ef4444">*</span></label>
-      <input class="form-input" id="addUserEmail" type="email" placeholder="user@institution.orgn bbbbbbbbbbbbbbbbbbbbbbbbbbb"/>
+      <input class="form-input" id="addUserEmail" type="email" placeholder="user@institution.gov.ph"/>
     </div>
     <div class="form-row">
       <div class="form-group">

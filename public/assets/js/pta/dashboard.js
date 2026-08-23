@@ -86,16 +86,13 @@ function renderTrendChart(labels, values) {
       datasets: [{
         label: 'Tables Completed',
         data: values,
-        borderColor: '#0a5c36',
-        backgroundColor: 'rgba(10, 92, 54, 0.08)',
-        borderWidth: 2.5,
-        tension: 0.35,
+        borderColor: '#16a34a',
+        backgroundColor: 'rgba(22, 163, 74, 0.1)',
+        borderWidth: 2,
+        tension: 0.3,
         fill: true,
-        pointBackgroundColor: '#b48a3c',
-        pointBorderColor: '#0a5c36',
-        pointBorderWidth: 1.5,
-        pointRadius: 4,
-        pointHoverRadius: 6
+        pointBackgroundColor: '#16a34a',
+        pointRadius: 3
       }]
     },
     options: {

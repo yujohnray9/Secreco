@@ -36,18 +36,18 @@
       border-radius: 99px;
       transition: width 0.5s ease;
     }
-    .prog-bar-green  { background: #0a5c36; }
-    .prog-bar-orange { background: #b48a3c; }
-    .prog-bar-grey   { background: #dc2626; }
+    .prog-bar-green  { background: #3d7a3f; }
+    .prog-bar-orange { background: #EF9F27; }
+    .prog-bar-grey   { background: #E24B4A; }
     .prog-pct {
       flex: 0 0 36px;
       font-size: 13px;
       font-weight: 600;
       text-align: right;
-      color: #0a5c36;
+      color: #2d7a3a;
     }
-    .prog-pct.pct-zero { color: #889c90; }
-    .no-data { color: #889c90; font-size: 13px; padding: 12px 0; }
+    .prog-pct.pct-zero { color: #aaa; }
+    .no-data { color: #aaa; font-size: 13px; padding: 12px 0; }
 
     /* ── Recent Activity ── */
     .act-row {
@@ -55,7 +55,7 @@
       align-items: flex-start;
       gap: 12px;
       padding: 10px 0;
-      border-bottom: 1px solid #e3ebe5;
+      border-bottom: 1px solid #f0f0f0;
     }
     .act-row:last-child { border-bottom: none; }
     .act-icon {
@@ -76,12 +76,12 @@
       stroke-linecap: round;
       stroke-linejoin: round;
     }
-    .act-icon-submitted { background: #f0f7f2; color: #0a5c36; border: 1px solid #cbe5d5; }
-    .act-icon-draft     { background: #fdf8eb; color: #8c6721; border: 1px solid #eddcb8; }
-    .act-icon-flagged   { background: #eff7fa; color: #1b6b8a; border: 1px solid #bfdbfe; }
-    .act-icon-started   { background: #f5f0f7; color: #6b3ba8; border: 1px solid #e9d5ff; }
+    .act-icon-submitted { background: #d1fae5; color: #065f46; }
+    .act-icon-draft     { background: #fef3c7; color: #92400e; }
+    .act-icon-flagged   { background: #dbeafe; color: #1e40af; }
+    .act-icon-started   { background: #ede9fe; color: #5b21b6; }
     .act-body { flex: 1; min-width: 0; }
-    .act-desc { font-size: 13px; color: #14241b; line-height: 1.4; }
+    .act-desc { font-size: 13px; color: #333; line-height: 1.4; }
     .act-desc strong { font-weight: 600; }
     .act-time { font-size: 11px; color: #999; margin-top: 2px; }
   `;

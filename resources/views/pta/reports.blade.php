@@ -3,32 +3,32 @@
 @section('styles')
 <link rel="stylesheet" href="/assets/css/pta/reports.css"/>
 <style>
-/* ── Redesign styles for Reports ── */
+/* ── Modern FreshCart adjustments for Reports ── */
 .page-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
-.page-title { font-family:var(--font-serif, 'Playfair Display', Georgia, serif); font-size:26px; font-weight:800; color:#111827; letter-spacing:-.01em; }
+.page-title { font-size:22px; font-weight:700; color:#111827; letter-spacing:-.4px; }
 .page-sub { font-size:13px; color:#6b7280; margin-top:3px; }
 
 .rpt-filter-row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:24px; }
-.toggle-group { display:flex; background:#e8f0e6; border-radius:24px; padding:3px; gap:2px; border:none; }
-.toggle-opt { padding:7px 18px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; color:#164e2e; transition:all .15s ease; user-select:none; }
-.toggle-opt.active { background:#164e2e; color:#fff; font-weight:700; }
+.toggle-group { display:flex; background:#eef7ee; border-radius:8px; padding:3px; gap:3px; border:1px solid #c8e6c9; }
+.toggle-opt { padding:7px 18px; border-radius:6px; font-size:12.5px; font-weight:600; cursor:pointer; color:#2e7d32; transition:all .2s; user-select:none; }
+.toggle-opt.active { background:#2d6a30; color:#fff; shadow:0 2px 4px rgba(0,0,0,.1); }
 
-.filter-select { border:1px solid #ede8de; border-radius:8px; padding:8px 14px; font-size:13px; color:#374151; background:#fff; cursor:pointer; outline:none; font-family:var(--font-sans); }
-.filter-select:focus { border-color:#164e2e; box-shadow:0 0 0 3px rgba(22,78,46,.12); }
+.filter-select { border:1px solid #d1d5db; border-radius:8px; padding:7px 14px; font-size:13px; color:#374151; background:#fff; cursor:pointer; outline:none; }
+.filter-select:focus { border-color:#2d6a30; box-shadow:0 0 0 3px rgba(45,106,48,.12); }
 
-.card { background:#fff; border-radius:14px; border:1px solid #ede8de; box-shadow:0 2px 12px rgba(22,78,46,.03); overflow:hidden; margin-bottom:24px; }
-.card-hdr { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid #ede8de; }
-.card-title { font-family:var(--font-serif, 'Playfair Display', Georgia, serif); font-size:16px; font-weight:700; color:#111827; border-left:3px solid #b8860b; padding-left:10px; }
+.card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; box-shadow:0 2px 12px rgba(0,0,0,.04); overflow:hidden; margin-bottom:24px; }
+.card-hdr { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid #f3f4f6; }
+.card-title { font-size:15px; font-weight:700; color:#111827; }
 .tbl-wrap { overflow-x:auto; }
 
-.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; border:none; transition:all .2s; font-family:var(--font-sans); }
-.btn-sm { padding:6px 14px; font-size:12px; }
-.btn-yellow, .btn-preview { background:#f5ebd6; color:#7a591e; border:1px solid #eddcb8; }
-.btn-yellow:hover, .btn-preview:hover { background:#eddcb8; color:#5c4314; }
-.btn-primary, .btn-export { background:#164e2e; color:#fff; }
-.btn-primary:hover, .btn-export:hover { background:#0f3820; color:#fff; }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all .2s; }
+.btn-sm { padding:6px 14px; font-size:12.5px; }
+.btn-yellow { background:#f59e0b; color:#fff; }
+.btn-yellow:hover { background:#d97706; }
+.btn-primary { background:#2d6a30; color:#fff; }
+.btn-primary:hover { background:#235425; }
 
-.word-preview { background:#fff; border:1px solid #ede8de; border-radius:10px; padding:40px 48px; font-family:'Calibri',Arial,sans-serif; font-size:13px; color:#1a1a1a; max-width:780px; margin:0 auto; box-shadow:0 4px 24px rgba(0,0,0,.06); }
+.word-preview { background:#fff; border:1px solid #e0e0e0; border-radius:10px; padding:40px 48px; font-family:'Calibri',Arial,sans-serif; font-size:13px; color:#1a1a1a; max-width:780px; margin:0 auto; box-shadow:0 4px 24px rgba(0,0,0,.08); }
 </style>
 @endsection
 

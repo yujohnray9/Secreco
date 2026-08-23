@@ -73,11 +73,29 @@
   /* ============ MAIN ============ */
   main{
     flex:1;
-    display:flex;
-    flex-direction:column;
+    display:grid;
+    grid-template-columns:280px 1fr;
     overflow:hidden;
     height:calc(100vh - 68px);
   }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar{
+    background:var(--forest);
+    color:#fff;
+    padding:28px 22px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+  .sidebar::-webkit-scrollbar{width:4px;}
+  .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:4px;}
+  .sidebar-title{font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px;}
+  .sidebar-text{font-size:11.5px;line-height:1.6;opacity:.92;}
+  .sidebar-section{border-top:1px solid rgba(255,255,255,.2);padding-top:16px;}
+  .sidebar-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;opacity:.85;margin-bottom:8px;}
+  .sidebar-content{font-size:11.5px;line-height:1.65;opacity:.95;}
 
   /* ============ SHOWCASE ============ */
   .showcase{
@@ -262,6 +280,8 @@
   .modal-btn.secondary:hover{background:#e2e8f0;}
 
   @media (max-width:1024px){
+    main{grid-template-columns:1fr;}
+    .sidebar{display:none;}
     .orbit-wrap{--D:min(82vw,420px);}
     .disc{width:32px;height:32px;}
   }
@@ -288,10 +308,27 @@
 </header>
 
 <main>
+  <aside class="sidebar">
+    <div>
+      <h2 class="sidebar-title">About CVAARRD</h2>
+      <p class="sidebar-text">A prime research and technology management consortium dedicated to advancing agriculture, aquatic, and natural resources research and development in Cagayan Valley.</p>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Vision</div>
+      <div class="sidebar-content">A prime research and technology management consortium and agriculture, aquatic and natural resources for an improved quality of life.</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Mission</div>
+      <div class="sidebar-content">Provide high quality leadership and policy direction focusing and harmonizing the R&amp;D thrusts and capabilities of various institutions for the well-being of the people and sustainable development in the Cagayan Valley.</div>
+    </div>
+  </aside>
+
   <section class="showcase">
     <div class="showcase-heading">
       <div class="showcase-eyebrow">Consortium at a glance</div>
-      <div class="showcase-title">Twenty-two institutions, one mandate</div>
+      <div class="showcase-title">Twenty-Two Institutions, One Mandate</div>
       <div class="showcase-sub">State universities, regional agencies, and partner organizations across Cagayan Valley</div>
     </div>
 

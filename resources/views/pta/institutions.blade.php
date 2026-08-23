@@ -5,8 +5,8 @@
 .pg-banner { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
 .pg-banner-title { font-size:22px; font-weight:700; color:#111827; letter-spacing:-.4px; }
 .pg-banner-sub   { font-size:13px; color:#6b7280; margin-top:3px; }
-.fc-card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; box-shadow:0 2px 12px rgba(16,185,129,.05); margin-bottom:24px; overflow:hidden; }
-.fc-card-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 14px; border-bottom:1px solid #f3f4f6; }
+.fc-card { background:#fff; border-radius:16px; border:1px solid #eae3d6; box-shadow:0 2px 12px rgba(0,0,0,.03); margin-bottom:24px; overflow:hidden; }
+.fc-card-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 14px; border-bottom:1px solid #eae3d6; }
 .fc-card-title { font-size:15px; font-weight:700; color:#111827; display:flex; align-items:center; gap:8px; }
 .fc-card-title svg { color:#10b981; }
 .fc-card-body  { padding:24px; }
@@ -16,10 +16,10 @@
 
 /* ── Inst Card Grid ── */
 .inst-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; padding-top:8px; }
-.inst-card { border:1px solid #f0f0f0; border-radius:14px; padding:18px 20px; transition:all .2s; background:#fff; }
-.inst-card:hover { border-color:#a7f3d0; box-shadow:0 4px 16px rgba(16,185,129,.1); transform:translateY(-2px); }
+.inst-card { border:1px solid #eae3d6; border-radius:14px; padding:18px 20px; transition:all .2s; background:#fff; }
+.inst-card:hover { border-color:#10b981; box-shadow:0 4px 16px rgba(0,0,0,.06); transform:translateY(-2px); }
 .inst-card-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
-.inst-logo { width:42px; height:42px; border-radius:10px; object-fit:cover; background:#ecfdf5; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; color:#059669; border:2px solid #a7f3d0; flex-shrink:0; }
+.inst-logo { width:44px; height:44px; border-radius:50%; object-fit:contain; background:#ffffff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#111827; border:1px solid #eae3d6; padding:2px; flex-shrink:0; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
 .inst-name { font-size:14px; font-weight:700; color:#111827; line-height:1.3; }
 .inst-type { font-size:11.5px; color:#9ca3af; margin-top:2px; }
 .inst-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
@@ -127,7 +127,7 @@ function renderCards(data) {
       <div class="inst-card">
         <div class="inst-card-head">
           ${inst.logo_url
-            ? `<img src="${inst.logo_url}" class="inst-logo" style="object-fit:cover" onerror="this.outerHTML='<div class=\\'inst-logo\\'>${instInitials(inst.name)}</div>'">`
+            ? `<img src="${inst.logo_url}" class="inst-logo" style="object-fit:contain;background:#ffffff" alt="${inst.name}" onerror="this.outerHTML='<div class=\\'inst-logo\\'>${instInitials(inst.name)}</div>'">`
             : `<div class="inst-logo">${instInitials(inst.name)}</div>`
           }
           <div>
@@ -166,7 +166,7 @@ function renderTable(data) {
     return `
       <tr>
         <td><div style="display:flex;align-items:center;gap:10px">
-          ${inst.logo_url ? `<img src="${inst.logo_url}" width="28" height="28" style="border-radius:6px" onerror="this.style.display='none'"/>` : ''}
+          ${inst.logo_url ? `<img src="${inst.logo_url}" width="30" height="30" style="border-radius:50%;object-fit:contain;background:#fff;border:1px solid #eae3d6;padding:1px" onerror="this.style.display='none'"/>` : ''}
           <strong>${inst.name}</strong>
         </div></td>
         <td style="color:#6b7280">${inst.type}</td>

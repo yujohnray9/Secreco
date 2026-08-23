@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SecReCo — CMI Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/assets/css/pta/base.css?v=3"/>
 <link rel="stylesheet" href="/assets/css/pta/header.css?v=3"/>
 <link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=3"/>
@@ -184,7 +184,9 @@ function confirmSignOut() {
 <div class="app-body">
   <aside class="sidebar">
     <div class="sb-brand" onclick="window.location.href='/dashboard/cmi/profile'" style="cursor:pointer">
-      <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="height:36px;width:auto;object-fit:contain;margin-right:10px;" onerror="this.src='/assets/logo/cvaard.jpeg'"/>
+      <div class="sb-brand-logo">
+        <img src="/assets/img/cvaarrd.png" alt="CVAARRD Logo" style="width:26px;height:26px;object-fit:contain;" onerror="this.outerHTML='<svg viewBox=\\'0 0 24 24\\' width=\\'20\\' height=\\'20\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2.5\\'><path d=\\'M12 2L2 7l10 5 10-5-10-5z\\'/><path d=\\'M2 17l10 5 10-5\\'/><path d=\\'M2 12l10 5 10-5\\'/></svg>'"/>
+      </div>
       <div>
         <div class="sb-brand-title">SecReCo</div>
         <div class="sb-brand-sub">CVAARRD Consortium</div>

@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════
-    DASHBOARD — CVAARRD / SecReCo Dashboard Styles
+   DASHBOARD — FreshCart / SecReCo Dashboard Styles
 ════════════════════════════════════════════ */
 
 .dashboard-grid {
@@ -17,21 +17,26 @@
 
 .stat-card-fc {
   background: #ffffff;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 22px 24px;
-  border: 1px solid #ede8de;
-  border-top: 3.5px solid #164e2e;
-  box-shadow: 0 4px 18px rgba(22, 78, 46, 0.03);
+  border: 1px solid #eae3d6;
+  border-top: 4px solid #10b981;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card-fc:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(22, 78, 46, 0.08);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
 }
+
+.stat-card-fc:nth-child(1) { border-top-color: #3b82f6; }
+.stat-card-fc:nth-child(2) { border-top-color: #10b981; }
+.stat-card-fc:nth-child(3) { border-top-color: #f97316; }
+.stat-card-fc:nth-child(4) { border-top-color: #a855f7; }
 
 .sc-fc-head {
   display: flex;
@@ -40,70 +45,59 @@
 }
 
 .sc-fc-title {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: #475569;
+  color: #4b5563;
 }
 
 .sc-fc-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 16px;
   flex-shrink: 0;
-  background: #e8f5e9;
-  color: #164e2e;
 }
 
-.sc-fc-icon.icon-blue   { background: #e8f5e9; color: #164e2e; }
-.sc-fc-icon.icon-green  { background: #e8f5e9; color: #164e2e; }
-.sc-fc-icon.icon-orange { background: #e8f5e9; color: #164e2e; }
-.sc-fc-icon.icon-purple { background: #e8f5e9; color: #164e2e; }
+.sc-fc-icon.icon-blue { background: #eff6ff; color: #3b82f6; }
+.sc-fc-icon.icon-green { background: #ecfdf5; color: #10b981; }
+.sc-fc-icon.icon-orange { background: #fff7ed; color: #f97316; }
+.sc-fc-icon.icon-purple { background: #f3e8ff; color: #a855f7; }
 
 .sc-fc-body {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: baseline;
+  gap: 12px;
 }
 
 .sc-fc-val {
-  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
-  font-size: 38px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px;
   font-weight: 800;
   color: #111827;
   line-height: 1;
-  margin: 2px 0 6px;
 }
 
 .sc-fc-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 3px 10px;
+  padding: 3px 8px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  width: fit-content;
-  background: #f5ebd6;
-  color: #8a6318;
 }
 
 .sc-fc-badge.up {
-  background: #f5ebd6;
-  color: #8a6318;
-}
-
-.sc-fc-badge.badge-reports, .stat-card-fc:nth-child(2) .sc-fc-badge {
-  background: #e2efe4;
-  color: #164e2e;
+  background: #ecfdf5;
+  color: #059669;
 }
 
 .sc-fc-badge.down {
-  background: #f5ebd6;
-  color: #8a6318;
+  background: #fef2f2;
+  color: #ef4444;
 }
 
 .sc-fc-foot {
@@ -114,29 +108,29 @@
 }
 
 .sc-fc-sub {
-  font-size: 12px;
-  color: #889c90;
+  font-size: 11.5px;
+  color: #9ca3af;
 }
 
 .sc-fc-arrow {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid #ede8de;
+  border: 1px solid #eae3d6;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b8072;
+  color: #6b7280;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .sc-fc-arrow:hover {
-  background: #164e2e;
+  background: #10b981;
   color: #ffffff;
-  border-color: #164e2e;
+  border-color: #10b981;
 }
 
 /* ── Middle Row (Line & Bar Charts) ── */
@@ -148,9 +142,10 @@
 
 .card-fc {
   background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #ede8de;
-  box-shadow: 0 4px 20px rgba(22, 78, 46, 0.03);
+  border-radius: 20px;
+  border: 1px solid #eae3d6;
+  border-top: 3px solid #10b981;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -164,70 +159,26 @@
 }
 
 .card-fc-title {
-  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
-  font-size: 18px;
-  font-weight: 800;
-  color: #111827;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.card-fc-subtitle {
-  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
-  font-size: 12px;
-  font-weight: 500;
-  color: #889c90;
-}
-
-/* Capsule filter toggle */
-.toggle-capsule {
-  background: #e8f0e6;
-  border-radius: 24px;
-  padding: 3px;
-  display: inline-flex;
-  gap: 2px;
-  border: none;
-}
-
-.toggle-capsule-btn {
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #164e2e;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-decoration: none;
-}
-
-.toggle-capsule-btn.active {
-  background: #164e2e;
-  color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
   font-weight: 700;
+  color: #111827;
 }
 
 .card-fc-filter {
   padding: 6px 14px;
   border-radius: 20px;
-  border: 1px solid #ede8de;
+  border: 1px solid #e5e7eb;
   background: #ffffff;
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: #4b5563;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.card-fc-filter:focus {
-  border-color: #164e2e;
 }
 
 .card-fc-dots {
-  color: #889c90;
+  color: #9ca3af;
   font-size: 18px;
   cursor: pointer;
 }
@@ -256,18 +207,18 @@
 .progress-label {
   font-size: 13.5px;
   font-weight: 600;
-  color: #14241b;
+  color: #374151;
 }
 
 .progress-pct {
   font-size: 13.5px;
   font-weight: 700;
-  color: #0a5c36;
+  color: #10b981;
 }
 
 .progress-track {
   height: 12px;
-  background: #eef3ef;
+  background: #f3f4f6;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -275,7 +226,7 @@
 .progress-fill {
   height: 100%;
   border-radius: 10px;
-  background: linear-gradient(90deg, #b48a3c 0%, #0a5c36 100%);
+  background: linear-gradient(90deg, #34d399 0%, #10b981 100%);
   transition: width 0.4s ease;
 }
 
