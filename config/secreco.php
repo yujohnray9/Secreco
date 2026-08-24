@@ -4,12 +4,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Cloudflare Turnstile
+    | Google reCAPTCHA v2
     |--------------------------------------------------------------------------
     */
-    'turnstile_secret' => env('APP_ENV') === 'local'
-        ? env('CF_TURNSTILE_SECRET_LOCAL', '1x0000000000000000000000000000000AA')
-        : env('CF_TURNSTILE_SECRET_PROD', ''),
+    'recaptcha_site_key'   => env('RECAPTCHA_SITE_KEY', '6Lc7YJYtAAAAANdFFQcMyohBnxH9gpJao3xMDe2V   '),
+    'recaptcha_secret_key' => env('RECAPTCHA_SECRET_KEY', '6Lc7YJYtAAAAAOFnQu08d0jnBgC94vLJONhuL4bs'),
 
     /*
     |--------------------------------------------------------------------------

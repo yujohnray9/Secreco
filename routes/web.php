@@ -18,10 +18,7 @@ Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
 
-Route::get('/verify-captcha', function () {
-    if (Auth::check()) return redirect('/dashboard/' . Auth::user()->role);
-    return view('auth.verify-captcha');
-})->name('verify-captcha');
+Route::redirect('/verify-captcha', '/login');
 
 Route::prefix('dashboard')->group(function () {
     Route::get('/cmi/{page?}', [CmiPageController::class, 'show'])->middleware(['auth.custom', 'role:cmi,pta']);

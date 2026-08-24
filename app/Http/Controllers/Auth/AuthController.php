@@ -36,30 +36,30 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => $rlMessage]);
         }
 
-        // Turnstile check
-        $token = trim($request->input('cf_turnstile_response', ''));
-        if (empty($token)) {
-            return response()->json(['success' => false, 'message' => 'Security challenge not completed. Please try again.']);
+        // reCAPTCHA verification
+        $recaptchaToken = trim($request->input('g_recaptcha_response') ?? $request->input('g-recaptcha-response', ''));
+        if (empty($recaptchaToken)) {
+            return response()->json(['success' => false, 'message' => 'Please complete the reCAPTCHA challenge.']);
         }
 
-        $secret = config('secreco.turnstile_secret');
-        $cfVerify = false;
+        $secret = config('secreco.recaptcha_secret_key');
+        $captchaValid = false;
 
         try {
-            $response = Http::asForm()->timeout(10)->withoutVerifying()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+            $response = Http::asForm()->timeout(10)->withoutVerifying()->post('https://www.google.com/recaptcha/api/siteverify', [
                 'secret'   => $secret,
-                'response' => $token,
+                'response' => $recaptchaToken,
                 'remoteip' => $ip,
             ]);
-            $cfResult = $response->json();
-            $cfVerify = !empty($cfResult['success']);
+            $result = $response->json();
+            $captchaValid = !empty($result['success']);
         } catch (Throwable $e) {
-            Log::error('Turnstile verification failed: ' . $e->getMessage());
+            Log::error('reCAPTCHA verification failed: ' . $e->getMessage());
         }
 
-        if (!$cfVerify) {
+        if (!$captchaValid) {
             $this->rateLimitService->recordFailure($ip);
-            return response()->json(['success' => false, 'message' => 'Security verification failed. Please try again.']);
+            return response()->json(['success' => false, 'message' => 'reCAPTCHA verification failed. Please try again.']);
         }
 
         // Credential validation

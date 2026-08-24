@@ -19,7 +19,7 @@
 
   <div class="page-hdr" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
     <div>
-      <div class="page-title">Fill Up Report</div>
+      <div class="page-title">Fill Out Report</div>
       <div class="page-sub" id="fillupSubtitle">CY {{ date('Y') }} Annual Accomplishment Report &amp; All Sections &amp; Tables</div>
     </div>
     <div class="page-actions" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
