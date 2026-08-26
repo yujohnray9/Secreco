@@ -31,8 +31,9 @@
       .then(data => {
         window.SubState.statuses = data?.statuses ?? {};
 
-        const relevant = Object.keys(window.SubState.statuses)
-          .filter(no => window.SubState.statuses[no] === 'accepted');
+        const relevant = [...new Set(Object.keys(window.SubState.statuses)
+          .filter(no => window.SubState.statuses[no] === 'accepted')
+          .map(no => no.toUpperCase()))];
 
         if (!relevant.length) { window.SubRender.renderTable(); return; }
 
@@ -40,15 +41,21 @@
           fetch(`${API_LOAD}?table_no=${no}&year=${year}`)
             .then(r => r.json())
             .then(d => {
-              window.SubState.meta[no] = {
+              const metaObj = {
                 updated_at : d?.updated_at ?? null,
                 rows       : Array.isArray(d?.rows) ? d.rows : [],
                 metaData   : (d?.meta && typeof d.meta === 'object') ? d.meta : {},
                 docs       : Array.isArray(d?.docs) ? d.docs : [],
               };
+              window.SubState.meta[no] = metaObj;
+              window.SubState.meta[no.toUpperCase()] = metaObj;
+              window.SubState.meta[no.toLowerCase()] = metaObj;
             })
             .catch(() => {
-              window.SubState.meta[no] = { updated_at: null, rows: [], metaData: {}, docs: [] };
+              const emptyObj = { updated_at: null, rows: [], metaData: {}, docs: [] };
+              window.SubState.meta[no] = emptyObj;
+              window.SubState.meta[no.toUpperCase()] = emptyObj;
+              window.SubState.meta[no.toLowerCase()] = emptyObj;
             })
         );
 

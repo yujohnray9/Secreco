@@ -19,15 +19,19 @@ function renderT1(data) {
 
     if (s === 'done' || s === 'submitted' || s === 'accepted') {
       (cmi.rows ?? []).forEach(r => {
-        const total = (+r.new_ || 0) + (+r.ongoing || 0) + (+r.completed || 0) + (+r.terminated || 0);
+        const newCount = (+r.new_ || +r.new || +r.new_projects || 0);
+        const ongoingCount = (+r.ongoing || 0);
+        const completedCount = (+r.completed || 0);
+        const terminatedCount = (+r.terminated || 0);
+        const total = newCount + ongoingCount + completedCount + terminatedCount;
         submitted += `
           <tr>
             <td>${esc(r.date ?? '')}</td>
             <td>${esc(r.agency || cmi.institution)}</td>
-            <td>${+r.new_       || 0}</td>
-            <td>${+r.ongoing    || 0}</td>
-            <td>${+r.completed  || 0}</td>
-            <td>${+r.terminated || 0}</td>
+            <td>${newCount}</td>
+            <td>${ongoingCount}</td>
+            <td>${completedCount}</td>
+            <td>${terminatedCount}</td>
             <td><strong>${total}</strong></td>
           </tr>`;
       });

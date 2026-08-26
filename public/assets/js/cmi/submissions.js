@@ -28,18 +28,37 @@
     fetch('/api/formats')
       .then(r => r.json())
       .then(data => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlYear   = urlParams.get('year') ? parseInt(urlParams.get('year')) : null;
+        const currentYear = new Date().getFullYear();
+
+        let targetYear = urlYear || 2026;
         if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
-          const activeYr = data.active_year || new Date().getFullYear();
-          const yearSel  = document.getElementById('subYearFilter');
+          const uniqueYears = [...new Set(data.years.map(Number))].sort((a,b) => b - a);
+          if (!uniqueYears.includes(targetYear)) {
+            targetYear = uniqueYears.includes(currentYear) ? currentYear : (data.active_year || uniqueYears[0]);
+          }
+          const yearSel = document.getElementById('subYearFilter');
           if (yearSel) {
-            const uniqueYears = [...new Set(data.years.map(Number))].sort((a,b) => b - a);
-            yearSel.innerHTML = uniqueYears.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
-            window.SubState.selectedYear = activeYr;
+            yearSel.innerHTML = uniqueYears.map(y => `<option value="${y}" ${y === targetYear ? 'selected' : ''}>CY ${y}</option>`).join('');
           }
         }
-      }).catch(() => {}).finally(() => {
+        window.SubState.selectedYear = targetYear;
+      }).catch(() => {
+        window.SubState.selectedYear = 2026;
+      }).finally(() => {
         window.SubLoad.loadData();
       });
+
+    // Year filter change event
+    document.getElementById('subYearFilter')?.addEventListener('change', (e) => {
+      window.SubState.selectedYear = parseInt(e.target.value) || new Date().getFullYear();
+      window.SubLoad.loadData();
+    });
+
+    // Search and Section filter events
+    document.getElementById('subSearch')?.addEventListener('input', () => window.SubRender.renderTable());
+    document.getElementById('subSectionFilter')?.addEventListener('change', () => window.SubRender.renderTable());
 
     /* ── View modal ── */
     document.getElementById('btnCloseViewModal')

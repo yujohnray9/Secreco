@@ -17,14 +17,28 @@ class DashboardController extends Controller
         $activeYear = (int) (\App\Models\SystemSetting::where('key', 'active_year')->value('value') ?? date('Y'));
         $reportingYear = (int) ($request->input('year') ?? $activeYear);
 
-        $sections = config('secreco.sections');
-        $tableLabels = config('secreco.table_labels');
+        $templates = \App\Models\FormatTemplate::where('year', $reportingYear)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('table_no', 'asc')
+            ->get();
 
-        $allTableKeys = config('secreco.all_tables', [
-            'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
-            'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
-            'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b',
-        ]);
+        if ($templates->isNotEmpty()) {
+            $sections = [];
+            $allTableKeys = [];
+            foreach ($templates as $t) {
+                $sec = trim($t->section) ?: 'General';
+                $sections[$sec][] = $t->table_no;
+                $allTableKeys[] = $t->table_no;
+            }
+        } else {
+            $sections = config('secreco.sections');
+            $allTableKeys = config('secreco.all_tables', [
+                'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
+                'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
+                'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b',
+            ]);
+        }
+        $tableLabels = config('secreco.table_labels');
         $totalRequired = count($allTableKeys);
 
         $userId = Auth::id() ?? session('user_id');

@@ -25,7 +25,7 @@ class ReportController extends Controller
             'T16','T17','T18','T19','T20a','T20b'
         ]);
 
-        // Update tables with content for this user and year to 'done' on submit (except accepted or deleted ones)
+        // Update tables with content or draft status for this user and year to 'submitted' on submit (preserving each table's own updated_at)
         ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
             ->whereNotIn('status', ['accepted', 'deleted'])
@@ -33,8 +33,9 @@ class ReportController extends Controller
             ->each(function ($tbl) {
                 $hasRows = is_array($tbl->rows_json) && count($tbl->rows_json) > 0;
                 $hasMeta = is_array($tbl->meta_json) && count($tbl->meta_json) > 0;
-                if ($tbl->status !== 'done' && ($hasRows || $hasMeta || $tbl->status === 'draft')) {
-                    $tbl->update(['status' => 'done', 'updated_at' => now()]);
+                if ($hasRows || $hasMeta || in_array($tbl->status, ['draft', 'done'], true)) {
+                    $tbl->timestamps = false;
+                    $tbl->update(['status' => 'submitted']);
                 }
             });
 
@@ -45,20 +46,23 @@ class ReportController extends Controller
         $byTable = [];
         foreach ($saved as $row) {
             $byTable[$row->table_no] = $row;
+            $byTable[strtoupper($row->table_no)] = $row;
+            $byTable[strtolower($row->table_no)] = $row;
         }
 
         $snapshot = [];
         foreach ($allTables as $no) {
-            if (isset($byTable[$no])) {
-                $st = $byTable[$no]->status;
+            $matchedRow = $byTable[$no] ?? ($byTable[strtoupper($no)] ?? ($byTable[strtolower($no)] ?? null));
+            if ($matchedRow) {
+                $st = $matchedRow->status;
                 if ($st === 'deleted') {
                     $st = 'not-started';
                 }
                 $snapshot[$no] = [
                     'status'     => $st,
-                    'meta'       => ($byTable[$no]->status === 'deleted') ? null : $byTable[$no]->meta_json,
-                    'rows'       => ($byTable[$no]->status === 'deleted') ? [] : $byTable[$no]->rows_json,
-                    'updated_at' => $byTable[$no]->updated_at ? $byTable[$no]->updated_at->toDateTimeString() : null,
+                    'meta'       => ($matchedRow->status === 'deleted') ? null : $matchedRow->meta_json,
+                    'rows'       => ($matchedRow->status === 'deleted') ? [] : $matchedRow->rows_json,
+                    'updated_at' => $matchedRow->updated_at ? $matchedRow->updated_at->toDateTimeString() : null,
                 ];
             } else {
                 $snapshot[$no] = [

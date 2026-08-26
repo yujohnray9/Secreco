@@ -159,21 +159,26 @@ function formatPHDate(dt) {
 }
 
 const statusBadge = s => {
+  const norm = (s || '').toLowerCase();
   const map = {
-    done      : 'badge-green',
-    accepted  : 'badge-teal',
-    returned  : 'badge-purple',
-    deleted   : 'badge-red',
-    draft     : 'badge-orange',
+    submitted   : 'badge-green',
+    done        : 'badge-green',
+    accepted    : 'badge-teal',
+    returned    : 'badge-purple',
+    deleted     : 'badge-red',
+    draft       : 'badge-orange',
+    'not-started': 'badge-gray',
   };
   const label = {
-    done      : 'Submitted',
-    accepted  : 'Accepted',
-    returned  : 'Returned',
-    deleted   : 'Deleted',
-    draft     : 'Draft',
+    submitted   : 'Submitted',
+    done        : 'Submitted',
+    accepted    : 'Accepted',
+    returned    : 'Returned',
+    deleted     : 'Deleted',
+    draft       : 'Draft',
+    'not-started': 'Not Started',
   };
-  return `<span class="badge ${map[s] || 'badge-gray'}">${label[s] || s}</span>`;
+  return `<span class="badge ${map[norm] || 'badge-gray'}">${label[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1))}</span>`;
 };
 
 let currentSubPage = 1;
@@ -298,20 +303,10 @@ async function loadSubs() {
   } catch(e) { console.error('PTA Submissions load error:', e); }
 }
 
-window.viewDataModal = function(idx) {
-  currentEditSubIdx = idx;
-  const r = cachedSubRows[idx];
-  if (!r) return;
-  document.getElementById('vdInst').textContent    = `${r.institution} — Table ${r.table_no}`;
-  document.getElementById('vdEncoder').textContent = `Encoder: ${r.encoder} • Status: ${r.table_status}`;
-
-  const wrap = document.getElementById('vdTableWrap');
-  let html = '';
-
   const DEFAULT_TABLE_KEYS = {
     'T1':  ['date', 'agency', 'new_', 'ongoing', 'completed', 'terminated'],
     'T2A': ['title', 'agency', 'researcher', 'recommendations', 'winners'],
-    'T2B': ['agency', 'count', 'remarks'],
+    'T2B': ['category', 'agency', 'count', 'remarks'],
     'T3':  ['project', 'status', 'duration', 'fund'],
     'T4':  ['donor', 'activity', 'amount', 'remarks'],
     'T5':  ['donor', 'activity', 'amount', 'remarks'],
@@ -336,11 +331,114 @@ window.viewDataModal = function(idx) {
   };
   window._DEFAULT_TABLE_KEYS = DEFAULT_TABLE_KEYS;
 
+  const COLUMN_LABELS = {
+    category: 'Category (GO, NGO, Private, LGU)',
+    date: 'Date', agency: 'Agency', new_: 'New', ongoing: 'Ongoing', completed: 'Completed', terminated: 'Terminated',
+    title: 'Title', researcher: 'Researcher', recommendations: 'Recommendations', winners: 'Winners',
+    count: 'Count', remarks: 'Remarks', project: 'Project', status: 'Status', duration: 'Duration', fund: 'Funding',
+    donor: 'Donor', activity: 'Activity', amount: 'Amount', nature: 'Nature', address: 'Address', year: 'Year',
+    type: 'Type', purpose: 'Purpose', funds: 'Funds', commodity: 'Commodity', program: 'Program', budget: 'Budget',
+    source: 'Source', role: 'Role', tech: 'Technology', owner: 'Owner', precomm: 'Pre-commercialization',
+    licensor: 'Licensor', startup: 'Startup', spinoff: 'Spinoff', venue: 'Venue', participants: 'Participants',
+    expenditures: 'Expenditures', item: 'Item', location: 'Location', expense: 'Expense', award: 'Award',
+    recipient: 'Recipient', sponsor: 'Sponsor', event: 'Event', host: 'Host', cmi: 'CMI', initiative: 'Initiative',
+    author: 'Author', description: 'Description', findings: 'Findings'
+  };
+
+  function getFieldInputType(k) {
+    const norm = (k || '').toLowerCase();
+    if (norm === 'category') {
+      return 'category';
+    }
+    if (norm === 'date' || norm.endsWith('_date') || norm.startsWith('date_') || norm === 'published_date') {
+      return 'date';
+    }
+    const numberFields = new Set([
+      'new_', 'new', 'ongoing', 'completed', 'terminated',
+      'count', 'amount', 'budget', 'expense', 'expenditures',
+      'participants', 'precomm', 'licensor', 'startup', 'spinoff',
+      'total', 'funds_amount', 'qty', 'quantity'
+    ]);
+    if (numberFields.has(norm)) {
+      return 'number';
+    }
+    return 'text';
+  }
+
+  function formatForDateInput(val) {
+    if (!val) return '';
+    const str = String(val).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmy) {
+      const d = dmy[1].padStart(2, '0');
+      const m = dmy[2].padStart(2, '0');
+      const y = dmy[3];
+      return `${y}-${m}-${d}`;
+    }
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+    return str;
+  }
+
+  function renderCellInput(key, rawVal) {
+    const type = getFieldInputType(key);
+    let val = rawVal ?? '';
+    if (type === 'category') {
+      const cat = String(val || 'go').toLowerCase().trim();
+      return `<select class="pta-cell-inp" data-key="category" style="width:100%;min-width:110px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;background:#fff;">
+        <option value="go" ${cat==='go'?'selected':''}>GO (Government)</option>
+        <option value="ngo" ${cat==='ngo'?'selected':''}>NGO (Non-Government)</option>
+        <option value="private" ${cat==='private'?'selected':''}>Private Sector</option>
+        <option value="lgu" ${cat==='lgu'?'selected':''}>LGU (Local Govt Unit)</option>
+      </select>`;
+    }
+    if (type === 'date') {
+      const dateVal = formatForDateInput(val);
+      return `<input type="date" class="pta-cell-inp" data-key="${key}" value="${String(dateVal).replace(/"/g, '&quot;')}" style="width:100%;min-width:130px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`;
+    }
+    if (type === 'number') {
+      const numVal = (val === '' || val === null || val === undefined) ? '' : val;
+      return `<input type="number" min="0" step="any" class="pta-cell-inp" data-key="${key}" value="${String(numVal).replace(/"/g, '&quot;')}" placeholder="0" style="width:100%;min-width:65px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`;
+    }
+    return `<input type="text" class="pta-cell-inp" data-key="${key}" value="${String(val).replace(/"/g, '&quot;')}" placeholder="${COLUMN_LABELS[key] || key}" style="width:100%;min-width:90px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`;
+  }
+  window._renderCellInput = renderCellInput;
+
+window.viewDataModal = function(idx) {
+  currentEditSubIdx = idx;
+  const r = cachedSubRows[idx];
+  if (!r) return;
+  document.getElementById('vdInst').textContent    = `${r.institution} — Table ${r.table_no}`;
+  document.getElementById('vdEncoder').textContent = `Encoder: ${r.encoder} • Status: ${r.table_status}`;
+
+  const wrap = document.getElementById('vdTableWrap');
+  let html = '';
+
   let rows = (r.rows && r.rows.length > 0) ? JSON.parse(JSON.stringify(r.rows)) : [{}];
   const tNoUpper = (r.table_no || '').toUpperCase();
-  let keys = (rows.length > 0 && Object.keys(rows[0]).length > 0 && !Object.keys(rows[0]).includes('field1'))
-    ? Object.keys(rows[0])
-    : (DEFAULT_TABLE_KEYS[tNoUpper] || ['field1', 'field2', 'field3', 'field4']);
+  const stdKeys = DEFAULT_TABLE_KEYS[tNoUpper] || ['field1', 'field2', 'field3', 'field4'];
+  const keyAliases = {
+    'new': 'new_',
+    'new_projects': 'new_',
+  };
+  const customKeys = [];
+  rows.forEach(row => {
+    if (row && typeof row === 'object') {
+      Object.keys(row).forEach(k => {
+        const canonical = keyAliases[k] || k;
+        if (k && !stdKeys.includes(canonical) && !stdKeys.includes(k) && !customKeys.includes(k) && !k.startsWith('_') && k !== 'field1') {
+          customKeys.push(k);
+        }
+      });
+    }
+  });
+  let keys = [...stdKeys, ...customKeys];
 
   html += `<div style="font-size:12.5px;color:#374151;margin-bottom:12px;background:#ecfdf5;padding:10px 14px;border-radius:8px;border:1px solid #a7f3d0;">
     <strong>PTA Admin Access:</strong> You can edit cell values or add missing rows below, then click <strong>Save / Submit Updates</strong> to update this submission.
@@ -350,7 +448,7 @@ window.viewDataModal = function(idx) {
     <thead>
       <tr>
         <th style="width:36px">#</th>
-        ${keys.map(k=>`<th>${k}</th>`).join('')}
+        ${keys.map(k=>`<th>${COLUMN_LABELS[k] || k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' ')}</th>`).join('')}
         <th style="width:40px">Del</th>
       </tr>
     </thead>
@@ -359,7 +457,15 @@ window.viewDataModal = function(idx) {
   rows.forEach((row, rIdx) => {
     html += `<tr>
       <td style="text-align:center;font-weight:600;color:#6b7280">${rIdx + 1}</td>
-      ${keys.map(k=>`<td><input type="text" class="pta-cell-inp" data-key="${k}" value="${String(row[k] ?? '').replace(/"/g, '&quot;')}" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" /></td>`).join('')}
+      ${keys.map(k=>{
+        let cellVal = row[k];
+        if (cellVal === undefined || cellVal === null || cellVal === '') {
+          if (k === 'new_' || k === 'new') {
+            cellVal = row['new_'] ?? row['new'] ?? row['new_projects'] ?? '';
+          }
+        }
+        return `<td>${renderCellInput(k, cellVal)}</td>`;
+      }).join('')}
       <td style="text-align:center"><button type="button" onclick="this.closest('tr').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:bold;">×</button></td>
     </tr>`;
   });
@@ -507,8 +613,9 @@ window.addPtaEditRow = function() {
   }
   const rowCount = tbody.rows.length + 1;
   const tr = document.createElement('tr');
+  const renderInp = window._renderCellInput || ((k, v) => `<input type="text" class="pta-cell-inp" data-key="${k}" value="${v}" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`);
   tr.innerHTML = `<td style="text-align:center;font-weight:600;color:#6b7280">${rowCount}</td>
-    ${keys.map(k=>`<td><input type="text" class="pta-cell-inp" data-key="${k}" value="" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" /></td>`).join('')}
+    ${keys.map(k=>`<td>${renderInp(k, '')}</td>`).join('')}
     <td style="text-align:center"><button type="button" onclick="this.closest('tr').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:bold;">×</button></td>`;
   tbody.appendChild(tr);
 };
@@ -525,7 +632,15 @@ window.savePtaModalEdit = async function() {
       const inputs = tr.querySelectorAll('.pta-cell-inp');
       const rowObj = {};
       inputs.forEach(inp => {
-        rowObj[inp.dataset.key] = inp.value;
+        const key = inp.dataset.key;
+        let v = inp.value;
+        if (getFieldInputType(key) === 'number' && v !== '') {
+          v = isNaN(Number(v)) ? v : Number(v);
+        }
+        rowObj[key] = v;
+        if (key === 'new_') {
+          rowObj['new'] = v;
+        }
       });
       updatedRows.push(rowObj);
     });
@@ -541,7 +656,7 @@ window.savePtaModalEdit = async function() {
         year: year,
         rows: updatedRows,
         meta: r.meta || {},
-        status: 'done'
+        status: r.table_status || 'submitted'
       })
     });
     const json = await res.json();

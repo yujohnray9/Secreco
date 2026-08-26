@@ -132,7 +132,13 @@
 
     CMI.setStatuses = function (statuses, meta = null) {
         for (let k in _status) delete _status[k];
-        Object.assign(_status, statuses || {});
+        if (statuses) {
+            for (let k in statuses) {
+                _status[k] = statuses[k];
+                _status[k.toUpperCase()] = statuses[k];
+                _status[k.toLowerCase()] = statuses[k];
+            }
+        }
 
         if (meta && Array.isArray(meta.templates)) {
             CMI.setFormatTemplates(meta.templates);
@@ -154,7 +160,10 @@
     };
 
     CMI.updateStatus = function (no, status) {
+        if (!no) return;
         _status[no] = status;
+        _status[no.toUpperCase()] = status;
+        _status[no.toLowerCase()] = status;
         renderFillNav();
     };
 
@@ -647,11 +656,12 @@
     }
     CMI.submitReport = function () {
         const allNos = Object.keys(TABLE_TITLES);
-        const done = allNos.filter((n) => ['done', 'accepted', 'submitted'].includes(_status[n])).length;
-        const draft = allNos.filter((n) => _status[n] === "draft").length;
-        const blank = allNos.filter(
-            (n) => !_status[n] || _status[n] === "not-started",
-        ).length;
+        const getStatusFor = (n) => {
+            return _status[n] || _status[n.toUpperCase()] || _status[n.toLowerCase()] || "not-started";
+        };
+        const done = allNos.filter((n) => ['done', 'accepted', 'submitted'].includes(getStatusFor(n))).length;
+        const draft = allNos.filter((n) => getStatusFor(n) === "draft").length;
+        const blank = allNos.filter((n) => getStatusFor(n) === "not-started").length;
         const total = allNos.length;
         const yr = window.CMI_REPORTING_YEAR || new Date().getFullYear();
 
@@ -734,7 +744,30 @@
                 toast("Report submitted successfully! It is now pending PTA review.");
                 _isSubmitted = true;
                 _submittedAt = res.submitted_at || new Date().toISOString();
-                _submittedTables = allNos.filter((n) => _status[n] === "done" || _status[n] === "draft");
+
+                // Refresh fresh statuses from backend so all submitted tables update in memory and sidebar immediately
+                try {
+                    const stRes = await fetch('/api/cmi/tables/statuses?year=' + yr);
+                    const stData = await stRes.json();
+                    if (stData && typeof CMI.setStatuses === 'function') {
+                        CMI.setStatuses(stData.statuses || {}, stData);
+                    }
+                } catch(err) {
+                    allNos.forEach(n => {
+                        const cur = _status[n] || _status[n.toUpperCase()] || _status[n.toLowerCase()];
+                        if (cur === 'draft' || cur === 'done') {
+                            _status[n] = 'submitted';
+                            _status[n.toUpperCase()] = 'submitted';
+                            _status[n.toLowerCase()] = 'submitted';
+                        }
+                    });
+                    renderFillNav();
+                }
+
+                _submittedTables = allNos.filter((n) => {
+                    const s = _status[n] || _status[n.toUpperCase()] || _status[n.toLowerCase()];
+                    return s === "done" || s === "submitted" || s === "accepted";
+                });
                 CMI.lockReport();
             } else {
                 toast("Submission failed: " + (res.error || "Unknown error"));

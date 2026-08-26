@@ -41,7 +41,7 @@
 
       const sectionRows = [];
       section.tables.forEach(t => {
-        const st = window.SubState.statuses[t.no];
+        const st = window.SubState.statuses[t.no] || window.SubState.statuses[t.no.toUpperCase()] || window.SubState.statuses[t.no.toLowerCase()];
         if (st !== 'accepted') return;
         if (searchTerm && !(
           t.no.toLowerCase().includes(searchTerm) ||

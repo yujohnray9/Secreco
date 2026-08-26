@@ -127,18 +127,18 @@
 @endsection
 
 @section('scripts')
-<script src="/assets/js/cmi/sections-data.js"></script>
-<script src="/assets/js/cmi/tables-config.js"></script>
-<script src="/assets/js/cmi/submissions-helpers.js"></script>
-<script src="/assets/js/cmi/submissions-state.js"></script>
-<script src="/assets/js/cmi/submissions-load.js"></script>
-<script src="/assets/js/cmi/submissions-render.js"></script>
-<script src="/assets/js/cmi/submissions-view.js"></script>
-<script src="/assets/js/cmi/submissions-lightbox.js"></script>
-<script src="/assets/js/cmi/submissions-edit-state.js"></script>
-<script src="/assets/js/cmi/submissions-edit-builders.js"></script>
-<script src="/assets/js/cmi/submissions-edit-events.js"></script>
-<script src="/assets/js/cmi/submissions-edit-save.js"></script>
-<script src="/assets/js/cmi/submissions-edit.js"></script>
-<script src="/assets/js/cmi/submissions.js"></script>
+<script src="/assets/js/cmi/sections-data.js?v=6"></script>
+<script src="/assets/js/cmi/tables-config.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-helpers.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-state.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-load.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-render.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-view.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-lightbox.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-edit-state.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-edit-builders.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-edit-events.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-edit-save.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-edit.js?v=6"></script>
+<script src="/assets/js/cmi/submissions.js?v=6"></script>
 @endsection

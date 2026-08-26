@@ -6,6 +6,20 @@
 
 @section('content')
 <div class="page active" id="page-dashboard">
+  <!-- ── DASHBOARD HEADER & YEAR FILTER ── -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-size:22px;font-weight:700;color:#1e293b;letter-spacing:-0.01em">CMI Dashboard</div>
+      <div id="dashYearSub" style="font-size:13px;color:#64748b;margin-top:2px">Overview of your institution's annual report progress for CY {{ date('Y') }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <label for="cmiDashYearFilter" style="font-size:12.5px;font-weight:600;color:#475569">Reporting Year:</label>
+      <select id="cmiDashYearFilter" style="border:1px solid #d1d5db;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:#1e293b;background:#fff;cursor:pointer;outline:none;box-shadow:0 1px 2px rgba(0,0,0,0.05)">
+        <option value="2026">CY 2026</option>
+      </select>
+    </div>
+  </div>
+
   <div class="dashboard-grid">
 
     <!-- ── TOP ROW: 4 STAT CARDS ── -->
@@ -20,11 +34,11 @@
         </div>
         <div class="sc-fc-body">
           <div class="sc-fc-val" id="statComplete">—</div>
-          <span class="sc-fc-badge up">↑ 100%</span>
+          <span class="sc-fc-badge up" id="statCompleteBadge">↑ 0%</span>
         </div>
         <div class="sc-fc-foot">
-          <span class="sc-fc-sub">of 20 required tables</span>
-          <button class="sc-fc-arrow" onclick="window.location.href='/dashboard/cmi/fillup'">→</button>
+          <span class="sc-fc-sub" id="statCompleteSub">of 24 required tables</span>
+          <button class="sc-fc-arrow" onclick="goToYearPage('/dashboard/cmi/fillup')">→</button>
         </div>
       </div>
 
@@ -42,7 +56,7 @@
         </div>
         <div class="sc-fc-foot">
           <span class="sc-fc-sub">Saved, pending submit</span>
-          <button class="sc-fc-arrow" onclick="window.location.href='/dashboard/cmi/drafts'">→</button>
+          <button class="sc-fc-arrow" onclick="goToYearPage('/dashboard/cmi/drafts')">→</button>
         </div>
       </div>
 
@@ -60,7 +74,7 @@
         </div>
         <div class="sc-fc-foot">
           <span class="sc-fc-sub">Tables remaining</span>
-          <button class="sc-fc-arrow" onclick="window.location.href='/dashboard/cmi/fillup'">→</button>
+          <button class="sc-fc-arrow" onclick="goToYearPage('/dashboard/cmi/fillup')">→</button>
         </div>
       </div>
 
@@ -78,7 +92,7 @@
         </div>
         <div class="sc-fc-foot">
           <span class="sc-fc-sub" id="statCorrectionMeta">Check remarks</span>
-          <button class="sc-fc-arrow" onclick="window.location.href='/dashboard/cmi/submissions'">→</button>
+          <button class="sc-fc-arrow" onclick="goToYearPage('/dashboard/cmi/submissions')">→</button>
         </div>
       </div>
     </div>
@@ -112,9 +126,20 @@
 
 @section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', async function () {
+let currentDashYear = 2026;
+
+function goToYearPage(base) {
+  const yr = document.getElementById('cmiDashYearFilter')?.value || currentDashYear;
+  window.location.href = `${base}?year=${yr}`;
+}
+
+async function loadDashboard(year) {
+  currentDashYear = year || document.getElementById('cmiDashYearFilter')?.value || 2026;
+  const subEl = document.getElementById('dashYearSub');
+  if (subEl) subEl.textContent = `Overview of your institution's annual report progress for CY ${currentDashYear}`;
+
   try {
-    const res = await fetch('/api/cmi/dashboard');
+    const res = await fetch(`/api/cmi/dashboard?year=${currentDashYear}`);
     const json = await res.json();
 
     if (json.stats) {
@@ -127,13 +152,13 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
 
       // Update 'of X required tables' dynamically
-      const subEl = document.querySelector('.sc-fc-sub');
-      if (subEl && json.stats.totalRequired) subEl.textContent = 'of ' + json.stats.totalRequired + ' required tables';
+      const subElReq = document.getElementById('statCompleteSub');
+      if (subElReq && json.stats.totalRequired) subElReq.textContent = 'of ' + json.stats.totalRequired + ' required tables';
 
       // Update % badge dynamically
       const total = json.stats.totalRequired || 1;
       const pct   = Math.round(((json.stats.complete || 0) / total) * 100);
-      const badge = document.querySelector('.sc-fc-badge.up');
+      const badge = document.getElementById('statCompleteBadge');
       if (badge) badge.textContent = '↑ ' + pct + '%';
     }
 
@@ -148,21 +173,6 @@ document.addEventListener('DOMContentLoaded', async function () {
           <div class="progress-track"><div class="progress-fill" style="width:${sp.pct}%;"></div></div>
         </div>
       `).join('');
-    } else {
-      document.getElementById('sectionProgress').innerHTML = `
-        <div class="progress-item">
-          <div class="progress-info"><span class="progress-label">Research & Development</span><span class="progress-pct">50%</span></div>
-          <div class="progress-track"><div class="progress-fill" style="width:50%;"></div></div>
-        </div>
-        <div class="progress-item">
-          <div class="progress-info"><span class="progress-label">Technology Transfer</span><span class="progress-pct">25%</span></div>
-          <div class="progress-track"><div class="progress-fill" style="width:25%;"></div></div>
-        </div>
-        <div class="progress-item">
-          <div class="progress-info"><span class="progress-label">Publications & IP</span><span class="progress-pct">0%</span></div>
-          <div class="progress-track"><div class="progress-fill" style="width:0%;"></div></div>
-        </div>
-      `;
     }
 
     if (json.recentActivity && json.recentActivity.length > 0) {
@@ -176,13 +186,41 @@ document.addEventListener('DOMContentLoaded', async function () {
     } else {
       document.getElementById('recentActivity').innerHTML = `
         <div style="padding:24px 0;text-align:center;color:#9ca3af;font-size:13px">
-          No recent activity yet. Start by filling up your first table.
+          No recent activity yet for CY ${currentDashYear}.
         </div>
       `;
     }
   } catch (e) {
     console.error('CMI Dashboard load error:', e);
   }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  fetch('/api/formats')
+    .then(r => r.json())
+    .then(data => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlYear   = urlParams.get('year') ? parseInt(urlParams.get('year')) : null;
+      const currentYear = new Date().getFullYear();
+
+      let targetYear = urlYear || 2026;
+      if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
+        const uniqueYears = [...new Set(data.years.map(Number))].sort((a,b) => b - a);
+        if (!uniqueYears.includes(targetYear)) {
+          targetYear = uniqueYears.includes(currentYear) ? currentYear : (data.active_year || uniqueYears[0]);
+        }
+        const yearSel = document.getElementById('cmiDashYearFilter');
+        if (yearSel) {
+          yearSel.innerHTML = uniqueYears.map(y => `<option value="${y}" ${y === targetYear ? 'selected' : ''}>CY ${y}</option>`).join('');
+        }
+      }
+      loadDashboard(targetYear);
+    })
+    .catch(() => loadDashboard(2026));
+
+  document.getElementById('cmiDashYearFilter')?.addEventListener('change', function(e) {
+    loadDashboard(parseInt(e.target.value) || 2026);
+  });
 });
 </script>
 @endsection

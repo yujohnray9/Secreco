@@ -6,6 +6,20 @@
 
 @section('content')
 <div class="page active" id="page-dashboard">
+  <!-- ── DASHBOARD HEADER & YEAR FILTER ── -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-size:22px;font-weight:700;color:#1e293b;letter-spacing:-0.01em">PTA Dashboard</div>
+      <div id="ptaDashYearSub" style="font-size:13px;color:#64748b;margin-top:2px">Consortium progress and submissions overview for CY {{ date('Y') }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <label for="ptaDashYearFilter" style="font-size:12.5px;font-weight:600;color:#475569">Reporting Year:</label>
+      <select id="ptaDashYearFilter" style="border:1px solid #d1d5db;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:#1e293b;background:#fff;cursor:pointer;outline:none;box-shadow:0 1px 2px rgba(0,0,0,0.05)">
+        <option value="2026">CY 2026</option>
+      </select>
+    </div>
+  </div>
+
   <div class="dashboard-grid">
 
     <!-- ── TOP ROW: 4 STAT CARDS ── -->
@@ -24,7 +38,7 @@
         </div>
         <div class="sc-fc-foot">
           <span class="sc-fc-sub">Member institutions</span>
-          <button class="sc-fc-arrow" onclick="window.location.href='/dashboard/pta/institutions'">→</button>
+          <button class="sc-fc-arrow" onclick="goToPtaYearPage('/dashboard/pta/institutions')">→</button>
         </div>
       </div>
 
@@ -42,7 +56,7 @@
         </div>
         <div class="sc-fc-foot">
           <span class="sc-fc-sub">Fully submitted reports</span>
-          <button class="sc-fc-arrow" onclick="window.location.href='/dashboard/pta/submissions'">→</button>
+          <button class="sc-fc-arrow" onclick="goToPtaYearPage('/dashboard/pta/submissions')">→</button>
         </div>
       </div>
 
@@ -59,15 +73,15 @@
           <span class="sc-fc-badge up">Active</span>
         </div>
         <div class="sc-fc-foot">
-          <span class="sc-fc-sub">Filling up tables</span>
-          <button class="sc-fc-arrow" onclick="window.location.href='/dashboard/pta/submissions'">→</button>
+          <span class="sc-fc-sub">Encoding or drafting</span>
+          <button class="sc-fc-arrow" onclick="goToPtaYearPage('/dashboard/pta/submissions')">→</button>
         </div>
       </div>
 
-      <!-- Not Started -->
+      <!-- Unstarted -->
       <div class="stat-card-fc">
         <div class="sc-fc-head">
-          <span class="sc-fc-title">Not Started</span>
+          <span class="sc-fc-title">Unstarted</span>
           <div class="sc-fc-icon icon-purple">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           </div>
@@ -77,8 +91,8 @@
           <span class="sc-fc-badge down">Pending</span>
         </div>
         <div class="sc-fc-foot">
-          <span class="sc-fc-sub">Need follow-up action</span>
-          <button class="sc-fc-arrow" onclick="window.location.href='/dashboard/pta/submissions'">→</button>
+          <span class="sc-fc-sub">No reports submitted yet</span>
+          <button class="sc-fc-arrow" onclick="goToPtaYearPage('/dashboard/pta/institutions')">→</button>
         </div>
       </div>
     </div>
@@ -145,10 +159,23 @@
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', async function () {
+let currentPtaDashYear = 2026;
+let trendChartInst = null;
+let barChartInst = null;
+let donutChartInst = null;
+
+function goToPtaYearPage(base) {
+  const yr = document.getElementById('ptaDashYearFilter')?.value || currentPtaDashYear;
+  window.location.href = `${base}?year=${yr}`;
+}
+
+async function loadPtaDashboard(year) {
+  currentPtaDashYear = year || document.getElementById('ptaDashYearFilter')?.value || 2026;
+  const subEl = document.getElementById('ptaDashYearSub');
+  if (subEl) subEl.textContent = `Consortium progress and submissions overview for CY ${currentPtaDashYear}`;
+
   try {
-    const year = new Date().getFullYear();
-    const res = await fetch(`/api/pta/dashboard/stats?year=${year}`);
+    const res = await fetch(`/api/pta/dashboard/stats?year=${currentPtaDashYear}`);
     const json = await res.json();
 
     if (json.stats) {
@@ -158,19 +185,18 @@ document.addEventListener('DOMContentLoaded', async function () {
       document.getElementById('statNotStarted').textContent  = json.stats.not_started || '0';
     }
 
-    // 1. Line Growth Trend Chart (Real DB Data)
-    let trendChartInst = null;
+    // 1. Line Growth Trend Chart
     const rawTrendLabels = json.trend_labels && json.trend_labels.length ? json.trend_labels : ['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6','Today'];
     const rawTrendValues = json.trend_values && json.trend_values.length ? json.trend_values : [0,0,1,2,1,3,4];
 
-    // Static monthly / annual placeholders (will be replaced with real API data when available)
     const monthlyLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const monthlyValues = json.monthly_values || [0,0,0,0,0,0,0,0,0,0,0,0];
     const annualLabels  = json.annual_labels  || ['2022','2023','2024','2025','2026'];
     const annualValues  = json.annual_values  || [0,0,0,0,0];
 
     function buildTrendChart(labels, values) {
-      const ctx = document.getElementById('growthTrendChart').getContext('2d');
+      const ctx = document.getElementById('growthTrendChart')?.getContext('2d');
+      if (!ctx) return;
       const grad = ctx.createLinearGradient(0, 0, 0, 260);
       grad.addColorStop(0, 'rgba(16,185,129,0.35)');
       grad.addColorStop(1, 'rgba(16,185,129,0)');
@@ -207,14 +233,12 @@ document.addEventListener('DOMContentLoaded', async function () {
       const btns = { weekly:'btnW', monthly:'btnM', annually:'btnA' };
       Object.values(btns).forEach(id => {
         const b = document.getElementById(id);
-        b.style.background = 'none';
-        b.style.color = '#6b7280';
-        b.style.fontWeight = '600';
+        if (b) { b.style.background = 'none'; b.style.color = '#6b7280'; b.style.fontWeight = '600'; }
       });
       const active = document.getElementById(btns[period]);
       if (active) { active.style.background = '#10b981'; active.style.color = '#fff'; active.style.fontWeight = '700'; }
 
-      const subs = { weekly: 'Last 7 days activity', monthly: `Monthly trends CY ${new Date().getFullYear()}`, annually: `Annual accomplishments (${annualLabels[0]}–${annualLabels[annualLabels.length-1]})` };
+      const subs = { weekly: 'Last 7 days activity', monthly: `Monthly trends CY ${currentPtaDashYear}`, annually: `Annual accomplishments (${annualLabels[0]}–${annualLabels[annualLabels.length-1]})` };
       const el = document.getElementById('trendSubtitle');
       if (el) el.textContent = subs[period] || '';
 
@@ -223,82 +247,114 @@ document.addEventListener('DOMContentLoaded', async function () {
       if (period === 'annually') buildTrendChart(annualLabels, annualValues);
     };
 
-    // Initial render — weekly
     buildTrendChart(rawTrendLabels, rawTrendValues);
 
     // 2. Bar Chart (Status Comparison from DB)
-    const ctxBar = document.getElementById('frequencyBarChart').getContext('2d');
-    const gradBar = ctxBar.createLinearGradient(0, 0, 0, 260);
-    gradBar.addColorStop(0, '#10b981');
-    gradBar.addColorStop(1, '#a7f3d0');
-
-    const s = json.stats || {};
-    new Chart(ctxBar, {
-      type: 'bar',
-      data: {
-        labels: ['Submitted', 'In Progress', 'Accepted', 'Returned'],
-        datasets: [{
-          data: [s.submitted || 0, s.in_progress || 0, s.accepted || 0, s.returned || 0],
-          backgroundColor: ['#10b981', '#f59e0b', '#059669', '#ef4444'],
-          borderRadius: 8,
-          barThickness: 32
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false } },
-          y: { ticks: { precision: 0 } }
+    const ctxBar = document.getElementById('frequencyBarChart')?.getContext('2d');
+    if (ctxBar) {
+      if (barChartInst) barChartInst.destroy();
+      const s = json.stats || {};
+      barChartInst = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: ['Submitted', 'In Progress', 'Accepted', 'Returned'],
+          datasets: [{
+            data: [s.submitted || 0, s.in_progress || 0, s.accepted || 0, s.returned || 0],
+            backgroundColor: ['#10b981', '#f59e0b', '#059669', '#ef4444'],
+            borderRadius: 8,
+            barThickness: 32
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { ticks: { precision: 0 } }
+          }
         }
-      }
-    });
+      });
+    }
 
     // 3. Donut Chart (Status Breakdown from DB)
-    const ctxDonut = document.getElementById('statusDonutChart').getContext('2d');
-    new Chart(ctxDonut, {
-      type: 'doughnut',
-      data: {
-        labels: ['Submitted', 'In Progress', 'Not Started', 'Returned'],
-        datasets: [{
-          data: [s.submitted || 0, s.in_progress || 0, s.not_started || 0, s.returned || 0],
-          backgroundColor: ['#10b981', '#3b82f6', '#d1d5db', '#ef4444'],
-          borderWidth: 0,
-          cutout: '72%'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'right' } }
-      }
-    });
+    const ctxDonut = document.getElementById('statusDonutChart')?.getContext('2d');
+    if (ctxDonut) {
+      if (donutChartInst) donutChartInst.destroy();
+      const s = json.stats || {};
+      donutChartInst = new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+          labels: ['Submitted', 'In Progress', 'Not Started', 'Returned'],
+          datasets: [{
+            data: [s.submitted || 0, s.in_progress || 0, s.not_started || 0, s.returned || 0],
+            backgroundColor: ['#10b981', '#3b82f6', '#d1d5db', '#ef4444'],
+            borderWidth: 0,
+            cutout: '72%'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right' } }
+        }
+      });
+    }
 
     // 4. Real Institution Progress Bars
     const progWrap = document.getElementById('institutionProgressList');
-    if (json.cmi_list && json.cmi_list.length > 0) {
-      progWrap.innerHTML = json.cmi_list.slice(0, 5).map(item => {
-        const pct = item.total_tables > 0 ? Math.round((item.tables_done / item.total_tables) * 100) : 0;
-        return `
-          <div class="progress-item">
-            <div class="progress-info" style="display:flex; justify-content:space-between; margin-bottom:4px;">
-              <span class="progress-label" style="font-size:13px; font-weight:600; color:#374151;">${item.institution}</span>
-              <span class="progress-pct" style="font-size:12px; font-weight:700; color:#10b981;">${pct}%</span>
+    if (progWrap) {
+      if (json.cmi_status_list && json.cmi_status_list.length > 0) {
+        progWrap.innerHTML = json.cmi_status_list.slice(0, 6).map(item => {
+          const pct = item.total_tables > 0 ? Math.round((item.tables_done / item.total_tables) * 100) : 0;
+          return `
+            <div class="progress-item">
+              <div class="progress-info" style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span class="progress-label" style="font-size:13px; font-weight:600; color:#374151;">${item.institution}</span>
+                <span class="progress-pct" style="font-size:12px; font-weight:700; color:#10b981;">${item.tables_done}/${item.total_tables} (${pct}%)</span>
+              </div>
+              <div class="progress-track" style="height:7px; background:#f3f4f6; border-radius:10px; overflow:hidden;">
+                <div class="progress-fill" style="width: ${pct}%; height:100%; background:linear-gradient(90deg, #10b981, #34d399); border-radius:10px; transition:width 0.8s;"></div>
+              </div>
             </div>
-            <div class="progress-track" style="height:7px; background:#f3f4f6; border-radius:10px; overflow:hidden;">
-              <div class="progress-fill" style="width: ${pct}%; height:100%; background:linear-gradient(90deg, #10b981, #34d399); border-radius:10px; transition:width 0.8s;"></div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    } else {
-      progWrap.innerHTML = '<div style="text-align:center; color:#9ca3af; font-size:13px; padding:20px;">No institution data available.</div>';
+          `;
+        }).join('');
+      } else {
+        progWrap.innerHTML = '<div style="text-align:center; color:#9ca3af; font-size:13px; padding:20px;">No institution data available for this year.</div>';
+      }
     }
 
   } catch (e) {
     console.error('PTA Dashboard load error:', e);
   }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  fetch('/api/formats')
+    .then(r => r.json())
+    .then(data => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlYear   = urlParams.get('year') ? parseInt(urlParams.get('year')) : null;
+      const currentYear = new Date().getFullYear();
+
+      let targetYear = urlYear || 2026;
+      if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
+        const uniqueYears = [...new Set(data.years.map(Number))].sort((a,b) => b - a);
+        if (!uniqueYears.includes(targetYear)) {
+          targetYear = uniqueYears.includes(currentYear) ? currentYear : (data.active_year || uniqueYears[0]);
+        }
+        const yearSel = document.getElementById('ptaDashYearFilter');
+        if (yearSel) {
+          yearSel.innerHTML = uniqueYears.map(y => `<option value="${y}" ${y === targetYear ? 'selected' : ''}>CY ${y}</option>`).join('');
+        }
+      }
+      loadPtaDashboard(targetYear);
+    })
+    .catch(() => loadPtaDashboard(2026));
+
+  document.getElementById('ptaDashYearFilter')?.addEventListener('change', function(e) {
+    loadPtaDashboard(parseInt(e.target.value) || 2026);
+  });
 });
 </script>
 @endsection

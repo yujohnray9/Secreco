@@ -47,14 +47,16 @@ class SubmissionController extends Controller
 
         $userIds = $cmiUsers->pluck('id')->toArray();
 
+        $submissionMap = [];
         $submissionDates = [];
         if ($userIds) {
             $subs = ReportSubmission::where('reporting_year', $year)
                 ->whereIn('user_id', $userIds)
-                ->orderBy('submitted_at', 'desc')
-                ->get(['user_id', 'submitted_at']);
+                ->orderBy('id', 'desc')
+                ->get();
             foreach ($subs as $sub) {
-                if (!isset($submissionDates[$sub->user_id])) {
+                if (!isset($submissionMap[$sub->user_id])) {
+                    $submissionMap[$sub->user_id] = $sub;
                     $submissionDates[$sub->user_id] = $sub->submitted_at ? (is_string($sub->submitted_at) ? $sub->submitted_at : $sub->submitted_at->toDateTimeString()) : null;
                 }
             }
@@ -107,6 +109,23 @@ class SubmissionController extends Controller
         foreach ($groupedUsers as $instName => $instUsers) {
             $primaryUser = $instUsers->first();
 
+            // Check if any user in this institution has an official submission for this year
+            $activeSub = null;
+            foreach ($instUsers as $u) {
+                if (isset($submissionMap[$u->id])) {
+                    $s = $submissionMap[$u->id];
+                    if (in_array($s->status, ['submitted', 'pending', 'accepted', 'returned'], true)) {
+                        $activeSub = $s;
+                        break;
+                    }
+                }
+            }
+
+            // If CMI only saved a draft and has NOT officially submitted yet, do not show in PTA submissions review list
+            if (!$activeSub && (!$status || $status === 'submitted' || $status === 'accepted' || $status === 'returned')) {
+                continue;
+            }
+
             foreach ($formatTables as $tNo) {
                 $foundTr = null;
                 $foundUser = $primaryUser;
@@ -140,21 +159,25 @@ class SubmissionController extends Controller
                 }
 
                 $st = $foundTr ? $foundTr->status : 'not-started';
-                if ($st === 'draft' && !$foundTr->meta_json && empty($foundTr->rows_json)) {
+                if ($st === 'done') {
+                    $st = 'submitted';
+                }
+
+                if ($st === 'draft' && (!$foundTr || (!$foundTr->meta_json && empty($foundTr->rows_json)))) {
                     $st = 'not-started';
                 }
 
-                if ($status && $status !== '' && $st !== $status) {
+                if ($status && $status !== '' && $status !== 'all' && $st !== $status) {
                     continue;
                 }
 
                 // Exclude not-started tables by default unless explicitly filtered
-                if ($st === 'not-started' && $status !== 'not-started') {
+                if ($st === 'not-started' && $status !== 'not-started' && $status !== 'all') {
                     continue;
                 }
 
                 $key = $foundUser->id . '_' . $tNo;
-                $submittedAt = ($foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null) ?? ($submissionDates[$foundUser->id] ?? ($foundTr?->created_at ? $foundTr->created_at->toDateTimeString() : null));
+                $submittedAt = ($submissionDates[$foundUser->id] ?? null) ?? ($foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null);
 
                 $rows[] = [
                     'cmi_user_id'         => (int) $foundUser->id,
@@ -216,8 +239,12 @@ class SubmissionController extends Controller
         if ($sub) {
             $snap = $sub->snapshot_json ?? [];
             if (is_array($snap)) {
-                if ($tableNo !== '' && isset($snap[$tableNo])) {
-                    $snap[$tableNo]['status'] = 'accepted';
+                if ($tableNo !== '') {
+                    foreach ([$tableNo, strtoupper($tableNo), strtolower($tableNo)] as $candidate) {
+                        if (array_key_exists($candidate, $snap) && is_array($snap[$candidate])) {
+                            $snap[$candidate]['status'] = 'accepted';
+                        }
+                    }
                 } else {
                     foreach ($snap as $k => $v) {
                         if (is_array($v)) {
@@ -226,7 +253,20 @@ class SubmissionController extends Controller
                     }
                 }
             }
-            $sub->update(['status' => 'accepted', 'remarks' => null, 'snapshot_json' => $snap]);
+
+            // Check if all submitted tables are accepted
+            $allAccepted = true;
+            if (is_array($snap)) {
+                foreach ($snap as $k => $v) {
+                    if (is_array($v) && isset($v['status']) && in_array($v['status'], ['submitted', 'done', 'draft'], true)) {
+                        $allAccepted = false;
+                        break;
+                    }
+                }
+            }
+
+            $overallStatus = $allAccepted ? 'accepted' : ($sub->status ?: 'submitted');
+            $sub->update(['status' => $overallStatus, 'remarks' => null, 'snapshot_json' => $snap]);
         }
 
         $cmiUser = User::find($cmiUserId);

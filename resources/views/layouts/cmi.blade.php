@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/assets/css/pta/base.css?v=3"/>
 <link rel="stylesheet" href="/assets/css/pta/header.css?v=3"/>
-<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=3"/>
+<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=4"/>
 <link rel="stylesheet" href="/assets/css/pta/modals.css?v=3"/>
 <link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=3"/>
 @yield('styles')
@@ -184,9 +184,7 @@ function confirmSignOut() {
 <div class="app-body">
   <aside class="sidebar">
     <div class="sb-brand" onclick="window.location.href='/dashboard/cmi/profile'" style="cursor:pointer">
-      <div class="sb-brand-logo">
-        <img src="/assets/img/cvaarrd.png" alt="CVAARRD Logo" style="width:26px;height:26px;object-fit:contain;" onerror="this.outerHTML='<svg viewBox=\\'0 0 24 24\\' width=\\'20\\' height=\\'20\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2.5\\'><path d=\\'M12 2L2 7l10 5 10-5-10-5z\\'/><path d=\\'M2 17l10 5 10-5\\'/><path d=\\'M2 12l10 5 10-5\\'/></svg>'"/>
-      </div>
+      <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="width:44px;height:44px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
       <div>
         <div class="sb-brand-title">SecReCo</div>
         <div class="sb-brand-sub">CVAARRD Consortium</div>

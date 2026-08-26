@@ -28,14 +28,21 @@ class TableController extends Controller
             return response()->json(['error' => 'Missing table_no']);
         }
 
+        $canonicalMap = [];
+        foreach (config('secreco.all_tables', []) as $stTable) {
+            $canonicalMap[strtoupper($stTable)] = $stTable;
+        }
+        $tableNo = $canonicalMap[strtoupper($tableNo)] ?? $tableNo;
+
         // Load from all users belonging to this institution, picking the best/newest filled record.
         $mateIds  = $this->getInstMateIds($userId);
         $allIds   = array_merge([$userId], $mateIds);
 
         $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'draft' => 2, 'not-started' => 0, 'deleted' => 0];
+        $candidates = array_unique([$tableNo, strtoupper($tableNo), strtolower($tableNo)]);
         $allRows  = ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
-            ->where('table_no', $tableNo)
+            ->whereIn('table_no', $candidates)
             ->get();
 
         $row = null;
@@ -121,9 +128,11 @@ class TableController extends Controller
         $rows          = $body['rows'] ?? [];
         $requested     = in_array($body['status'] ?? '', ['not-started', 'draft', 'done', 'error'], true) ? $body['status'] : 'draft';
 
-        if (!$tableNo) {
-            return response()->json(['error' => 'Missing table_no']);
+        $canonicalMap = [];
+        foreach (config('secreco.all_tables', []) as $stTable) {
+            $canonicalMap[strtoupper($stTable)] = $stTable;
         }
+        $tableNo = $canonicalMap[strtoupper($tableNo)] ?? $tableNo;
 
         $status = $requested;
         if ($status === 'draft' && !$this->hasContent($meta, $rows)) {
@@ -290,6 +299,11 @@ class TableController extends Controller
         // Higher-priority status wins: accepted > done/submitted > draft > not-started.
         $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'draft' => 2, 'not-started' => 0, 'deleted' => 0];
 
+        $canonicalMap = [];
+        foreach (config('secreco.all_tables', []) as $stTable) {
+            $canonicalMap[strtoupper($stTable)] = $stTable;
+        }
+
         $allRows = ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->get();
@@ -300,9 +314,12 @@ class TableController extends Controller
             if ($st === 'deleted' || !$this->hasContent($r->meta_json, $r->rows_json)) {
                 $st = 'not-started';
             }
-            $cur = $statuses[$r->table_no] ?? 'not-started';
+            $canon = $canonicalMap[strtoupper($r->table_no)] ?? $r->table_no;
+            $cur = $statuses[$canon] ?? 'not-started';
             if (($priority[$st] ?? 0) > ($priority[$cur] ?? 0)) {
-                $statuses[$r->table_no] = $st;
+                $statuses[$canon] = $st;
+                $statuses[strtoupper($canon)] = $st;
+                $statuses[strtolower($canon)] = $st;
             }
         }
 

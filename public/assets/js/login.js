@@ -905,10 +905,4 @@
       .catch(() => _fpShowMsg('fpStep2bError', 'Network error. Please try again.', true));
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    loadOccupiedInstitutions();
-    initOtpBoxes();
-    if (window.location.hash === '#register') {
-      showRegister();
-    }
-  });
+

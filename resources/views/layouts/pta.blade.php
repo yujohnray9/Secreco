@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/assets/css/pta/base.css?v=3"/>
 <link rel="stylesheet" href="/assets/css/pta/header.css?v=3"/>
-<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=3"/>
+<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=4"/>
 <link rel="stylesheet" href="/assets/css/pta/modals.css?v=3"/>
 <link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=3"/>
 @yield('styles')
@@ -228,7 +228,7 @@ function confirmSignOut() {
   <aside class="sidebar">
     <!-- Brand Header -->
     <div class="sb-brand">
-      <img src="/assets/img/cvaarrd.png" alt="CVAARRD Logo" style="height:36px;width:auto;object-fit:contain;margin-right:10px;"/>
+      <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="height:44px;width:44px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
       <div>
         <div class="sb-brand-title">SecReCo</div>
         <div class="sb-brand-sub">CVAARRD Consortium</div>

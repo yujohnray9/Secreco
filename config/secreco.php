@@ -7,8 +7,8 @@ return [
     | Google reCAPTCHA v2
     |--------------------------------------------------------------------------
     */
-    'recaptcha_site_key'   => env('RECAPTCHA_SITE_KEY', '6Lc7YJYtAAAAANdFFQcMyohBnxH9gpJao3xMDe2V   '),
-    'recaptcha_secret_key' => env('RECAPTCHA_SECRET_KEY', '6Lc7YJYtAAAAAOFnQu08d0jnBgC94vLJONhuL4bs'),
+    'recaptcha_site_key'   => env('RECAPTCHA_SITE_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'),
+    'recaptcha_secret_key' => env('RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'),
 
     /*
     |--------------------------------------------------------------------------
@@ -62,12 +62,11 @@ return [
     |--------------------------------------------------------------------------
     */
     'sections' => [
-        'R&D Mgt. & Coordination' => ['T1', 'T2a', 'T2b', 'T3', 'T4', 'T5'],
-        'Strategic R&D'           => ['T6', 'T7a', 'T7b', 'T8a', 'T8b'],
-        'Results Utilization'     => ['T9', 'T10', 'T11'],
-        'Capability & Governance' => ['T12', 'T13', 'T14', 'T15', 'T16'],
-        'Policy Analysis'         => ['T17', 'T18', 'T19'],
-        'Financial Report'        => ['T20a', 'T20b'],
+        'R&D Mgt. & Coord.'       => ['T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b'],
+        'Strategic R&D'           => ['T8a', 'T8b', 'T9'],
+        'Results Utilization'     => ['T10', 'T11', 'T12', 'T13'],
+        'Capability & Governance' => ['T14', 'T15', 'T16', 'T17', 'T18', 'T19'],
+        'Policy Analysis'         => ['T20a', 'T20b'],
     ],
 
     /*

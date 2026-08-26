@@ -21,22 +21,22 @@ class DatabaseSeeder extends Seeder
     {
         // ── 1. USERS ─────────────────────────────────────────────────
         $ptaUser = User::firstOrCreate(
-            ['email' => 'pta@gmail.com'],
+            ['email' => 'pta.rrb@gmail.com'],
             [
                 'first_name'  => 'PTA',
                 'last_name'   => 'Admin',
-                'password'    => Hash::make('password'),
+                'password'    => Hash::make('<PTA>$#11!@Rrb.'),
                 'role'        => 'pta',
                 'designation' => 'Project Technical Assistant II',
                 'status'      => 'active',
             ]
         );
         $cmiUser = User::updateOrCreate(
-            ['email' => 'yujohnray96@gmail.com'],
+            ['email' => 'ejaquino@gmail.com'],
             [
-                'first_name'  => 'John Ray',
-                'last_name'   => 'Yu',
-                'password'    => Hash::make('@Jrandjd214'),
+                'first_name'  => 'EJ',
+                'last_name'   => 'Aquino',
+                'password'    => Hash::make('@Password123'),
                 'role'        => 'cmi',
                 'institution' => 'Isabela State University - Echague',
                 'designation' => 'CMI Representative',

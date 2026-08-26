@@ -26,24 +26,23 @@
 }
 
 .sb-brand-logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: #10b981;
+  width: 44px;
+  height: 44px;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  box-shadow: none;
+  border-radius: 0;
   flex-shrink: 0;
 }
 
-.sb-brand-logo img {
-  width: 22px;
-  height: 22px;
+.sb-brand-logo img,
+.sb-brand > img {
+  width: 44px;
+  height: 44px;
   object-fit: contain;
+  border-radius: 6px;
 }
 
 .sb-brand-title {

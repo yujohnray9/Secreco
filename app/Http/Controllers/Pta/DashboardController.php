@@ -30,7 +30,24 @@ class DashboardController extends Controller
             $tablesByUser[$row->user_id][] = $row;
         }
 
-        $TOTAL_TABLES = 24;
+        $templates = \App\Models\FormatTemplate::where('year', $year)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('table_no', 'asc')
+            ->get();
+
+        if ($templates->isNotEmpty()) {
+            $sectionMap = [];
+            $allTableKeys = [];
+            foreach ($templates as $t) {
+                $sec = trim($t->section) ?: 'General';
+                $sectionMap[$sec][] = $t->table_no;
+                $allTableKeys[] = $t->table_no;
+            }
+            $TOTAL_TABLES = count($allTableKeys);
+        } else {
+            $sectionMap = config('secreco.sections');
+            $TOTAL_TABLES = 24;
+        }
 
         $submitted  = 0;
         $inProgress = 0;
@@ -83,8 +100,6 @@ class DashboardController extends Controller
                 'submitted_at' => $sub?->submitted_at ? $sub->submitted_at->toDateTimeString() : null,
             ];
         }
-
-        $sectionMap = config('secreco.sections');
 
         $sectionProgress = [];
         foreach ($sectionMap as $sectionLabel => $tableKeys) {

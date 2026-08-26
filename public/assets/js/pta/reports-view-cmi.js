@@ -41,42 +41,43 @@ async function renderCMIAllTables(institution) {
 
   const keys = Object.keys(TABLE_DEFS);
   try {
-    const results = await Promise.all(keys.map(k => fetchConsolidated(k)));
+    // 1 single API call for all tables:
+    let tableData = {};
+    try {
+      const allRes = await fetchConsolidated('all');
+      tableData = allRes.tables || allRes.data || {};
+    } catch (allErr) {
+      // Fallback: batch individual tables if 'all' fails
+      const results = await Promise.allSettled(keys.map(k => fetchConsolidated(k)));
+      keys.forEach((k, i) => {
+        if (results[i].status === 'fulfilled' && results[i].value?.data) {
+          tableData[k] = results[i].value.data;
+        }
+      });
+    }
+
     let rows = '';
-    keys.forEach((key, i) => {
-      const cmi      = results[i].data.find(c => c.institution === institution);
+    keys.forEach((key) => {
+      const list     = tableData[key] || [];
+      const cmi      = Array.isArray(list) ? list.find(c => c.institution === institution) : null;
       const s        = cmi?.table_status ?? 'not-started';
       const badge    = STATUS_BADGE[s] ?? STATUS_BADGE['not-started'];
       const rowCount = cmi?.rows?.length ?? 0;
-      const title    = TABLE_DEFS[key].label.split('—')[1]?.trim() ?? '';
-      const year     = el('rptYearFilter')?.value || new Date().getFullYear();
-
-      const cmiUserId = cmi?.cmi_user_id || cmi?.user_id || '';
-      let actionHtml = '';
-      if (rowCount > 0 && cmi) {
-        actionHtml = `
-        <a href="/dashboard/cmi/fillup?cmi_user_id=${cmiUserId}&year=${year}&table=${key}" class="btn btn-xs" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-left:4px;">
-          ✏️ Fill Up / Edit
-        </a>`;
-      } else {
-        actionHtml = `<a href="/dashboard/cmi/fillup?cmi_user_id=${cmiUserId}&year=${year}&table=${key}" class="btn btn-xs" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-          + Fill Up Report
-        </a>`;
-      }
+      const title    = TABLE_DEFS[key]?.label?.split('—')[1]?.trim() ?? '';
 
       rows += `<tr>
         <td><strong>${key}</strong></td>
         <td>${esc(title)}</td>
+        <td>${badge}</td>
         <td style="text-align:center">${rowCount || '—'}</td>
         <td style="font-size:11px;color:var(--text-muted)">${esc(cmi?.updated_at ?? '—')}</td>
-        <td>${actionHtml}</td>
       </tr>`;
     });
 
     el('cmiContainer').innerHTML = `
       <table class="dt" style="width:100%">
         <thead>
-          <tr><th>Table</th><th>Title</th><th>Rows</th><th>Updated</th><th>Action</th></tr>
+          <tr><th>Table</th><th>Title</th><th>Status</th><th>Rows</th><th>Updated</th></tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>`;

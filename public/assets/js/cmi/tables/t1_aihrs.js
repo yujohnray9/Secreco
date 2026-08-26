@@ -82,13 +82,14 @@
   ───────────────────────────────────────── */
   function makeRow(data = {}, removable = false) {
     const tr = document.createElement('tr');
+    const newCountVal = (data.new_ !== undefined && data.new_ !== '') ? data.new_ : ((data.new !== undefined && data.new !== '') ? data.new : '');
     tr.innerHTML = `
       <td><input type="date" class="t1-date" value="${esc(data.date||'')}"/></td>
       <td><input type="text" class="t1-agency" placeholder="Agency name" value="${esc(data.agency||'')}"/></td>
-      <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.new_||'')}"/></td>
-      <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.ongoing||'')}"/></td>
-      <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.completed||'')}"/></td>
-      <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.terminated||'')}"/></td>
+      <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(newCountVal)}"/></td>
+      <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.ongoing ?? '')}"/></td>
+      <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.completed ?? '')}"/></td>
+      <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.terminated ?? '')}"/></td>
       <td class="t1-total-cell" style="text-align:center;font-weight:600;color:var(--green)">
         ${ computeTotal(data) || '—' }
       </td>
@@ -96,7 +97,6 @@
     if (removable) {
       tr.querySelector('.t1-total-cell').insertAdjacentHTML('afterend',
         `<td style="text-align:center"><button class="row-remove-btn" onclick="this.closest('tr').remove();T1._recalcAll()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td>`);
-      // add extra th if needed (done via CSS: hide last th for non-removable rows)
     }
     // auto-calc on input
     tr.querySelectorAll('.t1-calc').forEach(inp =>
@@ -106,7 +106,8 @@
   }
 
   function computeTotal(d) {
-    const n = [d.new_||0, d.ongoing||0, d.completed||0, d.terminated||0]
+    const newVal = (d.new_ !== undefined && d.new_ !== '') ? d.new_ : (d.new || 0);
+    const n = [newVal, d.ongoing||0, d.completed||0, d.terminated||0]
                 .map(v => parseInt(v)||0);
     const t = n.reduce((a,b)=>a+b,0);
     return t > 0 ? t : '';
@@ -125,10 +126,12 @@
   function collectRows() {
     return [...document.querySelectorAll('#t1_rows tr')].map(tr => {
       const nums = tr.querySelectorAll('.t1-num');
+      const valNew = nums[0]?.value || '';
       return {
         date:       tr.querySelector('.t1-date')?.value || '',
         agency:     tr.querySelector('.t1-agency')?.value || '',
-        new_:       nums[0]?.value || '',
+        new_:       valNew,
+        new:        valNew,
         ongoing:    nums[1]?.value || '',
         completed:  nums[2]?.value || '',
         terminated: nums[3]?.value || '',
