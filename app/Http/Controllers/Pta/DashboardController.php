@@ -45,16 +45,30 @@ class DashboardController extends Controller
             }
             $TOTAL_TABLES = count($allTableKeys);
         } else {
-            $sectionMap = config('secreco.sections');
-            $TOTAL_TABLES = 24;
+            $sectionMap = config('secreco.sections') ?? [];
+            $allTableKeys = [];
+            if (is_array($sectionMap)) {
+                foreach ($sectionMap as $sTables) {
+                    if (is_array($sTables)) {
+                        foreach ($sTables as $st) $allTableKeys[] = $st;
+                    }
+                }
+            }
+            $TOTAL_TABLES = count($allTableKeys) > 0 ? count($allTableKeys) : 24;
         }
 
-        $submitted  = 0;
-        $inProgress = 0;
-        $notStarted = 0;
-        $returned   = 0;
-        $accepted   = 0;
-        $cmiStatusList = [];
+        $tableSubmitted  = 0;
+        $tableInProgress = 0;
+        $tableNotStarted = 0;
+        $tableReturned   = 0;
+        $tableAccepted   = 0;
+
+        $cmiSubmitted    = 0;
+        $cmiInProgress   = 0;
+        $cmiNotStarted   = 0;
+        $cmiReturned     = 0;
+        $cmiAccepted     = 0;
+        $cmiStatusList   = [];
 
         $submissions = ReportSubmission::where('reporting_year', $year)->orderByDesc('submitted_at')->get();
         $latestSub = [];
@@ -67,6 +81,12 @@ class DashboardController extends Controller
         foreach ($cmiList as $cmi) {
             $uid       = $cmi->id;
             $uTables   = $tablesByUser[$uid] ?? [];
+            $userTablesByNo = [];
+            foreach ($uTables as $tRow) {
+                $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tRow->table_no));
+                $userTablesByNo[$cleanKey] = $tRow;
+            }
+
             $done      = count(array_filter($uTables, fn($t) => in_array($t->status, ['done', 'submitted', 'accepted'], true)));
             $hasTables = count($uTables) > 0;
 
@@ -75,19 +95,50 @@ class DashboardController extends Controller
 
             if ($subStatus === 'accepted') {
                 $overallStatus = 'Accepted';
-                $accepted++;
+                $cmiAccepted++;
             } elseif ($subStatus === 'returned') {
                 $overallStatus = 'Returned';
-                $returned++;
+                $cmiReturned++;
             } elseif ($subStatus && in_array($subStatus, ['pending', 'submitted'], true)) {
                 $overallStatus = 'Submitted';
-                $submitted++;
+                $cmiSubmitted++;
             } elseif ($hasTables) {
                 $overallStatus = 'In Progress';
-                $inProgress++;
+                $cmiInProgress++;
             } else {
                 $overallStatus = 'Not Started';
-                $notStarted++;
+                $cmiNotStarted++;
+            }
+
+            // Calculate table-level statuses for this CMI
+            $hasActiveSub = $sub && in_array($subStatus, ['pending', 'submitted', 'accepted', 'returned'], true);
+            $snap = (is_array($sub?->snapshot_json)) ? $sub->snapshot_json : [];
+
+            foreach ($allTableKeys as $tNo) {
+                $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tNo));
+                $tr = $userTablesByNo[$cleanKey] ?? null;
+                $snapTable = null;
+                foreach ([$tNo, $cleanKey, strtolower($tNo)] as $candidate) {
+                    if (isset($snap[$candidate]) && is_array($snap[$candidate])) {
+                        $snapTable = $snap[$candidate];
+                        break;
+                    }
+                }
+
+                $st = $tr?->status;
+                $snapSt = $snapTable['status'] ?? null;
+
+                if ($st === 'accepted' || $snapSt === 'accepted') {
+                    $tableAccepted++;
+                } elseif ($st === 'returned' || $snapSt === 'returned') {
+                    $tableReturned++;
+                } elseif ($hasActiveSub && (in_array($st, ['submitted', 'done'], true) || in_array($snapSt, ['submitted', 'done'], true))) {
+                    $tableSubmitted++;
+                } elseif ($st === 'draft' || ($st === 'done' && !$hasActiveSub)) {
+                    $tableInProgress++;
+                } else {
+                    $tableNotStarted++;
+                }
             }
 
             $cmiStatusList[] = [
@@ -129,45 +180,102 @@ class DashboardController extends Controller
 
         $pendingApprovals = User::where('status', 'pending')->whereIn('role', ['cmi', 'viewer'])->count();
 
-        $trendData = ReportTable::where('status', 'done')
-            ->where('reporting_year', $year)
-            ->where('updated_at', '>=', now()->subDays(14)->startOfDay())
-            ->selectRaw('DATE(updated_at) as date, COUNT(*) as cnt')
+        // ── 1. WEEKLY TREND (Last 7 Days) ──
+        $weeklyTrend = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $d = date('Y-m-d', strtotime("-$i days"));
+            $weeklyTrend[$d] = 0;
+        }
+
+        $weeklyData = ReportSubmission::where('reporting_year', $year)
+            ->whereNotNull('submitted_at')
+            ->where('submitted_at', '>=', now()->subDays(6)->startOfDay())
+            ->selectRaw('DATE(submitted_at) as date, COUNT(*) as cnt')
             ->groupBy('date')
-            ->orderBy('date')
             ->get();
 
-        $trend = [];
-        for ($i = 13; $i >= 0; $i--) {
-            $d = date('Y-m-d', strtotime("-$i days"));
-            $trend[$d] = 0;
-        }
-        foreach ($trendData as $row) {
-            if (isset($trend[$row->date])) {
-                $trend[$row->date] = (int) $row->cnt;
+        foreach ($weeklyData as $row) {
+            if (isset($weeklyTrend[$row->date])) {
+                $weeklyTrend[$row->date] = (int) $row->cnt;
             }
         }
 
-        $trendLabels = array_map(fn($d) => date('M j', strtotime($d)), array_keys($trend));
-        $trendValues = array_values($trend);
+        $trendLabels = array_map(fn($d) => date('M j', strtotime($d)), array_keys($weeklyTrend));
+        $trendValues = array_values($weeklyTrend);
+
+        // ── 2. MONTHLY TREND (CY Year Jan–Dec) ──
+        $monthlyTrend = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $monthlyTrend[$m] = 0;
+        }
+
+        $monthlyData = ReportSubmission::where('reporting_year', $year)
+            ->whereNotNull('submitted_at')
+            ->whereYear('submitted_at', $year)
+            ->selectRaw('MONTH(submitted_at) as month, COUNT(*) as cnt')
+            ->groupBy('month')
+            ->get();
+
+        foreach ($monthlyData as $row) {
+            $m = (int) $row->month;
+            if (isset($monthlyTrend[$m])) {
+                $monthlyTrend[$m] = (int) $row->cnt;
+            }
+        }
+
+        $monthlyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $monthlyValues = array_values($monthlyTrend);
+
+        // ── 3. ANNUAL TREND (Last 5 Years) ──
+        $currentYear = (int) ($year ?: date('Y'));
+        $annualLabels = [];
+        $annualTrend  = [];
+        for ($y = $currentYear - 4; $y <= $currentYear; $y++) {
+            $annualLabels[] = (string) $y;
+            $annualTrend[$y] = 0;
+        }
+
+        $annualData = ReportSubmission::whereNotNull('submitted_at')
+            ->whereBetween('reporting_year', [$currentYear - 4, $currentYear])
+            ->selectRaw('reporting_year, COUNT(*) as cnt')
+            ->groupBy('reporting_year')
+            ->get();
+
+        foreach ($annualData as $row) {
+            $ry = (int) $row->reporting_year;
+            if (isset($annualTrend[$ry])) {
+                $annualTrend[$ry] = (int) $row->cnt;
+            }
+        }
+        $annualValues = array_values($annualTrend);
 
         return response()->json([
             'ok'   => true,
             'year' => $year,
             'stats' => [
                 'total_cmis'        => $totalCMIs,
-                'submitted'         => $submitted,
-                'in_progress'       => $inProgress,
-                'not_started'       => $notStarted,
-                'returned'          => $returned,
-                'accepted'          => $accepted,
+                'submitted'         => $tableSubmitted,
+                'in_progress'       => $tableInProgress,
+                'not_started'       => $tableNotStarted,
+                'returned'          => $tableReturned,
+                'accepted'          => $tableAccepted,
+                'cmi_submitted'     => $cmiSubmitted,
+                'cmi_in_progress'   => $cmiInProgress,
+                'cmi_not_started'   => $cmiNotStarted,
+                'cmi_returned'      => $cmiReturned,
+                'cmi_accepted'      => $cmiAccepted,
                 'pending_approvals' => $pendingApprovals,
             ],
             'section_progress' => $sectionProgress,
             'recent_activity'  => $recentActivity,
             'cmi_list'         => $cmiStatusList,
+            'cmi_status_list'  => $cmiStatusList,
             'trend_labels'     => $trendLabels,
             'trend_values'     => $trendValues,
+            'monthly_labels'   => $monthlyLabels,
+            'monthly_values'   => $monthlyValues,
+            'annual_labels'    => $annualLabels,
+            'annual_values'    => $annualValues,
         ]);
     }
 }

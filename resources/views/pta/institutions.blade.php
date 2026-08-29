@@ -46,6 +46,13 @@
 .view-toggle { display:flex; gap:4px; background:#f3f4f6; border-radius:10px; padding:3px; }
 .view-toggle-btn { border:none; background:transparent; border-radius:8px; padding:6px 12px; cursor:pointer; color:#6b7280; transition:all .15s; display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; }
 .view-toggle-btn.active { background:#fff; color:#111827; box-shadow:0 1px 4px rgba(0,0,0,.1); }
+
+@media (max-width: 640px) {
+  .pg-banner { flex-direction: column; align-items: stretch; gap: 12px; }
+  .view-toggle { align-self: flex-start; }
+  .fc-card-head { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; }
+  .fc-card-body { padding: 16px 14px; }
+}
 </style>
 @endsection
 

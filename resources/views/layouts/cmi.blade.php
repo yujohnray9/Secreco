@@ -37,10 +37,18 @@
 
 <!-- ═══ HEADER ═══ -->
 <header class="app-header">
-  <!-- Title & Subtitle -->
-  <div class="hdr-title-group">
-    <div class="hdr-page-title">CMI Representative Portal</div>
-    <div class="hdr-page-sub">{{ $userInst ? $userInst : 'Secure Reporting & Accomplishment System' }}</div>
+  <div class="hdr-left-group">
+    <button class="hdr-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu" title="Menu">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- Title & Subtitle -->
+    <div class="hdr-title-group">
+      <div class="hdr-page-title">CMI Representative Portal</div>
+      <div class="hdr-page-sub">{{ $userInst ? $userInst : 'Secure Reporting & Accomplishment System' }}</div>
+    </div>
   </div>
 
   <!-- Right Actions -->
@@ -82,6 +90,24 @@
 <script src="/assets/js/cmi/c_core.js?v=3"></script>
 <script src="/assets/js/cmi/upload_photo.js?v=3"></script>
 <script>
+function toggleMobileSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.toggle('mobile-open');
+  if (bd) bd.classList.toggle('active');
+}
+
+function closeMobileSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.remove('mobile-open');
+  if (bd) bd.classList.remove('active');
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeMobileSidebar();
+});
+
 window.showToast = window.toast = window.toast || function(msg) {
   const c = document.getElementById('toastWrap');
   if (!c) { alert(msg); return; }
@@ -180,15 +206,21 @@ function confirmSignOut() {
 })();
 </script>
 
+<!-- SIDEBAR BACKDROP FOR MOBILE -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
+
 <!-- ═══ BODY ═══ -->
 <div class="app-body">
   <aside class="sidebar">
-    <div class="sb-brand" onclick="window.location.href='/dashboard/cmi/profile'" style="cursor:pointer">
-      <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="width:44px;height:44px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
-      <div>
-        <div class="sb-brand-title">SecReCo</div>
-        <div class="sb-brand-sub">CVAARRD Consortium</div>
+    <div class="sb-header-wrap">
+      <div class="sb-brand" onclick="window.location.href='/dashboard/cmi/profile'" style="cursor:pointer">
+        <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="width:40px;height:40px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
+        <div>
+          <div class="sb-brand-title">SecReCo</div>
+          <div class="sb-brand-sub">CVAARRD Consortium</div>
+        </div>
       </div>
+      <button class="sb-close-btn" onclick="closeMobileSidebar()" aria-label="Close Sidebar">&times;</button>
     </div>
 
     <div class="nav-section">

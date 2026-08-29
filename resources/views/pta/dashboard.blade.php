@@ -187,9 +187,9 @@ async function loadPtaDashboard(year) {
 
     // 1. Line Growth Trend Chart
     const rawTrendLabels = json.trend_labels && json.trend_labels.length ? json.trend_labels : ['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6','Today'];
-    const rawTrendValues = json.trend_values && json.trend_values.length ? json.trend_values : [0,0,1,2,1,3,4];
+    const rawTrendValues = json.trend_values && json.trend_values.length ? json.trend_values : [0,0,0,0,0,0,0];
 
-    const monthlyLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthlyLabels = json.monthly_labels || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const monthlyValues = json.monthly_values || [0,0,0,0,0,0,0,0,0,0,0,0];
     const annualLabels  = json.annual_labels  || ['2022','2023','2024','2025','2026'];
     const annualValues  = json.annual_values  || [0,0,0,0,0];
@@ -285,10 +285,10 @@ async function loadPtaDashboard(year) {
       donutChartInst = new Chart(ctxDonut, {
         type: 'doughnut',
         data: {
-          labels: ['Submitted', 'In Progress', 'Not Started', 'Returned'],
+          labels: ['Submitted', 'Accepted', 'In Progress', 'Returned', 'Unstarted'],
           datasets: [{
-            data: [s.submitted || 0, s.in_progress || 0, s.not_started || 0, s.returned || 0],
-            backgroundColor: ['#10b981', '#3b82f6', '#d1d5db', '#ef4444'],
+            data: [s.submitted || 0, s.accepted || 0, s.in_progress || 0, s.returned || 0, s.not_started || 0],
+            backgroundColor: ['#10b981', '#059669', '#f59e0b', '#ef4444', '#e5e7eb'],
             borderWidth: 0,
             cutout: '72%'
           }]
@@ -304,8 +304,9 @@ async function loadPtaDashboard(year) {
     // 4. Real Institution Progress Bars
     const progWrap = document.getElementById('institutionProgressList');
     if (progWrap) {
-      if (json.cmi_status_list && json.cmi_status_list.length > 0) {
-        progWrap.innerHTML = json.cmi_status_list.slice(0, 6).map(item => {
+      const cmiList = json.cmi_status_list || json.cmi_list || [];
+      if (cmiList && cmiList.length > 0) {
+        progWrap.innerHTML = cmiList.map(item => {
           const pct = item.total_tables > 0 ? Math.round((item.tables_done / item.total_tables) * 100) : 0;
           return `
             <div class="progress-item">

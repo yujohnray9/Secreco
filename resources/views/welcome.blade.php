@@ -279,11 +279,69 @@
     .modal-btn.secondary{background:#f1f5f9;color:#334155;border:1px solid var(--line);}
     .modal-btn.secondary:hover{background:#e2e8f0;}
 
-    @media (max-width:1024px){
-      main{grid-template-columns:1fr;}
-      .sidebar{display:none;}
-      .orbit-wrap{--D:min(82vw,420px);}
-      .disc{width:32px;height:32px;}
+    @media (max-width: 1024px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+      }
+      header {
+        padding: 12px 18px;
+        height: auto;
+        gap: 12px;
+      }
+      main {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+      .sidebar {
+        display: none;
+      }
+      .showcase {
+        padding: 24px 14px;
+        min-height: 460px;
+      }
+      .orbit-wrap {
+        --D: min(84vw, 380px);
+      }
+      .disc {
+        width: 32px;
+        height: 32px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      header {
+        padding: 10px 14px;
+      }
+      .brand-info p {
+        display: none;
+      }
+      .brand-info h1 {
+        font-size: 14px;
+      }
+      .stat-badge {
+        display: none;
+      }
+      .orbit-wrap {
+        --D: min(88vw, 320px);
+      }
+      .disc {
+        width: 28px;
+        height: 28px;
+      }
+      .hub-disc {
+        width: 58px;
+        height: 58px;
+      }
+      .hub-disc img {
+        width: 38px;
+        height: 38px;
+      }
+      .modal-card {
+        padding: 20px 16px;
+      }
     }
   </style>
   </head>

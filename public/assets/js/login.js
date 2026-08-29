@@ -177,19 +177,42 @@
     }
   }
 
-  /* ── OCCUPIED INSTITUTIONS (1 CMI per institution rule) ── */
+  /* ── OCCUPIED INSTITUTIONS (1 CMI per institution rule & 1 PTA rule) ── */
   let occupiedInstitutions = [];
+  let ptaAccountExists = false;
 
   async function loadOccupiedInstitutions() {
     try {
       const res  = await fetch('/api/auth/occupied-institutions');
       const data = await res.json();
-      if (data.success && Array.isArray(data.occupied)) {
-        occupiedInstitutions = data.occupied;
-        updateRegInstSelectOptions();
+      if (data.success) {
+        if (Array.isArray(data.occupied)) {
+          occupiedInstitutions = data.occupied;
+          updateRegInstSelectOptions();
+        }
+        if (data.pta_exists !== undefined) {
+          ptaAccountExists = !!data.pta_exists;
+          updatePtaRoleOption();
+        }
       }
     } catch(e) {
       console.error('Error loading occupied institutions:', e);
+    }
+  }
+
+  function updatePtaRoleOption() {
+    const ptaOpt = document.querySelector('#regRoleSelect option[value="pta"]');
+    if (!ptaOpt) return;
+    if (ptaAccountExists) {
+      ptaOpt.disabled = true;
+      ptaOpt.style.color = '#9ca3af';
+      if (!ptaOpt.textContent.includes('(Already Registered)')) {
+        ptaOpt.textContent = 'Project Technical Assistant II (Already Registered)';
+      }
+    } else {
+      ptaOpt.disabled = false;
+      ptaOpt.style.color = '';
+      ptaOpt.textContent = 'Project Technical Assistant II';
     }
   }
 
@@ -279,8 +302,18 @@
   /* ── ROLE SELECT ──
     - PTA: walang institution, walang designation
     - CMI: may institution AT designation
-    - Viewer: designation lang, walang institution */
+    - Guest/Viewer: designation lang, walang institution */
   function selectRole(role) {
+    if (role === 'pta' && ptaAccountExists) {
+      showAlert('A Project Technical Assistant II account already exists. Only 1 PTA account is allowed.');
+      const roleEl = document.getElementById('regRoleSelect');
+      if (roleEl) roleEl.value = '';
+      selectedRole = null;
+      const instField = document.getElementById('regInstField');
+      if (instField) instField.style.display = 'none';
+      return;
+    }
+
     selectedRole = role;
     const instField = document.getElementById('regInstField');
     if (!instField) return;
@@ -291,7 +324,7 @@
       document.getElementById('regInstSelect').value = '';
       document.getElementById('regDesignation').value = '';
     } else if (role === 'cmi' || role === 'viewer') {
-      // CMI at Viewer: ipakita ang block
+      // CMI at Guest/Viewer: ipakita ang block
       instField.style.display = 'block';
 
       // Institution: visible lang para sa CMI
@@ -330,6 +363,10 @@
       showAlert('Please select a role.', () => { if (roleEl) roleEl.focus(); });
       return;
     }
+    if (selectedRole === 'pta' && ptaAccountExists) {
+      showAlert('A Project Technical Assistant II account already exists. Only 1 PTA account is allowed.', () => { if (roleEl) roleEl.focus(); });
+      return;
+    }
     if (selectedRole === 'cmi') {
       const inst = document.getElementById('regInstSelect').value;
       if (!inst) {
@@ -341,7 +378,7 @@
         return;
       }
     }
-    // Designation: required para sa CMI at Viewer lang, hindi para sa PTA
+    // Designation: required para sa CMI at Guest/Viewer lang, hindi para sa PTA
     if (selectedRole !== 'pta') {
       const desg = document.getElementById('regDesignation').value.trim();
       if (!desg) {
@@ -551,7 +588,7 @@
   }
 
   /* ── REVIEW ── */
-  const ROLE_LABELS = { pta: 'Project Technical Assistant II', cmi: 'CMI Representative', viewer: 'Viewer' };
+  const ROLE_LABELS = { pta: 'Project Technical Assistant II', cmi: 'CMI Representative', viewer: 'Guest', guest: 'Guest' };
 
   function buildReview() {
     const fn    = document.getElementById('regFirstName').value.trim();
@@ -564,7 +601,7 @@
     document.getElementById('rv-email').textContent = email;
     document.getElementById('rv-role').textContent  = ROLE_LABELS[selectedRole] || selectedRole;
 
-    // Designation row: ipakita para sa CMI at Viewer lang, itago para sa PTA
+    // Designation row: ipakita para sa CMI at Guest/Viewer lang, itago para sa PTA
     const desgRow = document.getElementById('rv-desg').closest('.review-row');
     if (selectedRole === 'pta') {
       if (desgRow) desgRow.style.display = 'none';

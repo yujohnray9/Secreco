@@ -87,6 +87,15 @@
 .toggle-slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
 .toggle-switch input:checked + .toggle-slider { background:#10b981; }
 .toggle-switch input:checked + .toggle-slider:before { transform:translateX(20px); }
+
+@media (max-width: 640px) {
+  .pg-banner { flex-direction: column; align-items: stretch; gap: 12px; }
+  .settings-panel { padding: 18px 14px 20px; }
+  .settings-tab-bar { padding: 0 8px; }
+  .settings-tab-btn { padding: 12px 10px; font-size: 12px; }
+  .profile-photo-row { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; }
+  .search-input { max-width: 100%; }
+}
 </style>
 @endsection
 

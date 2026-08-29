@@ -69,6 +69,16 @@
 .col-row { display:flex; gap:6px; align-items:center; margin-bottom:6px; }
 .btn-cancel { background:#f3f4f6; color:#374151; border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
 .btn-cancel:hover { background:#e5e7eb; }
+
+@media (max-width: 640px) {
+  .pg-banner { flex-direction: column; align-items: stretch; gap: 12px; }
+  .pg-banner .btn-primary-fc { align-self: flex-start; }
+  .modal-box { padding: 20px 16px; }
+  .form-row { grid-template-columns: 1fr; }
+  .fc-table thead th, .fc-table td { padding: 10px 12px; }
+  .fc-card-head { flex-direction: column; align-items: stretch; gap: 10px; }
+  .fc-card-body { padding: 0 14px 14px; }
+}
 </style>
 @endsection
 

@@ -18,11 +18,19 @@
 
 <!-- ═══ HEADER ═══ -->
 <header class="app-header">
-  <div class="hdr-left" style="display:flex;align-items:center;gap:10px">
-    <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD" style="height:36px;width:auto;object-fit:contain;margin-right:4px" onerror="this.src='/assets/img/cvaarrd.png'"/>
-    <div>
-      <div class="hdr-page-title" style="font-size:16px;font-weight:700;color:#111827">SecReCo Dashboard</div>
-      <div class="hdr-page-sub" style="font-size:12px;color:#6b7280">CVAARRD Consortium System (Viewer)</div>
+  <div class="hdr-left-group">
+    <button class="hdr-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu" title="Menu">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+    <div class="hdr-left" style="display:flex;align-items:center;gap:10px">
+      <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD" style="height:36px;width:auto;object-fit:contain;margin-right:4px" onerror="this.src='/assets/img/cvaarrd.png'"/>
+      <div>
+        <div class="hdr-page-title" style="font-size:16px;font-weight:700;color:#111827">SecReCo Dashboard</div>
+        <div class="hdr-page-sub" style="font-size:12px;color:#6b7280">CVAARRD Consortium System (Viewer)</div>
+      </div>
     </div>
   </div>
 
@@ -69,6 +77,24 @@
 
 <script src="/assets/js/pta/core.js?v=3"></script>
 <script>
+function toggleMobileSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.toggle('mobile-open');
+  if (bd) bd.classList.toggle('active');
+}
+
+function closeMobileSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.remove('mobile-open');
+  if (bd) bd.classList.remove('active');
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeMobileSidebar();
+});
+
 window.showToast = window.toast = window.toast || function(msg) {
   const c = document.getElementById('toastWrap');
   if (!c) { alert(msg); return; }
@@ -167,15 +193,21 @@ function confirmSignOut() {
 })();
 </script>
 
+<!-- SIDEBAR BACKDROP FOR MOBILE -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
+
 <!-- ═══ BODY ═══ -->
 <div class="app-body">
   <aside class="sidebar">
-    <div class="sb-brand">
-      <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="height:44px;width:44px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
-      <div>
-        <div class="sb-brand-title">SecReCo</div>
-        <div class="sb-brand-sub">CVAARRD Consortium</div>
+    <div class="sb-header-wrap">
+      <div class="sb-brand">
+        <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="height:40px;width:40px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
+        <div>
+          <div class="sb-brand-title">SecReCo</div>
+          <div class="sb-brand-sub">CVAARRD Consortium</div>
+        </div>
       </div>
+      <button class="sb-close-btn" onclick="closeMobileSidebar()" aria-label="Close Sidebar">&times;</button>
     </div>
 
     <div class="nav-section">
@@ -195,6 +227,14 @@ function confirmSignOut() {
       <a href="/dashboard/viewer/institutions" class="nav-item {{ $currentPage === 'institutions' ? 'active' : '' }}">
         <span class="nav-ic"><svg viewBox="0 0 24 24"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
         Institutions
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-sec-label">Other</div>
+      <a href="#" onclick="confirmSignOut(); return false;" class="nav-item">
+        <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+        Logout
       </a>
     </div>
   </aside>

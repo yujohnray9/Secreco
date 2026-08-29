@@ -468,3 +468,63 @@ table.merged td.not-submitted {
   margin-left: 2px;
   vertical-align: middle;
 }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE MEDIA QUERIES FOR FILL UP PAGE
+══════════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .fill-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+
+  .fill-nav {
+    width: 100%;
+    height: auto;
+    max-height: 220px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 10px 14px;
+    overflow-y: auto;
+  }
+
+  .fill-body {
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 16px 14px;
+    height: auto;
+  }
+
+  .fill-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: stretch;
+  }
+
+  .fill-actions .btn {
+    flex: 1;
+    min-width: 130px;
+  }
+}
+
+@media (max-width: 520px) {
+  .fill-body {
+    padding: 12px 10px;
+  }
+
+  .fill-nav-sub {
+    font-size: 11.5px;
+    padding: 7px 10px;
+  }
+
+  .dm-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .dm-footer .btn {
+    width: 100%;
+  }
+}

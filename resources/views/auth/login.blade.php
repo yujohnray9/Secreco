@@ -529,11 +529,14 @@
 
           <div class="field">
             <label>ROLE <span style="color:#e57373">*</span></label>
+            @php
+              $ptaExists = \App\Models\User::where('role', 'pta')->exists();
+            @endphp
             <select class="inst-select" id="regRoleSelect" onchange="selectRole(this.value)">
               <option value="">— Select your role —</option>
-              <option value="pta">Project Technical Assistant II</option>
+              <option value="pta" id="optRolePta" {{ $ptaExists ? 'disabled style=color:#9ca3af;' : '' }}>Project Technical Assistant II{{ $ptaExists ? ' (Already Registered)' : '' }}</option>
               <option value="cmi">CMI Representative</option>
-              <option value="viewer">Viewer</option>
+              <option value="viewer">Guest</option>
             </select>
           </div>
 

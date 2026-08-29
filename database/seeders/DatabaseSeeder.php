@@ -21,11 +21,11 @@ class DatabaseSeeder extends Seeder
     {
         // ── 1. USERS ─────────────────────────────────────────────────
         $ptaUser = User::firstOrCreate(
-            ['email' => 'pta.rrb@gmail.com'],
+            ['email' => 'pta@gmail.com'],
             [
                 'first_name'  => 'PTA',
                 'last_name'   => 'Admin',
-                'password'    => Hash::make('<PTA>$#11!@Rrb.'),
+                'password'    => Hash::make('password'),
                 'role'        => 'pta',
                 'designation' => 'Project Technical Assistant II',
                 'status'      => 'active',

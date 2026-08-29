@@ -345,12 +345,23 @@ class SubmissionController extends Controller
             'created_at'   => now(),
         ]);
 
-        ReportSubmission::where('user_id', $cmiUserId)
+        $sub = ReportSubmission::where('user_id', $cmiUserId)
             ->where('reporting_year', $year)
-            ->whereIn('status', ['pending', 'in-progress', 'submitted'])
+            ->whereIn('status', ['pending', 'in-progress', 'submitted', 'returned', 'accepted'])
             ->orderByDesc('submitted_at')
-            ->first()
-            ?->update(['status' => 'returned', 'remarks' => $reason]);
+            ->first();
+
+        if ($sub) {
+            $snap = $sub->snapshot_json ?? [];
+            if (is_array($snap) && $tableNo !== '') {
+                foreach ([$tableNo, strtoupper($tableNo), strtolower($tableNo)] as $candidate) {
+                    if (array_key_exists($candidate, $snap) && is_array($snap[$candidate])) {
+                        $snap[$candidate]['status'] = 'returned';
+                    }
+                }
+            }
+            $sub->update(['status' => 'returned', 'remarks' => $reason, 'snapshot_json' => $snap]);
+        }
 
         ActivityLogService::log($ptaUserId, "Correction requested for {$tableNo} — CMI user #{$cmiUserId}: \"{$reason}\"");
 

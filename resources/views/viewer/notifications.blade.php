@@ -28,6 +28,14 @@
 .notif-item.unread .notif-msg { font-weight:600; color:#111827; }
 .notif-time { font-size:11.5px; color:#9ca3af; margin-top:4px; display:flex; align-items:center; gap:5px; }
 .notif-time svg { width:12px; height:12px; }
+
+@media (max-width: 640px) {
+  .pg-banner { flex-direction: column; align-items: stretch; gap: 12px; }
+  .fc-card-head { padding: 14px 16px 12px; }
+  .fc-card-body { padding: 0 14px 16px; }
+  .notif-item { padding: 12px 12px; gap: 10px; }
+  .notif-icon { width: 34px; height: 34px; border-radius: 8px; }
+}
 </style>
 @endsection
 

@@ -21,7 +21,12 @@ class UserController extends Controller
             ->orderBy('first_name', 'asc')
             ->get();
 
-        $roleLabel = ['cmi' => 'CMI Representative', 'viewer' => 'Viewer'];
+        $roleLabel = [
+            'cmi'    => 'CMI Representative',
+            'viewer' => 'Guest',
+            'guest'  => 'Guest',
+            'pta'    => 'Project Technical Assistant II',
+        ];
 
         $users = $rows->map(function ($r) use ($roleLabel) {
             return [
@@ -60,7 +65,14 @@ class UserController extends Controller
         $institution = trim($request->input('institution', ''));
         $designation = trim($request->input('position', ''));
 
-        $roleMap = ['CMI Representative' => 'cmi', 'Viewer' => 'viewer', 'cmi' => 'cmi', 'viewer' => 'viewer'];
+        $roleMap = [
+            'CMI Representative' => 'cmi',
+            'Guest'              => 'viewer',
+            'Viewer'             => 'viewer',
+            'guest'              => 'viewer',
+            'cmi'                => 'cmi',
+            'viewer'             => 'viewer',
+        ];
         $dbRole  = $roleMap[$role] ?? null;
 
         if (!$firstName || !$email || !$dbRole) {

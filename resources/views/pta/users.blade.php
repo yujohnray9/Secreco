@@ -10,15 +10,15 @@
 .fc-card-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 14px; border-bottom:1px solid #f3f4f6; flex-wrap:wrap; gap:10px; }
 .fc-card-title { font-size:15px; font-weight:700; color:#111827; display:flex; align-items:center; gap:8px; }
 .fc-card-title svg { color:#10b981; }
-.fc-card-body  { padding:0 24px 24px; }
-.fc-table-wrap { overflow-x:auto; margin-top:4px; }
+.fc-card-body  { padding:0; }
+.fc-table-wrap { overflow-x:auto; margin:0; }
 .fc-table { width:100%; border-collapse:collapse; font-size:13.5px; }
 .fc-table thead tr { background:#f9fafb; }
-.fc-table thead th { padding:11px 16px; text-align:left; font-size:11.5px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid #f0f0f0; white-space:nowrap; }
-.fc-table tbody tr { border-bottom:1px solid #f9fafb; transition:background .15s; }
+.fc-table thead th { padding:12px 24px; text-align:left; font-size:11.5px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid #f0f0f0; white-space:nowrap; }
+.fc-table tbody tr { border-bottom:1px solid #f3f4f6; transition:background .15s; }
 .fc-table tbody tr:last-child { border-bottom:none; }
 .fc-table tbody tr:hover { background:#f9fafe; }
-.fc-table td { padding:13px 16px; color:#374151; vertical-align:middle; }
+.fc-table td { padding:13px 24px; color:#374151; vertical-align:middle; }
 .fc-table td strong { color:#111827; font-weight:600; }
 .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600; }
 .badge-green  { background:#ecfdf5; color:#059669; }
@@ -62,6 +62,14 @@
 .temp-pw-box { background:#f0fdf4; border:1px solid #a7f3d0; border-radius:12px; padding:16px; margin-top:16px; display:none; }
 .temp-pw-label { font-size:12px; color:#6b7280; margin-bottom:4px; }
 .temp-pw-val { font-size:17px; font-weight:800; color:#059669; letter-spacing:.05em; font-family:monospace; }
+
+@media (max-width: 640px) {
+  .pg-banner { flex-direction: column; align-items: stretch; gap: 12px; }
+  .pg-banner .btn-primary-fc { align-self: flex-start; }
+  .modal-box { padding: 20px 16px; }
+  .form-row { grid-template-columns: 1fr; }
+  .fc-table thead th, .fc-table td { padding: 10px 12px; }
+}
 </style>
 @endsection
 
@@ -104,7 +112,7 @@
             </tr>
           </thead>
           <tbody id="pendingTbody">
-            <tr><td colspan="6" style="text-align:center;padding:32px;color:#9ca3af">Loading pending users...</td></tr>
+            <tr><td colspan="6" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading pending users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -132,7 +140,7 @@
             </tr>
           </thead>
           <tbody id="activeTbody">
-            <tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af">Loading active users...</td></tr>
+            <tr><td colspan="7" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading active users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -174,7 +182,7 @@
         <label class="form-label">Role <span style="color:#ef4444">*</span></label>
         <select class="form-select" id="addUserRole" onchange="onRoleChange()">
           <option value="cmi">CMI Representative</option>
-          <option value="viewer">Viewer</option>
+          <option value="viewer">Guest</option>
         </select>
       </div>
       <div class="form-group" id="addUserInstGroup">
@@ -235,6 +243,14 @@
 <script>
 function initials(name) {
   return name ? name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase() : '?';
+}
+
+function formatRoleLabel(role) {
+  const r = (role || '').toLowerCase();
+  if (r === 'cmi') return 'CMI Representative';
+  if (r === 'viewer' || r === 'guest') return 'Guest';
+  if (r === 'pta') return 'Project Technical Assistant II';
+  return role || '—';
 }
 
 let ptaOccupiedInstitutions = [];
@@ -384,7 +400,7 @@ async function loadUsers() {
     document.getElementById('pendingCount').textContent = pending.length + ' pending';
 
     if (pending.length === 0) {
-      pTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#9ca3af">
+      pTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px 24px;color:#9ca3af">
         <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 10px">
           <circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/>
         </svg>No accounts pending approval.
@@ -397,7 +413,7 @@ async function loadUsers() {
             <strong>${u.first_name} ${u.last_name}</strong>
           </div></td>
           <td style="color:#6b7280">${u.email}</td>
-          <td><span class="badge badge-purple">${u.role.toUpperCase()}</span></td>
+          <td><span class="badge badge-purple">${formatRoleLabel(u.role)}</span></td>
           <td>${u.institution || '—'}</td>
           <td>${u.designation || '—'}</td>
           <td style="display:flex;gap:6px">
@@ -420,7 +436,7 @@ async function loadUsers() {
     document.getElementById('activeCount').textContent = users.length + ' users';
 
     if (users.length === 0) {
-      aTbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#9ca3af">No registered users found.</td></tr>';
+      aTbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px 24px;color:#9ca3af">No registered users found.</td></tr>';
     } else {
       aTbody.innerHTML = users.map(u => `
         <tr>
@@ -429,7 +445,7 @@ async function loadUsers() {
             <strong>${u.name}</strong>
           </div></td>
           <td style="color:#6b7280">${u.email}</td>
-          <td><span class="badge badge-blue">${u.role}</span></td>
+          <td><span class="badge badge-blue">${formatRoleLabel(u.role)}</span></td>
           <td>${u.institution || '—'}</td>
           <td>${u.position || '—'}</td>
           <td><span class="badge ${u.status==='Active' ? 'badge-green' : 'badge-red'}">${u.status}</span></td>

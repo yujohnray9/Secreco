@@ -151,6 +151,9 @@ class AuthController extends Controller
         $password    = $request->input('password', '');
         $pwConfirm   = $request->input('password_confirm', '');
         $role        = $request->input('role', '');
+        if ($role === 'guest') {
+            $role = 'viewer';
+        }
         $institution = trim($request->input('institution', ''));
         $designation = trim($request->input('designation', ''));
 
@@ -160,7 +163,13 @@ class AuthController extends Controller
         if (empty($email)) $errors[] = 'Email is required.';
         elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Invalid email format.';
         if (!in_array($role, ['pta', 'cmi', 'viewer'])) $errors[] = 'Please select a valid role.';
-        if ($role === 'cmi') {
+
+        if ($role === 'pta') {
+            $ptaExists = User::where('role', 'pta')->exists();
+            if ($ptaExists) {
+                $errors[] = 'A Project Technical Assistant II account already exists. Only 1 PTA account is allowed in the system.';
+            }
+        } elseif ($role === 'cmi') {
             if (empty($institution)) {
                 $errors[] = 'Institution is required.';
             } else {
@@ -284,6 +293,9 @@ class AuthController extends Controller
         $lastName    = trim($request->input('last_name', ''));
         $password    = $request->input('password', '');
         $role        = $request->input('role', '');
+        if ($role === 'guest') {
+            $role = 'viewer';
+        }
         $designation = trim($request->input('designation', ''));
 
         if (empty($email) || empty($firstName) || empty($lastName) || empty($password) || empty($role)) {
@@ -302,6 +314,17 @@ class AuthController extends Controller
         if (User::where('email', $email)->exists()) {
             $pending->delete();
             return response()->json(['success' => false, 'message' => 'That email is already registered. Please sign in.']);
+        }
+
+        if ($role === 'pta') {
+            $ptaExists = User::where('role', 'pta')->exists();
+            if ($ptaExists) {
+                $pending->delete();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'A Project Technical Assistant II account already exists. Only 1 PTA account is allowed in the system.'
+                ]);
+            }
         }
 
         $hashed    = Hash::make($password);
@@ -467,9 +490,12 @@ class AuthController extends Controller
             ->unique()
             ->values();
 
+        $ptaExists = User::where('role', 'pta')->exists();
+
         return response()->json([
-            'success'  => true,
-            'occupied' => $occupied,
+            'success'    => true,
+            'occupied'   => $occupied,
+            'pta_exists' => $ptaExists,
         ]);
     }
 }

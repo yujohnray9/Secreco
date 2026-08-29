@@ -1,30 +1,268 @@
-/* ═══════════════════════════════════════════
-   MODALS & TOAST — shared modal overlays
-   and toast notifications used in c_header.php
+/* ════════════════════════════════════════════
+   FRESHCART MODERN MODAL & TOAST DIALOG SYSTEM
+   Replaces default browser confirm() & alert()
+   with custom SVG modals
 ════════════════════════════════════════════ */
-/* ── MODAL ── */
-.modal-overlay{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
-  z-index:500;align-items:center;justify-content:center
-}
-.modal-overlay.open{display:flex}
-.modal{
-  background:var(--white);border-radius:var(--radius);padding:28px;
-  width:480px;max-width:90vw;box-shadow:var(--shadow-md);
-  animation:fadeUp .2s ease
-}
-.modal-title{font-family:'Poppins',sans-serif;font-size:16px;font-weight:700;margin-bottom:8px}
-.modal-desc{font-size:13px;color:var(--text-light);margin-bottom:20px;line-height:1.5}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
 
-/* ── TOAST ── */
-.toast-wrap{position:fixed;top:80px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:600}
-.toast{
-  background:var(--green-dark);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);
-  font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px;
-  box-shadow:var(--shadow-md);animation:slideIn .3s ease,fadeOut .3s ease 2.7s forwards;
-  max-width:320px
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9990;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  animation: modalBackdropFade .2s ease forwards;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
-@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-@keyframes fadeOut{to{opacity:0;transform:translateX(100%)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.modal-overlay.open {
+  display: flex;
+}
+
+@keyframes modalBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-fc-box {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px 26px 24px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(16, 185, 129, 0.06);
+  position: relative;
+  text-align: center;
+  transform: scale(0.95);
+  animation: modalPopUp .22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-sizing: border-box;
+}
+
+@keyframes modalPopUp {
+  to { transform: scale(1); }
+}
+
+/* ── Modal Icon Badges ── */
+.modal-fc-icon-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.modal-fc-icon-wrap.type-green {
+  background: #ecfdf5;
+  border: 2px solid #a7f3d0;
+  color: #059669;
+}
+.modal-fc-icon-wrap.type-red {
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  color: #dc2626;
+}
+.modal-fc-icon-wrap.type-orange {
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  color: #d97706;
+}
+.modal-fc-icon-wrap.type-blue {
+  background: #eff6ff;
+  border: 2px solid #bfdbfe;
+  color: #2563eb;
+}
+
+.modal-fc-title {
+  font-family: 'Poppins', 'Inter', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+}
+
+.modal-fc-desc {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 18px;
+  word-break: break-word;
+}
+
+.modal-fc-input {
+  width: 100%;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #111827;
+  background: #fafafa;
+  outline: none;
+  font-family: inherit;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+  transition: all .15s;
+}
+.modal-fc-input:focus {
+  border-color: #10b981;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.modal-fc-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.modal-fc-btn {
+  flex: 1;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  touch-action: manipulation;
+}
+.modal-fc-btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+.modal-fc-btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.modal-fc-btn-green {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+.modal-fc-btn-green:hover {
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  transform: translateY(-1px);
+}
+
+.modal-fc-btn-red {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}
+.modal-fc-btn-red:hover {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+  transform: translateY(-1px);
+}
+
+.modal-fc-btn-orange {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+.modal-fc-btn-orange:hover {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  transform: translateY(-1px);
+}
+
+/* ── TOAST STYLES ── */
+.toast-wrap {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 9999;
+  pointer-events: none;
+  max-width: calc(100% - 40px);
+}
+.toast {
+  pointer-events: auto;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+  animation: toastSlideIn .25s ease, toastFadeOut .3s ease 2.7s forwards;
+  max-width: 380px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  word-break: break-word;
+}
+@keyframes toastSlideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes toastFadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+/* ── Spinner ── */
+@keyframes btnSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: btnSpin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+.btn-spinner-dark {
+  border-color: rgba(0, 0, 0, 0.15);
+  border-top-color: #374151;
+}
+
+/* ════════════════════════════════════════════
+   RESPONSIVE MODAL MEDIA QUERIES
+════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .modal-fc-box {
+    padding: 22px 18px 18px;
+    border-radius: 16px;
+  }
+
+  .modal-fc-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-fc-btn {
+    width: 100%;
+    padding: 10px 14px;
+  }
+
+  .toast-wrap {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    align-items: center;
+    max-width: 100%;
+  }
+
+  .toast {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+    font-size: 12px;
+    padding: 9px 14px;
+  }
+}

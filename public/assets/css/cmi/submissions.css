@@ -195,3 +195,50 @@
   font-family: 'Inter', sans-serif;
   letter-spacing: 0.02em;
 }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE MEDIA QUERIES FOR SUBMISSIONS
+══════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  #modalEditTable .modal-box, #modalLightbox .modal-box {
+    max-height: 94vh;
+    border-radius: 12px;
+    width: 100%;
+  }
+
+  .modal-hdr {
+    padding: 12px 14px;
+  }
+
+  .modal-body {
+    padding: 14px 12px;
+  }
+
+  .modal-ftr {
+    padding: 10px 12px;
+    flex-direction: column-reverse;
+  }
+
+  .modal-ftr .btn {
+    width: 100%;
+  }
+
+  .view-meta-row {
+    gap: 6px;
+  }
+
+  .view-meta-item {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 110px;
+    padding: 6px 10px;
+  }
+
+  .sub-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sub-count-badge {
+    justify-content: center;
+  }
+}

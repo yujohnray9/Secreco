@@ -16,7 +16,7 @@ function initials(name) {
 function roleBadge(role) {
   return role === 'CMI Representative'
     ? `<span class="badge badge-gold">CMI Representative</span>`
-    : `<span class="badge badge-blue">Viewer</span>`;
+    : `<span class="badge badge-blue">Guest</span>`;
 }
 
 function statusBadge(status) {
@@ -34,7 +34,7 @@ async function fetchPendingUsers() {
     // fallback sample data
     pendingUsers = [
       { id: 101, name: 'Rosa Lim',     email: 'r.lim@clsu.edu.ph',  role: 'CMI Representative', position: 'Research Associate II', institution: 'CLSU',     dateRequested: 'Jun 10, 2025' },
-      { id: 102, name: 'Pedro Valdez', email: 'p.valdez@da.gov.ph', role: 'Viewer',             position: 'Agriculturist II',      institution: 'DA-RFO 2', dateRequested: 'Jun 10, 2025' },
+      { id: 102, name: 'Pedro Valdez', email: 'p.valdez@da.gov.ph', role: 'Guest',              position: 'Agriculturist II',      institution: 'DA-RFO 2', dateRequested: 'Jun 10, 2025' },
     ];
   }
   renderPending();
@@ -114,7 +114,7 @@ async function fetchAllUsers() {
       { id: 1, name: 'Maria Santos',   email: 'm.santos@bas.da.gov.ph',  role: 'CMI Representative', position: 'Science Research Specialist II', institution: 'BAS',               status: 'Active', lastLogin: 'Jun 10' },
       { id: 2, name: 'Ana Reyes',      email: 'a.reyes@philrice.gov.ph', role: 'CMI Representative', position: 'Researcher I',                   institution: 'PhilRice – Isabela', status: 'Active', lastLogin: 'Jun 9'  },
       { id: 3, name: 'Juan Cruz',      email: 'j.cruz@isu.edu.ph',       role: 'CMI Representative', position: 'Instructor I',                   institution: 'ISU – Echague',      status: 'Active', lastLogin: 'Jun 9'  },
-      { id: 4, name: 'Linda Bautista', email: 'l.bautista@ched.gov.ph',  role: 'Viewer',             position: 'Education Supervisor II',        institution: 'CHED-RO2',           status: 'Active', lastLogin: 'Jun 8'  },
+      { id: 4, name: 'Linda Bautista', email: 'l.bautista@ched.gov.ph',  role: 'Guest',              position: 'Education Supervisor II',        institution: 'CHED-RO2',           status: 'Active', lastLogin: 'Jun 8'  },
     ];
   }
   filteredUsers = [...allUsers];

@@ -238,5 +238,8 @@
 
 /* ── Responsive ── */
 @media (max-width: 540px) {
-  .notif-summary-row { grid-template-columns: 1fr 1fr; }
+  .notif-summary-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .notif-filter-spacer { display: none; }
+  .notif-filter-bar { justify-content: space-between; }
+  .notif-item { padding: 10px 12px; }
 }

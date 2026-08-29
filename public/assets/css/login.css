@@ -16,7 +16,10 @@
   --success:    #2d6a30;
 }
 
-html, body { height: 100%; overflow: hidden; }
+html, body {
+  min-height: 100%;
+  height: auto;
+}
 
 body {
   font-family: 'Inter', sans-serif;
@@ -25,6 +28,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* ── MAIN ── */
@@ -734,3 +738,122 @@ footer a:hover { color: #fff; }
 
 /* Institution field — hidden by default, shown when CMI is selected */
 /* (controlled by .inst-field and .inst-field.visible above) */
+
+/* ════════════════════════════════════════════
+   RESPONSIVE MEDIA QUERIES FOR LOGIN & AUTH
+════════════════════════════════════════════ */
+@media (max-width: 992px) {
+  .main {
+    flex-direction: column;
+    padding: 30px 20px;
+    gap: 24px;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .left-panel {
+    flex: none;
+    width: 100%;
+    padding: 10px 0;
+  }
+
+  .logo-circle {
+    width: 80px;
+    height: 80px;
+  }
+
+  .logo-wrap {
+    margin-bottom: 14px;
+  }
+
+  .hero-title {
+    font-size: 52px;
+    margin-bottom: 8px;
+  }
+
+  .hero-tagline {
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 340px;
+  }
+
+  .highlight-block {
+    display: none;
+  }
+
+  .right-panel {
+    flex: none;
+    width: 100%;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 30px 26px 26px;
+  }
+
+  footer {
+    padding: 16px 24px;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .foot-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .main {
+    padding: 20px 14px;
+    gap: 16px;
+  }
+
+  .hero-title {
+    font-size: 38px;
+  }
+
+  .hero-label {
+    font-size: 12px;
+  }
+
+  .hero-tagline {
+    font-size: 12px;
+    max-width: 280px;
+  }
+
+  .hero-underline {
+    margin-top: 14px;
+  }
+
+  .card {
+    padding: 22px 16px 20px;
+    border-radius: 18px;
+  }
+
+  .form-row, .reg-row {
+    flex-direction: column !important;
+    gap: 10px;
+  }
+
+  .reg-col {
+    width: 100% !important;
+  }
+
+  .custom-modal {
+    padding: 20px 16px 18px;
+    width: 94%;
+  }
+
+  .recaptcha-wrap {
+    transform: scale(0.92);
+    transform-origin: center center;
+  }
+}

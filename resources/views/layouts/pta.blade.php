@@ -37,13 +37,19 @@
 
 <!-- ═══ HEADER ═══ -->
 <header class="app-header">
-  <!-- Title & Subtitle -->
-  <div class="hdr-title-group">
-    <div class="hdr-page-title">SecReCo Dashboard</div>
-    <div class="hdr-page-sub">Analyze consortium submissions, metrics, and institutional accomplishments.</div>
+  <div class="hdr-left-group">
+    <button class="hdr-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu" title="Menu">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- Title & Subtitle -->
+    <div class="hdr-title-group">
+      <div class="hdr-page-title">SecReCo Dashboard</div>
+      <div class="hdr-page-sub">Analyze consortium submissions, metrics, and institutional accomplishments.</div>
+    </div>
   </div>
-
-
 
   <!-- Right Actions -->
   <div class="hdr-right-actions">
@@ -87,6 +93,24 @@
 <script src="/assets/js/pta/core.js?v=3"></script>
 <script src="/assets/js/pta/upload_photo.js?v=3"></script>
 <script>
+function toggleMobileSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.toggle('mobile-open');
+  if (bd) bd.classList.toggle('active');
+}
+
+function closeMobileSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.remove('mobile-open');
+  if (bd) bd.classList.remove('active');
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeMobileSidebar();
+});
+
 window.showToast = window.toast = window.toast || function(msg) {
   const c = document.getElementById('toastWrap');
   if (!c) { alert(msg); return; }
@@ -98,7 +122,6 @@ window.showToast = window.toast = window.toast || function(msg) {
 };
 
 let globalConfirmCallback = null;
-
 
 function closeGlobalModal() {
   document.getElementById('globalConfirmModal').classList.remove('open');
@@ -130,7 +153,7 @@ function showConfirmModal(opts) {
   } else if (type === 'red') {
     iconSvg.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
   } else if (type === 'orange') {
-    iconSvg.innerHTML = '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
+    iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
   } else {
     iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>';
   }
@@ -155,9 +178,9 @@ function showConfirmModal(opts) {
 
 function showPromptModal(opts) {
   const title       = opts.title || 'Input Required';
-  const desc        = opts.message || 'Please enter details:';
-  const placeholder = opts.placeholder || '';
+  const desc        = opts.message || 'Please provide details:';
   const confirmText = opts.confirmText || 'Submit';
+  const placeholder = opts.placeholder || 'Enter value...';
   const onConfirm   = opts.onConfirm || null;
 
   document.getElementById('gModalTitle').textContent = title;
@@ -171,11 +194,12 @@ function showPromptModal(opts) {
   const iconWrap = document.getElementById('gModalIconWrap');
   iconWrap.className = 'modal-fc-icon-wrap type-orange';
 
+  const iconSvg = document.getElementById('gModalIcon');
+  iconSvg.innerHTML = '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>';
+
   const btn = document.getElementById('gModalConfirmBtn');
   btn.className = 'modal-fc-btn modal-fc-btn-orange';
   btn.textContent = confirmText;
-
-  document.getElementById('gModalIcon').innerHTML = '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>';
 
   btn.onclick = function() {
     const val = inp.value.trim();
@@ -223,16 +247,22 @@ function confirmSignOut() {
 })();
 </script>
 
+<!-- SIDEBAR BACKDROP FOR MOBILE -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
+
 <!-- ═══ BODY ═══ -->
 <div class="app-body">
   <aside class="sidebar">
-    <!-- Brand Header -->
-    <div class="sb-brand">
-      <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="height:44px;width:44px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
-      <div>
-        <div class="sb-brand-title">SecReCo</div>
-        <div class="sb-brand-sub">CVAARRD Consortium</div>
+    <div class="sb-header-wrap">
+      <!-- Brand Header -->
+      <div class="sb-brand" onclick="window.location.href='/dashboard/pta/dashboard'" style="cursor:pointer">
+        <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="height:40px;width:40px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
+        <div>
+          <div class="sb-brand-title">SecReCo</div>
+          <div class="sb-brand-sub">CVAARRD Consortium</div>
+        </div>
       </div>
+      <button class="sb-close-btn" onclick="closeMobileSidebar()" aria-label="Close Sidebar">&times;</button>
     </div>
 
     <!-- MAIN NAV -->

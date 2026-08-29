@@ -14,20 +14,30 @@
   flex-shrink: 0;
   padding: 20px 16px;
   gap: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Brand & Mobile Close Wrap ── */
+.sb-header-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eae3d6;
 }
 
 /* ── Brand Logo Header ── */
 .sb-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 8px 12px;
-  border-bottom: 1px solid #eae3d6;
+  gap: 10px;
+  text-decoration: none;
+  min-width: 0;
 }
 
 .sb-brand-logo {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   background: transparent;
   display: flex;
   align-items: center;
@@ -38,16 +48,17 @@
 }
 
 .sb-brand-logo img,
-.sb-brand > img {
-  width: 44px;
-  height: 44px;
+.sb-brand img {
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .sb-brand-title {
   font-family: 'Poppins', sans-serif;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: #111827;
   letter-spacing: -0.02em;
@@ -58,6 +69,26 @@
   font-size: 10px;
   color: #9ca3af;
   font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Close Button (shown on mobile drawer) */
+.sb-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.sb-close-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
 }
 
 /* ── Navigation Sections ── */
@@ -73,7 +104,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #9ca3af;
-  padding: 8px 12px 4px;
+  padding: 6px 12px 2px;
 }
 
 /* ── Nav Items ── */
@@ -139,12 +170,12 @@
   border-radius: 10px;
 }
 
-/* ── Bottom Help Box (FreshCart Card) ── */
+/* ── Bottom Help Box ── */
 .sb-help-card {
   margin-top: auto;
   background: linear-gradient(135deg, #a7f3d0 0%, #34d399 100%);
-  border-radius: 18px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 14px;
   position: relative;
   overflow: hidden;
   box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
@@ -195,7 +226,57 @@
   background: #047857;
 }
 
+/* ── SIDEBAR BACKDROP FOR MOBILE ── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 990;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.sidebar-backdrop.active {
+  display: block;
+  opacity: 1;
+}
+
 /* Hide legacy sidebar elements */
 .sidebar-user, .sb-user-card, .sb-av-lg, .sb-name, .sb-role, .sb-user-center, .sb-inst {
   display: none !important;
+}
+
+/* ════════════════════════════════════════════
+   RESPONSIVE MEDIA QUERIES
+════════════════════════════════════════════ */
+@media (max-width: 992px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 270px;
+    max-width: 85vw;
+    z-index: 995;
+    background: #ffffff;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0 18px 18px 0;
+    border-right: none;
+    padding: 18px 16px;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sb-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }

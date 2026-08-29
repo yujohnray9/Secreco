@@ -34,12 +34,22 @@ class NotificationController extends Controller
 
         $notifications = [];
 
-        $stored = Notification::where(function ($q) use ($userId, $userRole) {
+        $storedQuery = Notification::where(function ($q) use ($userId, $userRole) {
             $q->where('user_id', $userId)
               ->orWhere(function ($q2) use ($userRole) {
                   $q2->whereNull('user_id')->where('role', $userRole);
               });
-        })->orderByDesc('created_at')->take(50)->get();
+        });
+
+        if ($userRole === 'pta') {
+            $storedQuery->where('message', 'not like', '%updated by PTA%')
+                        ->where('message', 'not like', '%PTA updated%')
+                        ->where('message', 'not like', '%accepted by PTA%')
+                        ->where('message', 'not like', '%deleted by PTA%')
+                        ->where('message', 'not like', '%Approved:%');
+        }
+
+        $stored = $storedQuery->orderByDesc('created_at')->take(50)->get();
 
         foreach ($stored as $n) {
             $key = 'stored_' . $n->id;
