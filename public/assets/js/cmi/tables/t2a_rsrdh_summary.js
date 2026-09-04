@@ -13,7 +13,7 @@
   const API_LOAD   = '/api/cmi/tables/load';
 
   const CATEGORIES = [
-    { key: 'research',    label: 'Research Category' },
+    { key: 'research',     label: 'Research Category' },
     { key: 'development', label: 'Development Category' },
   ];
 
@@ -35,18 +35,6 @@
       <!-- Header -->
       <div class="t-hdr">
         <div class="t-title">Table 2a. Summary of Regional Symposium on R&amp;D Highlights.</div>
-      </div>
-
-      <!-- Date / Venue -->
-      <div style="display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:8px">
-          <label style="font-weight:600">Date:</label>
-          <input type="date" id="t2a_date" style="min-width:180px"/>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <label style="font-weight:600">Venue:</label>
-          <input type="text" id="t2a_venue" placeholder="e.g. NTA Conference Hall" style="min-width:240px"/>
-        </div>
       </div>
 
       <!-- Table -->
@@ -168,7 +156,6 @@
   /* ─────────────────────────────────────────
      STATUS (auto-derived from completeness)
      "winners" is optional (not every entry wins).
-     Date/Venue are table-level required if any row has data.
   ───────────────────────────────────────── */
   function isRowTouched(r) {
     return ['title','agency','researcher','recommendations','winners']
@@ -178,12 +165,10 @@
     return ['title','agency','researcher','recommendations']
       .every(f => (r[f] || '').trim() !== '');
   }
-  function computeStatus(rows, meta) {
+  function computeStatus(rows) {
     const touched = rows.filter(isRowTouched);
-    const metaTouched = (meta.date || '').trim() !== '' || (meta.venue || '').trim() !== '';
-    if (touched.length === 0 && !metaTouched) return 'not-started';
-    const metaComplete = (meta.date || '').trim() !== '' && (meta.venue || '').trim() !== '';
-    return (touched.every(isRowComplete) && metaComplete) ? 'done' : 'draft';
+    if (touched.length === 0) return 'not-started';
+    return touched.every(isRowComplete) ? 'done' : 'draft';
   }
   function statusLabel(s) { return s === 'done' ? 'Complete' : s === 'draft' ? 'In Progress' : 'Not Started'; }
   function updateStatusBadge(status) {
@@ -228,19 +213,14 @@
         });
         renumberAll();
 
-        // date / venue
         const meta = data.meta || {};
-        const dateEl  = document.getElementById('t2a_date');
-        const venueEl = document.getElementById('t2a_venue');
-        if (dateEl)  dateEl.value  = meta.date  || '';
-        if (venueEl) venueEl.value = meta.venue || '';
 
         // documentation
         _images = (data.docs && data.docs.length) ? data.docs : (meta.images || []);
         updateBadge();
 
         // status (use server status if provided, else auto-derive)
-        const status = data.status || computeStatus(saved, meta);
+        const status = data.status || computeStatus(saved);
         updateStatusBadge(status);
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
@@ -262,14 +242,12 @@
   function save(requestedStatus) {
     const rows = collectRows();
     const meta = {
-      date:   document.getElementById('t2a_date')?.value  || '',
-      venue:  document.getElementById('t2a_venue')?.value || '',
       images: _images,
     };
 
-    // Block save if completely empty (no row content, no date/venue)
+    // Block save if completely empty
     const fields = ['title', 'agency', 'researcher', 'recommendations', 'winners'];
-    if (!CMIUtils.guardEmptySave(rows, fields, { date: meta.date, venue: meta.venue })) return;
+    if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
     const status   = (requestedStatus === 'draft') ? 'draft' : 'done';
 
@@ -353,6 +331,7 @@
     openDocs,
     _renumber(catKey) { renumber(catKey); },
   };
+  window.T2A = window.T2a;
 
   /* ─────────────────────────────────────────
      REGISTER WITH CORE

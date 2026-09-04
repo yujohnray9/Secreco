@@ -161,8 +161,13 @@
     if (elNotStarted) elNotStarted.textContent = stats.notStarted;
     if (elCorrection) elCorrection.textContent = stats.correction;
     if (elCorrMeta)   elCorrMeta.textContent   = stats.correctionMeta;
-    const complMeta = document.querySelector('.sc-green .sc-meta');
-    if (complMeta) complMeta.textContent = 'of ' + stats.totalRequired + ' required';
+    const complMeta = document.getElementById('statCompleteSub') || document.querySelector('.sc-green .sc-meta');
+    if (complMeta && stats.totalRequired !== undefined) complMeta.textContent = 'of ' + stats.totalRequired + ' required tables';
+    const compBadge = document.getElementById('statCompleteBadge');
+    if (compBadge && stats.totalRequired) {
+      const pct = Math.round((stats.complete / stats.totalRequired) * 100);
+      compBadge.textContent = '↑ ' + pct + '%';
+    }
   }
 
   function renderDeadline(deadline) {

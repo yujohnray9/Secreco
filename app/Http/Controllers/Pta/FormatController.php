@@ -67,50 +67,105 @@ class FormatController extends Controller
 
         switch ($action) {
             case 'add':
-                $year      = (int) ($input['year'] ?? 0);
-                $tableNo   = strtoupper(trim($input['table_no'] ?? ''));
-                $title     = trim($input['title'] ?? '');
-                $section   = trim($input['section'] ?? '');
-                $required  = !empty($input['is_required']) ? 1 : 0;
-                $colsJson  = $input['columns_json'] ?? null;
-
-                if (!$year || !$tableNo || !$title || !$section) {
-                    return response()->json(['ok' => false, 'message' => 'Missing required fields.']);
-                }
-
-                $nextSort = (int) FormatTemplate::where('year', $year)->max('sort_order') + 1;
-
-                $colsEncoded = null;
-                if ($colsJson !== null) {
-                    $decoded = is_array($colsJson) ? $colsJson : json_decode($colsJson, true);
-                    $colsEncoded = ($decoded !== null) ? $decoded : null;
+                $year = (int) ($input['year'] ?? 0);
+                if (!$year) {
+                    return response()->json(['ok' => false, 'message' => 'Invalid year.']);
                 }
 
                 $yearStatus = FormatTemplate::where('year', $year)->value('status') ?? 'draft';
+                $canonicalMap = [];
+                foreach (config('secreco.all_tables', []) as $stTable) {
+                    $canonicalMap[strtoupper($stTable)] = $stTable;
+                }
 
-                try {
+                // Support both bulk tables array and single table object
+                $rawTables = $input['tables'] ?? null;
+                if (!is_array($rawTables) || empty($rawTables)) {
+                    $rawTables = [[
+                        'table_no'     => $input['table_no'] ?? '',
+                        'title'        => $input['title'] ?? '',
+                        'section'      => $input['section'] ?? '',
+                        'is_required'  => $input['is_required'] ?? 1,
+                        'is_locked'    => $input['is_locked'] ?? 0,
+                        'columns_json' => $input['columns_json'] ?? null,
+                    ]];
+                }
+
+                $addedCount  = 0;
+                $lastTableNo = '';
+                $errors      = [];
+
+                foreach ($rawTables as $tItem) {
+                    $rawTable = trim($tItem['table_no'] ?? '');
+                    if (!$rawTable) continue;
+                    $tableNo  = $canonicalMap[strtoupper($rawTable)] ?? strtoupper($rawTable);
+                    $title    = trim($tItem['title'] ?? '');
+                    $section  = trim($tItem['section'] ?? 'R&D Mgt. & Coord.');
+                    $required = !empty($tItem['is_required']) ? 1 : 0;
+                    $locked   = !empty($tItem['is_locked']) ? 1 : 0;
+                    $colsJson = $tItem['columns_json'] ?? null;
+
+                    if (!$title) {
+                        $errors[] = "Table {$tableNo} is missing a title.";
+                        continue;
+                    }
+
+                    if (FormatTemplate::where('year', $year)->where('table_no', $tableNo)->exists()) {
+                        $errors[] = "Table {$tableNo} already exists for CY {$year}.";
+                        continue;
+                    }
+
+                    $nextSort = (int) FormatTemplate::where('year', $year)->max('sort_order') + 1;
+                    $colsEncoded = null;
+                    if ($colsJson !== null) {
+                        $decoded = is_array($colsJson) ? $colsJson : json_decode($colsJson, true);
+                        $colsEncoded = ($decoded !== null) ? $decoded : null;
+                    }
+
                     FormatTemplate::create([
                         'year'         => $year,
                         'table_no'     => $tableNo,
                         'title'        => $title,
+                        'subtitle'     => null,
                         'section'      => $section,
                         'is_required'  => $required,
+                        'is_locked'    => $locked,
                         'sort_order'   => $nextSort,
                         'status'       => $yearStatus,
                         'created_by'   => $userId,
                         'columns_json' => $colsEncoded,
                     ]);
-                    return response()->json(['ok' => true, 'message' => "Table {$tableNo} added."]);
-                } catch (\Throwable $e) {
-                    return response()->json(['ok' => false, 'message' => 'Table number already exists for this year.']);
+
+                    $addedCount++;
+                    $lastTableNo = $tableNo;
                 }
+
+                if ($addedCount === 0) {
+                    $msg = !empty($errors) ? implode(' ', $errors) : 'No valid tables were added.';
+                    return response()->json(['ok' => false, 'message' => $msg]);
+                }
+
+                $msg = $addedCount === 1
+                    ? "Table {$lastTableNo} added successfully."
+                    : "{$addedCount} tables added successfully.";
+                if (!empty($errors)) {
+                    $msg .= ' (' . implode(' ', $errors) . ')';
+                }
+
+                return response()->json(['ok' => true, 'message' => $msg, 'count' => $addedCount]);
 
             case 'edit':
                 $id       = (int) ($input['id'] ?? 0);
-                $tableNo  = strtoupper(trim($input['table_no'] ?? ''));
+                $rawTable = trim($input['table_no'] ?? '');
+                $canonicalMap = [];
+                foreach (config('secreco.all_tables', []) as $stTable) {
+                    $canonicalMap[strtoupper($stTable)] = $stTable;
+                }
+                $tableNo  = $canonicalMap[strtoupper($rawTable)] ?? strtoupper($rawTable);
                 $title    = trim($input['title'] ?? '');
                 $section  = trim($input['section'] ?? '');
                 $required = !empty($input['is_required']) ? 1 : 0;
+                $locked   = !empty($input['is_locked']) ? 1 : 0;
                 $colsJson = $input['columns_json'] ?? null;
 
                 if (!$id || !$tableNo || !$title || !$section) {
@@ -132,14 +187,31 @@ class FormatController extends Controller
                     $ft->update([
                         'table_no'     => $tableNo,
                         'title'        => $title,
+                        'subtitle'     => null,
                         'section'      => $section,
                         'is_required'  => $required,
+                        'is_locked'    => $locked,
                         'columns_json' => $colsEncoded,
                     ]);
                     return response()->json(['ok' => true, 'message' => "Table {$tableNo} updated."]);
                 } catch (\Throwable $e) {
                     return response()->json(['ok' => false, 'message' => 'Table number already exists for this year.']);
                 }
+
+            case 'toggle_lock':
+                $id = (int) ($input['id'] ?? 0);
+                $ft = FormatTemplate::find($id);
+                if (!$ft) {
+                    return response()->json(['ok' => false, 'message' => 'Template not found.']);
+                }
+                $ft->is_locked = !$ft->is_locked;
+                $ft->save();
+                $stateText = $ft->is_locked ? "locked (PTA only)" : "unlocked for CMI";
+                return response()->json([
+                    'ok'        => true,
+                    'is_locked' => (bool) $ft->is_locked,
+                    'message'   => "Table {$ft->table_no} is now {$stateText}."
+                ]);
 
             case 'delete':
                 $id = (int) ($input['id'] ?? 0);
@@ -211,8 +283,10 @@ class FormatController extends Controller
                         'year'        => $toYear,
                         'table_no'    => $r->table_no,
                         'title'       => $r->title,
+                        'subtitle'    => $r->subtitle,
                         'section'     => $r->section,
                         'is_required' => $r->is_required,
+                        'is_locked'   => $r->is_locked,
                         'sort_order'  => $r->sort_order,
                         'status'      => 'draft',
                         'created_by'  => $userId,

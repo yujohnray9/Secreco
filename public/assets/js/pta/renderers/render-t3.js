@@ -55,35 +55,50 @@
         </tfoot>
       </table>`;
 
-    // ── Drill-down ──
-    html += '<div class="rpt-drilldown">';
+    // ── Table 2: Merged Detail Table (continuous numbering, no institution label) ──
+    const allDetailProjects = [];
     allRows.forEach(inst => {
       const rows = (inst.rows || []).filter(r => r.project?.trim());
-      if (!rows.length) return;
-      html += `<details class="rpt-detail-block">
-        <summary><strong>${esc(inst.institution || '—')}</strong> — ${rows.length} project(s)</summary>
-        <table class="rpt-table merged" style="margin-top:8px">
-          <thead><tr>
-            <th style="width:36px">#</th>
-            <th>Projects and Activities</th>
-            <th style="width:130px">Status</th>
-            <th style="width:140px">Duration</th>
-            <th style="width:150px">Source of Fund</th>
-          </tr></thead>
-          <tbody>`;
-      rows.forEach((r, i) => {
-        const statusColor = r.status === 'Completed' ? 'var(--green)' : '#b06b00';
-        html += `<tr>
-          <td style="text-align:center">${i + 1}.</td>
-          <td>${esc(r.project || '—')}</td>
-          <td style="color:${statusColor};font-weight:600">${esc(r.status || '—')}</td>
-          <td>${esc(r.duration || '—')}</td>
-          <td>${esc(r.fund || '—')}</td>
-        </tr>`;
+      rows.forEach(r => {
+        allDetailProjects.push({
+          project: r.project || '—',
+          status: r.status || '—',
+          duration: r.duration || '—',
+          fund: r.fund || '—',
+        });
       });
-      html += '</tbody></table></details>';
     });
-    html += '</div>';
+
+    html += `
+      <table class="rpt-table detail-table" style="width:100%;margin-top:28px">
+        <thead>
+          <tr>
+            <th style="width:40px;text-align:center">#</th>
+            <th>Projects and Activities</th>
+            <th style="width:140px">Status</th>
+            <th style="width:150px">Duration</th>
+            <th style="width:160px">Source of Fund</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    if (allDetailProjects.length === 0) {
+      html += `<tr><td colspan="5" style="text-align:center;padding:30px;color:#9ca3af">No entries recorded.</td></tr>`;
+    } else {
+      allDetailProjects.forEach((r, idx) => {
+        const statusColor = r.status === 'Completed' ? 'var(--green,#075b42)' : '#b06b00';
+        html += `
+          <tr>
+            <td style="text-align:center">${idx + 1}.</td>
+            <td>${esc(r.project)}</td>
+            <td style="color:${statusColor};font-weight:600">${esc(r.status)}</td>
+            <td>${esc(r.duration)}</td>
+            <td>${esc(r.fund)}</td>
+          </tr>`;
+      });
+    }
+
+    html += `</tbody></table>`;
 
     container.innerHTML = html;
   };

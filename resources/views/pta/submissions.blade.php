@@ -60,6 +60,16 @@
 .modal-box-lg { background:#fff; border-radius:20px; padding:28px; width:100%; max-width:760px; box-shadow:0 24px 60px rgba(0,0,0,.18); max-height:90vh; overflow-y:auto; }
 .modal-title-lg { font-size:18px; font-weight:800; color:#111827; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
 .modal-sub-lg { font-size:13px; color:#6b7280; margin-bottom:20px; }
+.section-header-row td {
+  padding: 10px 16px !important;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #059669;
+  background: #f3f6f4 !important;
+  border-left: 4px solid #10b981;
+}
 </style>
 @endsection
 
@@ -85,7 +95,15 @@
         All Submissions
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input type="text" class="filter-select" id="subSearchInput" placeholder="Search institution, encoder, table..." style="width:240px"/>
+        <input type="text" class="filter-select" id="subSearchInput" placeholder="Search institution, encoder, table..." style="width:230px"/>
+        <select class="filter-select" id="subSectionFilter" style="width:auto">
+          <option value="">All Sections</option>
+          <option value="R&D Mgt. & Coord.">R&D Mgt. & Coord.</option>
+          <option value="Strategic R&D">Strategic R&D</option>
+          <option value="Results Utilization">Results Utilization</option>
+          <option value="Capability & Governance">Capability & Governance</option>
+          <option value="Policy Analysis">Policy Analysis</option>
+        </select>
         <select class="filter-select" id="subYearSel" style="width:auto">
           <option value="">Loading...</option>
         </select>
@@ -181,77 +199,140 @@ const statusBadge = s => {
   return `<span class="badge ${map[norm] || 'badge-gray'}">${label[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1))}</span>`;
 };
 
+const SECTION_ORDER = [
+  'R&D Mgt. & Coord.',
+  'Strategic R&D',
+  'Results Utilization',
+  'Capability & Governance',
+  'Policy Analysis'
+];
+
+function normalizeSectionName(sec) {
+  if (!sec) return 'R&D Mgt. & Coord.';
+  const s = String(sec).trim();
+  if (/^capability/i.test(s)) return 'Capability & Governance';
+  if (/^r\s*&\s*d/i.test(s)) return 'R&D Mgt. & Coord.';
+  if (/^strategic/i.test(s)) return 'Strategic R&D';
+  if (/^results/i.test(s)) return 'Results Utilization';
+  if (/^policy/i.test(s)) return 'Policy Analysis';
+  return s;
+}
+
 let currentSubPage = 1;
 let subPageSize = 10;
 
 function renderSubsTable() {
   const query = (document.getElementById('subSearchInput')?.value || '').toLowerCase().trim();
-  const year  = document.getElementById('subYearSel')?.value || new Date().getFullYear();
+  const sectionFilter = document.getElementById('subSectionFilter')?.value || '';
   const tbody = document.getElementById('subsTbody');
   
   const filtered = cachedSubRows.filter(r => {
+    const sec = normalizeSectionName(r.section);
+    if (sectionFilter && sec !== normalizeSectionName(sectionFilter)) {
+      return false;
+    }
     if (!query) return true;
     return (r.institution || '').toLowerCase().includes(query) ||
            (r.encoder || '').toLowerCase().includes(query) ||
-           (`table ${r.table_no}` || '').toLowerCase().includes(query);
+           (`table ${r.table_no}` || '').toLowerCase().includes(query) ||
+           (r.title || '').toLowerCase().includes(query) ||
+           (r.section || '').toLowerCase().includes(query);
   });
 
-  const totalItems = filtered.length;
-  const totalPages = Math.ceil(totalItems / subPageSize) || 1;
-  if (currentSubPage > totalPages) currentSubPage = totalPages;
-  if (currentSubPage < 1) currentSubPage = 1;
-
-  const startIdx = (currentSubPage - 1) * subPageSize;
-  const endIdx   = Math.min(startIdx + subPageSize, totalItems);
-  const pageRows = filtered.slice(startIdx, endIdx);
-
-  if (pageRows.length === 0) {
+  if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#9ca3af">
-      No submissions found matching "${query}".
+      No submissions found matching current filters.
     </td></tr>`;
-    renderSubsPagination(0, 0, 0, 1);
+    const wrap = document.getElementById('subsPaginationWrap');
+    if (wrap) wrap.innerHTML = '';
     return;
   }
 
-  tbody.innerHTML = pageRows.map((r) => {
-    const subDate = formatPHDate(r.submitted_at);
-    const ts = formatPHDate(r.updated_at);
-    const actionTs = r.action_at ? `<span class="ts-label">${formatPHDate(r.action_at)}</span>` : '';
-    const isActioned = r.table_status === 'accepted' || r.table_status === 'returned' || r.table_status === 'deleted';
-    return `
-    <tr>
-      <td><strong>${r.institution}</strong></td>
-      <td>${r.encoder}</td>
-      <td><span class="badge badge-blue">Table ${r.table_no}</span></td>
-      <td>${statusBadge(r.table_status || 'done')}${actionTs}</td>
-      <td style="color:#059669;font-weight:600;font-size:12.5px">${subDate}</td>
-      <td style="color:#6b7280;font-size:12.5px">${ts}</td>
-      <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${cachedSubRows.indexOf(r)})" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-          Edit/View Data
-        </button>
-        ${!isActioned ? `
-        <button class="btn-sm-fc btn-sm-accept" onclick="acceptSub(${cachedSubRows.indexOf(r)})">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Accept
-        </button>
-        <button class="btn-sm-fc btn-sm-return" onclick="returnSub(${cachedSubRows.indexOf(r)})">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.73"/></svg>
-          Return
-        </button>
-        <button class="btn-sm-fc btn-sm-delete" onclick="deleteSub(${cachedSubRows.indexOf(r)})">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-          Delete
-        </button>` : statusBadge(r.table_status)}
-      </td>
-    </tr>`;
-  }).join('');
+  // Group filtered rows by Section (preserving standard section order)
+  const groupedBySection = {};
+  SECTION_ORDER.forEach(sec => { groupedBySection[sec] = []; });
 
-  renderSubsPagination(startIdx + 1, endIdx, totalItems, totalPages);
+  filtered.forEach(r => {
+    const sec = normalizeSectionName(r.section);
+    if (!groupedBySection[sec]) {
+      groupedBySection[sec] = [];
+    }
+    groupedBySection[sec].push(r);
+  });
+
+  const htmlParts = [];
+  let renderedCount = 0;
+
+  const allSectionKeys = [
+    ...SECTION_ORDER,
+    ...Object.keys(groupedBySection).filter(k => !SECTION_ORDER.includes(k))
+  ];
+
+  allSectionKeys.forEach(secName => {
+    const sectionRows = groupedBySection[secName] || [];
+    if (sectionRows.length === 0) return;
+
+    htmlParts.push(`
+      <tr class="section-header-row" style="background:#f3f6f4 !important">
+        <td colspan="7" style="font-weight:700 !important;font-size:12px !important;text-transform:uppercase !important;letter-spacing:.06em !important;color:#059669 !important;background:#f3f6f4 !important;border-left:4px solid #10b981 !important;padding:10px 16px !important">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#059669" stroke-width="2.5" style="display:inline-block;vertical-align:-1px;margin-right:6px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          ${secName.toUpperCase()} <span style="font-size:11px;font-weight:500;color:#6b7280;text-transform:none;letter-spacing:normal;margin-left:6px">(${sectionRows.length} table${sectionRows.length > 1 ? 's' : ''})</span>
+        </td>
+      </tr>
+    `);
+
+    sectionRows.forEach(r => {
+      renderedCount++;
+      const subDate = formatPHDate(r.submitted_at);
+      const ts = formatPHDate(r.updated_at);
+      const actionTs = r.action_at ? `<span class="ts-label">${formatPHDate(r.action_at)}</span>` : '';
+      const isActioned = r.table_status === 'accepted' || r.table_status === 'returned' || r.table_status === 'deleted';
+      const origIdx = cachedSubRows.indexOf(r);
+
+      htmlParts.push(`
+        <tr>
+          <td><strong>${r.institution}</strong></td>
+          <td>${r.encoder}</td>
+          <td><span class="badge badge-blue">Table ${r.table_no}</span></td>
+          <td>${statusBadge(r.table_status || 'done')}${actionTs}</td>
+          <td style="color:#059669;font-weight:600;font-size:12.5px">${subDate}</td>
+          <td style="color:#6b7280;font-size:12.5px">${ts}</td>
+          <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${origIdx})" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Edit/View Data
+            </button>
+            ${!isActioned ? `
+            <button class="btn-sm-fc btn-sm-accept" onclick="acceptSub(${origIdx})">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Accept
+            </button>
+            <button class="btn-sm-fc btn-sm-return" onclick="returnSub(${origIdx})">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.73"/></svg>
+              Return
+            </button>
+            <button class="btn-sm-fc btn-sm-delete" onclick="deleteSub(${origIdx})">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              Delete
+            </button>` : statusBadge(r.table_status)}
+          </td>
+        </tr>
+      `);
+    });
+  });
+
+  tbody.innerHTML = htmlParts.join('');
+
+  const wrap = document.getElementById('subsPaginationWrap');
+  if (wrap) {
+    wrap.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid #f3f4f6;flex-wrap:wrap;gap:10px;font-size:12.5px;color:#6b7280">
+        <div>Showing <strong>${renderedCount}</strong> submission${renderedCount !== 1 ? 's' : ''} across sections</div>
+      </div>`;
+  }
 }
 
 function renderSubsPagination(start, end, total, totalPages) {
@@ -737,6 +818,8 @@ window.deleteSub = function(idx) {
 
 document.getElementById('subYearSel').addEventListener('change', loadSubs);
 document.getElementById('subStatusSel').addEventListener('change', loadSubs);
+const secFilterSel = document.getElementById('subSectionFilter');
+if (secFilterSel) secFilterSel.addEventListener('change', renderSubsTable);
 const searchInp = document.getElementById('subSearchInput');
 if (searchInp) searchInp.addEventListener('input', renderSubsTable);
 document.addEventListener('DOMContentLoaded', function() {

@@ -226,7 +226,15 @@ class DashboardController extends Controller
         $monthlyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         $monthlyValues = array_values($monthlyTrend);
 
-        // ── 3. ANNUAL TREND (Last 5 Years) ──
+        // ── 3. QUARTERLY TREND (Q1–Q4 of selected year) ──
+        $q1 = ($monthlyTrend[1] ?? 0) + ($monthlyTrend[2] ?? 0) + ($monthlyTrend[3] ?? 0);
+        $q2 = ($monthlyTrend[4] ?? 0) + ($monthlyTrend[5] ?? 0) + ($monthlyTrend[6] ?? 0);
+        $q3 = ($monthlyTrend[7] ?? 0) + ($monthlyTrend[8] ?? 0) + ($monthlyTrend[9] ?? 0);
+        $q4 = ($monthlyTrend[10] ?? 0) + ($monthlyTrend[11] ?? 0) + ($monthlyTrend[12] ?? 0);
+        $quarterlyLabels = ['Q1 (Jan–Mar)', 'Q2 (Apr–Jun)', 'Q3 (Jul–Sep)', 'Q4 (Oct–Dec)'];
+        $quarterlyValues = [$q1, $q2, $q3, $q4];
+
+        // ── 4. ANNUAL TREND (Last 5 Years) ──
         $currentYear = (int) ($year ?: date('Y'));
         $annualLabels = [];
         $annualTrend  = [];
@@ -274,6 +282,8 @@ class DashboardController extends Controller
             'trend_values'     => $trendValues,
             'monthly_labels'   => $monthlyLabels,
             'monthly_values'   => $monthlyValues,
+            'quarterly_labels' => $quarterlyLabels,
+            'quarterly_values' => $quarterlyValues,
             'annual_labels'    => $annualLabels,
             'annual_values'    => $annualValues,
         ]);

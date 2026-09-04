@@ -208,6 +208,7 @@
     openDocs,
     _renumber: renumber,
   };
+  window.T20a = window.T20A;
 
   (window.CMI = window.CMI || {});
   function register() {

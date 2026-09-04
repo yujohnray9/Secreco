@@ -1,6 +1,5 @@
 /* ════════════════════════════════════════════
-   BASE — variables, reset, layout shell,
-   buttons, cards, forms, badges, utilities.
+   BASE — Manus / SecReCo Core Design Tokens & Layout
    Loaded on every page.
 ════════════════════════════════════════════ */
 
@@ -11,74 +10,130 @@
 }
 
 :root {
-  --green: #10b981;
-  --green-dark: #059669;
-  --green-light: #ecfdf5;
-  --green-tint: #e6f7ef;
-  --yellow: #f59e0b;
-  --yellow-light: #fffbebee;
+  --forest: #075b42;
+  --forest-deep: #034a36;
+  --forest-hover: #0a6d50;
+  --mint: #e4f4ed;
+  --ivory: #f8f7f2;
+  --ink: #16352d;
+  --muted: #74807c;
+  --line: #e6ebe7;
+  --gold: #c99a36;
+  --amber: #e8ab19;
+  --orange: #ed7d13;
+  --red: #df443d;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Mapped legacy variables for full backward compatibility */
+  --green: var(--forest);
+  --green-dark: var(--forest-deep);
+  --green-light: var(--mint);
+  --green-tint: #ecf8f2;
+  --yellow: var(--gold);
+  --yellow-light: #fff8e8;
   --white: #ffffff;
-  --bg: #f5f0e8;
+  --bg: var(--ivory);
   --card-bg: #ffffff;
-  --text: #111827;
-  --text-light: #4b5563;
-  --text-muted: #9ca3af;
-  --border: #eae3d6;
-  --border-hover: #10b981;
-  --danger: #ef4444;
+  --text: var(--ink);
+  --text-light: var(--muted);
+  --text-muted: #8c9994;
+  --border: var(--line);
+  --border-hover: var(--forest);
+  --danger: var(--red);
   --danger-light: #fef2f2;
-  --warning: #f59e0b;
+  --warning: var(--amber);
   --warning-light: #fffbeb;
-  --success: #10b981;
-  --success-light: #ecfdf5;
-  --info: #3b82f6;
+  --success: #168362;
+  --success-light: var(--mint);
+  --info: #2563eb;
   --info-light: #eff6ff;
-  --shadow: 0 4px 20px rgba(0,0,0,0.03);
-  --shadow-md: 0 10px 30px rgba(0,0,0,0.05);
-  --radius: 16px;
+  --shadow: 0 4px 14px rgba(25, 60, 47, 0.05);
+  --shadow-md: 0 10px 26px rgba(25, 60, 47, 0.06);
+  --radius: 14px;
   --radius-sm: 8px;
 }
 
-html, body {
+html {
+  background: var(--ivory);
+  min-width: 320px;
   min-height: 100%;
-  height: 100%;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  background: var(--ivory);
+  color: var(--ink);
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  padding: 12px 16px;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3, h4, h5, h6,
+.page-title, .card-title, .section-title h2,
+.sidebar-brand strong, .topbar-title strong {
+  font-family: 'Manrope', sans-serif;
+  color: var(--ink);
+}
+
 /* ── LAYOUT SHELL ── */
+.app-shell {
+  background: var(--ivory);
+  min-height: 100vh;
+  display: flex;
+}
+
 .app-body {
   flex: 1;
   display: flex;
-  overflow: hidden;
-  background: var(--white);
-  border-radius: 24px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid #eae3d6;
-  min-height: 0;
+  min-height: 100vh;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
   position: relative;
 }
 
-.main-content {
+.main-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content,
+.page-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px 32px;
+  padding: 28px 30px 42px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background: #faf7f2;
+  background-color: var(--ivory);
+  background-image: url(/assets/img/manus/secreco-ivory-grain.png);
+  background-size: cover;
   min-width: 0;
+  position: relative;
+  isolation: isolate;
   -webkit-overflow-scrolling: touch;
+}
+
+.main-content::after,
+.page-content::after {
+  content: "";
+  z-index: -1;
+  opacity: 0.055;
+  pointer-events: none;
+  background: url(/assets/img/manus/secreco-botanical-accent.png) 50%/contain no-repeat;
+  width: 250px;
+  height: 180px;
+  position: absolute;
+  top: 2px;
+  right: 4%;
 }
 
 .page {
@@ -124,72 +179,137 @@ body {
 }
 
 /* ── BUTTONS ── */
-.btn {
+.btn, .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   padding: 8px 16px;
   border-radius: var(--radius-sm);
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   border: 1px solid var(--border);
   background: var(--white);
   color: var(--text);
-  transition: all .2s;
+  transition: transform 0.16s var(--ease-out), box-shadow 0.16s var(--ease-out), background 0.16s var(--ease-out);
   text-decoration: none;
   white-space: nowrap;
   touch-action: manipulation;
 }
 
-.btn:hover {
-  border-color: var(--green);
-  color: var(--green);
+.btn:active, .button:active {
+  transform: scale(0.97);
 }
 
-.btn-primary {
-  background: var(--green);
-  border-color: var(--green);
-  color: #fff;
+.btn:hover, .button:hover {
+  border-color: var(--forest);
+  color: var(--forest);
+  background: #f4faf6;
 }
 
-.btn-primary:hover {
-  background: var(--green-dark);
-  border-color: var(--green-dark);
-  color: #fff;
+.btn-primary, .button-primary {
+  background: var(--forest) !important;
+  border: 1px solid rgba(201, 154, 54, 0.55) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 13px rgba(7, 91, 66, 0.16);
+}
+
+.btn-primary:hover, .button-primary:hover {
+  background: var(--forest-deep) !important;
+  box-shadow: 0 8px 17px rgba(7, 91, 66, 0.25);
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.btn-ghost, .button-ghost {
+  color: var(--forest);
+  background: #ffffff;
+  border: 1px solid #cadbd3;
+}
+
+.btn-ghost:hover, .button-ghost:hover {
+  background: #f3faf6;
+  border-color: #9eccb5;
 }
 
 .btn-yellow {
-  background: var(--yellow);
-  border-color: var(--yellow);
-  color: var(--green-dark);
+  background: #fff6dc;
+  border-color: #f1dfaa;
+  color: #a47a15;
 }
 
 .btn-yellow:hover {
-  opacity: .9;
-  color: var(--green-dark);
+  background: #ffeed0;
+  color: #87620d;
 }
 
 .btn-danger {
-  background: var(--danger-light);
-  border-color: #fca9a9;
+  background: #fef2f2;
+  border-color: #fecaca;
   color: var(--danger);
 }
 
 .btn-danger:hover {
-  background: #fca9a9;
+  background: #fee2e2;
 }
 
 .btn-sm {
   padding: 6px 12px;
-  font-size: 11.5px;
+  font-size: 11px;
 }
 
 .btn-xs {
   padding: 4px 8px;
-  font-size: 10.5px;
+  font-size: 10px;
+}
+
+/* ── STATUS PILLS & BADGES ── */
+.status-pill {
+  border-radius: 20px;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+}
+
+.status-dot {
+  background: currentColor;
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+}
+
+.status-accepted {
+  color: #168362;
+  background: #e7f7ef;
+}
+
+.status-in-progress {
+  color: #a17705;
+  background: #fff5d9;
+}
+
+.status-needs-review {
+  color: #d56818;
+  background: #fff0e5;
+}
+
+.status-returned {
+  color: #df443d;
+  background: #fef2f2;
+}
+
+.table-badge {
+  color: var(--forest);
+  background: #edf7f1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 /* ── CONTEXT/DEADLINE BAR ── */

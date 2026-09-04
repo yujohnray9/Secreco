@@ -73,12 +73,20 @@ class ReportController extends Controller
                     );
                 }
 
+                $lockedTables = \App\Models\FormatTemplate::where('year', $year)
+                    ->where('is_locked', true)
+                    ->pluck('table_no')
+                    ->map(fn($t) => strtoupper($t))
+                    ->values()
+                    ->toArray();
+
                 return response()->json([
-                    'ok'     => true,
-                    'year'   => $year,
-                    'table'  => 'all',
-                    'data'   => $allResults,
-                    'tables' => $allResults,
+                    'ok'            => true,
+                    'year'          => $year,
+                    'table'         => 'all',
+                    'data'          => $allResults,
+                    'tables'        => $allResults,
+                    'locked_tables' => $lockedTables,
                 ]);
             }
 
@@ -109,11 +117,19 @@ class ReportController extends Controller
                 $statusPriority
             );
 
+            $lockedTables = \App\Models\FormatTemplate::where('year', $year)
+                ->where('is_locked', true)
+                ->pluck('table_no')
+                ->map(fn($t) => strtoupper($t))
+                ->values()
+                ->toArray();
+
             return response()->json([
-                'ok'    => true,
-                'year'  => $year,
-                'table' => $table,
-                'data'  => $result,
+                'ok'            => true,
+                'year'          => $year,
+                'table'         => $table,
+                'data'          => $result,
+                'locked_tables' => $lockedTables,
             ]);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('ReportController getConsolidated error: ' . $e->getMessage(), [

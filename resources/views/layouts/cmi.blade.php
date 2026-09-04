@@ -4,12 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SecReCo — CMI Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/assets/css/pta/base.css?v=3"/>
-<link rel="stylesheet" href="/assets/css/pta/header.css?v=3"/>
-<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=4"/>
-<link rel="stylesheet" href="/assets/css/pta/modals.css?v=3"/>
-<link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=3"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/assets/css/pta/base.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/header.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/modals.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=20260903"/>
 @yield('styles')
 </head>
 <body>
@@ -17,7 +17,7 @@
 <!-- TOAST CONTAINER -->
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- FRESHCART GLOBAL CUSTOM CONFIRM / PROMPT MODAL -->
+<!-- GLOBAL CUSTOM CONFIRM / PROMPT MODAL -->
 <div class="modal-overlay" id="globalConfirmModal">
   <div class="modal-fc-box">
     <div class="modal-fc-icon-wrap type-green" id="gModalIconWrap">
@@ -34,58 +34,6 @@
     </div>
   </div>
 </div>
-
-<!-- ═══ HEADER ═══ -->
-<header class="app-header">
-  <div class="hdr-left-group">
-    <button class="hdr-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu" title="Menu">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
-      </svg>
-    </button>
-
-    <!-- Title & Subtitle -->
-    <div class="hdr-title-group">
-      <div class="hdr-page-title">CMI Representative Portal</div>
-      <div class="hdr-page-sub">{{ $userInst ? $userInst : 'Secure Reporting & Accomplishment System' }}</div>
-    </div>
-  </div>
-
-  <!-- Right Actions -->
-  <div class="hdr-right-actions">
-    <button class="notif-btn" onclick="window.location.href='/dashboard/cmi/notifications'" title="Notifications">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
-      <span class="notif-dot"></span>
-    </button>
-
-    @php
-      $photoUrl = Auth::user()?->profile_picture ?? $userPhoto;
-      if ($photoUrl) {
-          $photoUrl = ltrim($photoUrl, '/');
-          if (!str_starts_with($photoUrl, 'storage/') && !str_starts_with($photoUrl, 'assets/')) {
-              $photoUrl = 'storage/' . $photoUrl;
-          }
-          $photoUrl = '/' . $photoUrl;
-      } else {
-          $photoUrl = '/assets/img/default-avatar.svg';
-      }
-    @endphp
-    <div class="hdr-user-profile" onclick="window.location.href='/dashboard/cmi/profile'">
-      <img class="hdr-user-avatar" src="{{ $photoUrl }}" alt="avatar"/>
-      <div class="hdr-user-details">
-        <span class="hdr-user-name">{{ $userName }}</span>
-        <span class="hdr-user-email">CMI Rep</span>
-      </div>
-    </div>
-
-    <button class="signout-btn" onclick="confirmSignOut()" title="Sign Out">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
-  </div>
-</header>
 
 <script src="/assets/js/cmi/c_core.js?v=3"></script>
 <script src="/assets/js/cmi/upload_photo.js?v=3"></script>
@@ -206,22 +154,27 @@ function confirmSignOut() {
 })();
 </script>
 
-<!-- SIDEBAR BACKDROP FOR MOBILE -->
-<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
+<!-- ═══ FULL APP SHELL ═══ -->
+<div class="app-shell">
+  <!-- SIDEBAR BACKDROP FOR MOBILE -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
 
-<!-- ═══ BODY ═══ -->
-<div class="app-body">
+  <!-- ═══ SIDEBAR ═══ -->
   <aside class="sidebar">
     <div class="sb-header-wrap">
-      <div class="sb-brand" onclick="window.location.href='/dashboard/cmi/profile'" style="cursor:pointer">
-        <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="width:40px;height:40px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
+      <div class="sidebar-brand" onclick="window.location.href='/dashboard/cmi/profile'" style="cursor:pointer">
+        <div class="brand-mark">
+          <img src="/assets/img/logo26.png" alt="CVAARRD Logo" onerror="this.src='/assets/img/cvaarrd.png'"/>
+        </div>
         <div>
-          <div class="sb-brand-title">SecReCo</div>
-          <div class="sb-brand-sub">CVAARRD Consortium</div>
+          <strong>SecReCo</strong>
+          <span>{{ $userInst ? $userInst : 'CVAARRD Consortium' }}</span>
         </div>
       </div>
       <button class="sb-close-btn" onclick="closeMobileSidebar()" aria-label="Close Sidebar">&times;</button>
     </div>
+
+    <div class="sidebar-rule"></div>
 
     <div class="nav-section">
       <div class="nav-sec-label">Main</div>
@@ -249,18 +202,78 @@ function confirmSignOut() {
         <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
         My Profile
       </a>
-      <a href="#" onclick="confirmSignOut(); return false;" class="nav-item">
+      <a href="#" onclick="confirmSignOut(); return false;" class="nav-item logout">
         <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
         Logout
       </a>
     </div>
   </aside>
 
-  <div class="main-content" id="mainContent">
-    @yield('content')
+  <!-- ═══ MAIN AREA ═══ -->
+  <div class="main-area">
+    <!-- ═══ HEADER ═══ -->
+    <header class="app-header topbar">
+      <div class="hdr-left-group">
+        <button class="hdr-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu" title="Menu">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+
+        <!-- Title & Subtitle -->
+        <div class="hdr-title-group">
+          <div class="hdr-page-title">CMI Representative Portal</div>
+          <div class="hdr-page-sub">{{ $userInst ? $userInst : 'Secure Reporting & Accomplishment System' }}</div>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="hdr-right-actions">
+        <button class="notif-btn" onclick="window.location.href='/dashboard/cmi/notifications'" title="Notifications">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="notif-dot"></span>
+        </button>
+
+        <div class="profile-divider"></div>
+
+        @php
+          $photoUrl = Auth::user()?->profile_picture ?? $userPhoto;
+          if ($photoUrl) {
+              $photoUrl = ltrim($photoUrl, '/');
+              if (!str_starts_with($photoUrl, 'storage/') && !str_starts_with($photoUrl, 'assets/')) {
+                  $photoUrl = 'storage/' . $photoUrl;
+              }
+              $photoUrl = '/' . $photoUrl;
+          } else {
+              $photoUrl = '/assets/img/default-avatar.svg';
+          }
+        @endphp
+        <div class="hdr-user-profile" onclick="window.location.href='/dashboard/cmi/profile'">
+          <div class="hdr-user-avatar">
+            <img src="{{ $photoUrl }}" alt="avatar" onerror="this.src='/assets/img/default-avatar.svg'"/>
+          </div>
+          <div class="hdr-user-details">
+            <span class="hdr-user-name">{{ $userName }}</span>
+            <span class="hdr-user-email">CMI Rep</span>
+          </div>
+        </div>
+
+        <button class="signout-btn" onclick="confirmSignOut()" title="Sign Out">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content page-content" id="mainContent">
+      @yield('content')
+    </main>
   </div>
 </div>
 
+<script src="/assets/js/session-timeout.js?v=3"></script>
 @yield('scripts')
 </body>
 </html>

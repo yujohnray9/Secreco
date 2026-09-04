@@ -134,6 +134,18 @@ class TableController extends Controller
         }
         $tableNo = $canonicalMap[strtoupper($tableNo)] ?? $tableNo;
 
+        // Check if table is locked for CMI
+        $ft = \App\Models\FormatTemplate::where('year', $reportingYear)->where('table_no', $tableNo)->first();
+        if ($ft && $ft->is_locked) {
+            $currentUserRole = Auth::user()?->role;
+            if ($currentUserRole !== 'pta') {
+                return response()->json([
+                    'success' => false,
+                    'error'   => "Table {$tableNo} is locked for CMI. Only PTA administrators can input or fill out this table.",
+                ], 403);
+            }
+        }
+
         $status = $requested;
         if ($status === 'draft' && !$this->hasContent($meta, $rows)) {
             $status = 'not-started';
@@ -326,7 +338,7 @@ class TableController extends Controller
         $templates = FormatTemplate::where('year', $reportingYear)
             ->orderBy('sort_order', 'asc')
             ->orderBy('table_no', 'asc')
-            ->get(['id', 'year', 'table_no', 'title', 'section', 'is_required', 'columns_json', 'sort_order', 'status']);
+            ->get(['id', 'year', 'table_no', 'title', 'section', 'is_required', 'is_locked', 'columns_json', 'sort_order', 'status']);
 
         return response()->json([
             'statuses'         => $statuses,

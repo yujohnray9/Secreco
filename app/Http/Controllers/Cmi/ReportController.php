@@ -18,12 +18,14 @@ class ReportController extends Controller
     {
         $userId        = Auth::id() ?? session('user_id');
         $reportingYear = (int) ($request->input('year') ?? $request->input('reporting_year') ?? date('Y'));
-        $fmtTables     = \App\Models\FormatTemplate::where('year', $reportingYear)->orderBy('sort_order', 'asc')->pluck('table_no')->toArray();
-        $allTables     = !empty($fmtTables) ? $fmtTables : config('secreco.all_tables', [
+        $defaultTables = config('secreco.all_tables', [
             'T1','T2a','T2b','T3','T4','T5','T6','T7a','T7b',
             'T8a','T8b','T9','T10','T11','T12','T13','T14','T15',
             'T16','T17','T18','T19','T20a','T20b'
         ]);
+        $fmtTables  = \App\Models\FormatTemplate::where('year', $reportingYear)->orderBy('sort_order', 'asc')->pluck('table_no')->toArray();
+        $userTables = ReportTable::where('user_id', $userId)->where('reporting_year', $reportingYear)->pluck('table_no')->toArray();
+        $allTables  = array_values(array_unique(array_merge($defaultTables, $fmtTables, $userTables)));
 
         // Update tables with content or draft status for this user and year to 'submitted' on submit (preserving each table's own updated_at)
         ReportTable::where('user_id', $userId)

@@ -171,10 +171,9 @@ function buildExportHTML({ forPreview, logos = {} }) {
     .replace(/src="\//g, `src="${origin}/`)
     .replace(/font-family\s*:[^;"']*/gi, 'font-family:Calibri,Arial,sans-serif')
     .replace(/color\s*:\s*#(?:1b4d2e|3a7d44|1b5e20|2e7d32|388e3c)[^;"']*/gi, 'color:#1a1a1a')
-    .replace(/<details/gi, '<div class="rpt-detail-block-open"')
-    .replace(/<\/details>/gi, '</div>')
-    .replace(/<summary([^>]*)>/gi, '<div style="font-weight:bold;font-size:11pt;color:#1b4d2e;margin:14px 0 8px;"$1>')
-    .replace(/<\/summary>/gi, '</div>');
+    .replace(/<summary[^>]*>.*?<\/summary>/gis, '')
+    .replace(/<details[^>]*>/gi, '')
+    .replace(/<\/details>/gi, '');
 
   const generatedAt = new Date().toLocaleString('en-PH', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -464,48 +463,21 @@ async function exportToDOCX(logos = {}) {
       }
     });
 
-    // 2. Process drilldown detail blocks & sub-tables
-    const detailBlocks = [...tableContainer.querySelectorAll('.rpt-detail-block, details')];
-    if (detailBlocks.length > 0) {
-      detailBlocks.forEach(block => {
-        const summaryEl = block.querySelector('summary');
-        const summaryTxt = cellText(summaryEl);
-        if (summaryTxt) {
-          mainDocxElements.push(new Paragraph({
-            children: [new TextRun({ text: summaryTxt, bold: true, size: 20, color: GREEN, font: { name: 'Calibri' } })],
-            spacing: { before: 200, after: 100 },
-          }));
-        }
-
-        const subTables = [...block.querySelectorAll('table')];
-        subTables.forEach(st => {
-          let prevTitle = '';
-          let prev = st.previousElementSibling;
-          while (prev) {
-            if (prev.tagName === 'DIV' || prev.tagName === 'H4' || prev.tagName === 'H5' || prev.tagName === 'P') {
-              const text = cellText(prev);
-              if (text && text !== summaryTxt) {
-                prevTitle = text;
-                break;
-              }
+    // 2. Only process drilldown sub-tables if NO main consolidated table exists
+    if (summaryTables.length === 0) {
+      const detailBlocks = [...tableContainer.querySelectorAll('.rpt-detail-block, details')];
+      if (detailBlocks.length > 0) {
+        detailBlocks.forEach(block => {
+          const subTables = [...block.querySelectorAll('table')];
+          subTables.forEach(st => {
+            const docxST = buildDocxTableFromDOM(st);
+            if (docxST) {
+              mainDocxElements.push(docxST);
+              mainDocxElements.push(new Paragraph({ children: [], spacing: { after: 140 } }));
             }
-            prev = prev.previousElementSibling;
-          }
-
-          if (prevTitle) {
-            mainDocxElements.push(new Paragraph({
-              children: [new TextRun({ text: prevTitle, bold: true, size: 18, color: BLACK, font: { name: 'Calibri' } })],
-              spacing: { before: 140, after: 60 },
-            }));
-          }
-
-          const docxST = buildDocxTableFromDOM(st);
-          if (docxST) {
-            mainDocxElements.push(docxST);
-            mainDocxElements.push(new Paragraph({ children: [], spacing: { after: 140 } }));
-          }
+          });
         });
-      });
+      }
     }
   }
 

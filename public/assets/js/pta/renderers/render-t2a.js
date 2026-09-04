@@ -24,9 +24,6 @@ function renderT2a(data) {
     const s = cmi.table_status;
 
     if (s === 'done' || s === 'submitted' || s === 'accepted') {
-      const meta  = cmi.meta || {};
-      const date  = meta.date  || '—';
-      const venue = meta.venue || '—';
       const rows  = cmi.rows  ?? [];
 
       // Group rows by category, preserving order
@@ -42,8 +39,6 @@ function renderT2a(data) {
         <tr>
           <td colspan="6" style="background:#ecfdf5;font-weight:700;font-size:13.5px;padding:10px 14px;color:#166534;border-bottom:2px solid #a7f3d0;text-align:center;">
             <strong>${esc(cmi.institution)}</strong>
-            &nbsp;·&nbsp; Date: <strong>${esc(date)}</strong>
-            &nbsp;·&nbsp; Venue: <strong>${esc(venue)}</strong>
           </td>
         </tr>
         <tr style="background:#10b981;color:#fff;">

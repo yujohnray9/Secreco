@@ -221,6 +221,7 @@
     openDocs,
     _renumber: renumber,
   };
+  window.T20b = window.T20B;
 
   (window.CMI = window.CMI || {});
   function register() {

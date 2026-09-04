@@ -22,21 +22,46 @@ class DashboardController extends Controller
             ->orderBy('table_no', 'asc')
             ->get();
 
-        if ($templates->isNotEmpty()) {
-            $sections = [];
-            $allTableKeys = [];
-            foreach ($templates as $t) {
-                $sec = trim($t->section) ?: 'General';
-                $sections[$sec][] = $t->table_no;
-                $allTableKeys[] = $t->table_no;
+        $baseSections = config('secreco.sections', [
+            'R&D Mgt. & Coord.'       => ['T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b'],
+            'Strategic R&D'           => ['T8a', 'T8b', 'T9'],
+            'Results Utilization'     => ['T10', 'T11', 'T12', 'T13'],
+            'Capability & Governance' => ['T14', 'T15', 'T16', 'T17', 'T18', 'T19'],
+            'Policy Analysis'         => ['T20a', 'T20b'],
+        ]);
+
+        $sections = $baseSections;
+        $allTableKeys = config('secreco.all_tables', [
+            'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
+            'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
+            'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b',
+        ]);
+
+        foreach ($templates as $t) {
+            $tNo = $t->table_no;
+            if (!in_array($tNo, $allTableKeys, true)) {
+                $allTableKeys[] = $tNo;
             }
-        } else {
-            $sections = config('secreco.sections');
-            $allTableKeys = config('secreco.all_tables', [
-                'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
-                'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
-                'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b',
-            ]);
+            $sec = trim($t->section) ?: 'General';
+            $matchedSec = null;
+            foreach (array_keys($sections) as $sKey) {
+                if (strcasecmp($sKey, $sec) === 0) {
+                    $matchedSec = $sKey;
+                    break;
+                }
+            }
+            if ($matchedSec) {
+                if (!in_array($tNo, $sections[$matchedSec], true)) {
+                    $sections[$matchedSec][] = $tNo;
+                }
+            } else {
+                if (!isset($sections[$sec])) {
+                    $sections[$sec] = [];
+                }
+                if (!in_array($tNo, $sections[$sec], true)) {
+                    $sections[$sec][] = $tNo;
+                }
+            }
         }
         $tableLabels = config('secreco.table_labels');
         $totalRequired = count($allTableKeys);

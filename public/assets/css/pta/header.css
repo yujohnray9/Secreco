@@ -1,51 +1,53 @@
 /* ════════════════════════════════════════════
-   HEADER — FreshCart / SecReCo Topbar
+   HEADER / TOPBAR — Manus / SecReCo Elegant Topbar
 ════════════════════════════════════════════ */
 
-.app-header {
-  background: #ffffff;
-  border-bottom: 1px solid #eae3d6;
-  padding: 14px 28px;
-  height: 72px;
+.app-header,
+.topbar {
+  background: #ffffffde;
+  border-bottom: 1px solid #e6ebe7;
+  padding: 0 30px 0 28px;
+  height: 78px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  z-index: 100;
+  z-index: 15;
   gap: 16px;
   width: 100%;
   box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
 
 /* ── Left container for menu button + title ── */
 .hdr-left-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
 }
 
 /* ── Mobile Hamburger Menu Button ── */
 .hdr-menu-btn {
-  display: none;
+  display: none !important;
   align-items: center;
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 10px;
-  border: 1px solid #eae3d6;
-  background: #ffffff;
-  color: #374151;
+  border-radius: 9px;
+  border: 1px solid #c9e6d7;
+  background: #e4f4ed;
+  color: #075b42;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
-.hdr-menu-btn:hover,
-.hdr-menu-btn:focus-visible {
-  background: #ecfdf5;
-  border-color: #10b981;
-  color: #059669;
+.hdr-menu-btn:hover {
+  background: #d4f0e2;
 }
 
 /* ── Left: Page Title & Description ── */
@@ -55,165 +57,168 @@
   min-width: 0;
 }
 
-.hdr-page-title {
-  font-family: 'Poppins', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #111827;
-  line-height: 1.2;
+.hdr-page-title,
+.topbar-title strong {
+  font-family: 'Manrope', sans-serif !important;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: #12372e;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
 }
 
-.hdr-page-sub {
-  font-size: 11.5px;
-  color: #9ca3af;
-  margin-top: 2px;
+.hdr-page-sub,
+.topbar-title span {
+  font-size: 12px;
+  color: #74807c;
+  margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* ── Center: Search Input Pill ── */
-.hdr-search-wrap {
-  flex: 1;
-  max-width: 400px;
-  position: relative;
-  margin: 0 16px;
-}
-
-.hdr-search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  color: #9ca3af;
-  pointer-events: none;
-}
-
-.hdr-search-input {
-  width: 100%;
-  padding: 8px 16px 8px 38px;
-  border-radius: 30px;
-  background: #faf7f2;
-  border: 1px solid #eae3d6;
-  font-size: 13px;
-  color: #111827;
-  outline: none;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.15s ease;
-}
-
-.hdr-search-input:focus {
-  background: #ffffff;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-.hdr-search-input::placeholder {
-  color: #9ca3af;
+  font-weight: 400;
+  display: block;
 }
 
 /* ── Right Actions ── */
-.hdr-right-actions {
+.hdr-right-actions,
+.topbar-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   flex-shrink: 0;
 }
 
-/* Notification Bell Circle */
-.notif-btn {
+/* Notification Bell */
+.notif-btn,
+.notification {
   position: relative;
   width: 38px;
   height: 38px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid #eae3d6;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  color: #4b5563;
-  transition: all 0.15s ease;
+  color: #16352d;
+  transition: all 0.18s ease;
   flex-shrink: 0;
 }
 
-.notif-btn:hover {
-  background: #ecfdf5;
-  border-color: #10b981;
-  color: #059669;
+.notif-btn:hover,
+.notification:hover {
+  background: #e4f4ed;
+  color: #075b42;
 }
 
-.notif-dot {
+.notif-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.notif-dot,
+.notification em {
   position: absolute;
-  top: -3px;
-  right: -5px;
-  min-width: 18px;
-  height: 18px;
+  top: 1px;
+  right: 1px;
+  min-width: 17px;
+  height: 17px;
   padding: 0 4px;
-  background: #ef4444;
+  background: #df443d;
   color: #ffffff;
+  font-family: 'DM Sans', sans-serif;
   font-size: 10px;
   font-weight: 700;
-  border-radius: 10px;
+  border-radius: 20px;
   border: 2px solid #ffffff;
   display: none;
   align-items: center;
   justify-content: center;
   line-height: 1;
+  font-style: normal;
+}
+
+/* Divider between notif and profile */
+.profile-divider {
+  background: #e6ebe7;
+  width: 1px;
+  height: 31px;
+  display: block;
 }
 
 /* User Profile Badge */
-.hdr-user-profile {
+.hdr-user-profile,
+.profile-button {
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  padding: 3px 8px 3px 3px;
+  padding: 4px 10px 4px 4px;
   border-radius: 30px;
-  transition: background 0.15s ease;
+  transition: all 0.18s ease;
+  background: transparent;
   border: 1px solid transparent;
 }
 
-.hdr-user-profile:hover {
-  background: #f9fafb;
-  border-color: #eae3d6;
+.hdr-user-profile:hover,
+.profile-button:hover {
+  background: #f4faf6;
+  border-color: #dbebe2;
 }
 
-.hdr-user-avatar {
-  width: 36px;
-  height: 36px;
+.hdr-user-avatar,
+.avatar {
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #10b981;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  background: #e4f4ed;
+  border: 1px solid #b7dccb;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
-.hdr-user-details {
-  display: flex;
-  flex-direction: column;
+.hdr-user-avatar img,
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.hdr-user-name {
+.hdr-user-details,
+.profile-copy {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 1px;
+}
+
+.hdr-user-name,
+.profile-copy strong {
   font-size: 13px;
   font-weight: 700;
-  color: #111827;
+  color: #16352d;
   line-height: 1.2;
   white-space: nowrap;
-  max-width: 120px;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.hdr-user-email {
-  font-size: 10.5px;
-  color: #9ca3af;
+.hdr-user-email,
+.profile-copy small {
+  font-size: 11px;
+  font-weight: 500;
+  color: #74807c;
   line-height: 1.2;
 }
 
@@ -222,21 +227,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid #eae3d6;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e6ebe7;
   background: #ffffff;
-  color: #6b7280;
+  color: #74807c;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
   flex-shrink: 0;
 }
 
 .signout-btn:hover {
   background: #fef2f2;
-  border-color: #fca5a5;
-  color: #ef4444;
+  border-color: #fecaca;
+  color: #df443d;
+  transform: translateY(-1px);
 }
 
 .signout-btn svg {
@@ -245,67 +251,35 @@
   stroke: currentColor;
   stroke-width: 2;
   fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* Backward compatibility */
-.hdr-left, .logo-circle, .brand-name, .brand-sub, .hdr-center, .hdr-meta, .hdr-cy {
-  display: flex;
 }
 
 /* ════════════════════════════════════════════
-   RESPONSIVE MEDIA QUERIES
+   RESPONSIVE HEADER
 ════════════════════════════════════════════ */
 @media (max-width: 992px) {
-  .app-header {
-    padding: 10px 16px;
-    height: 64px;
-    gap: 12px;
+  .app-header,
+  .topbar {
+    padding: 0 18px;
+    height: 68px;
   }
-  .hdr-menu-btn {
-    display: flex;
-  }
-  .hdr-search-wrap {
-    display: none;
-  }
-  .hdr-page-title {
-    font-size: 16px;
-  }
-  .hdr-page-sub {
-    font-size: 11px;
-  }
-}
 
-@media (max-width: 640px) {
-  .app-header {
-    padding: 8px 12px;
-    height: 58px;
-    gap: 8px;
+  .hdr-menu-btn {
+    display: flex !important;
   }
-  .hdr-page-title {
-    font-size: 14.5px;
-    max-width: 140px;
+
+  .hdr-page-title,
+  .topbar-title strong {
+    font-size: 17px;
   }
-  .hdr-page-sub {
+
+  .hdr-page-sub,
+  .topbar-title span {
     display: none;
   }
-  .hdr-right-actions {
-    gap: 6px;
-  }
-  .notif-btn, .signout-btn {
-    width: 34px;
-    height: 34px;
-  }
-  .hdr-user-profile {
-    padding: 0;
-    border: none;
-  }
-  .hdr-user-avatar {
-    width: 32px;
-    height: 32px;
-  }
-  .hdr-user-details {
+
+  .profile-divider,
+  .hdr-user-details,
+  .profile-copy {
     display: none;
   }
 }

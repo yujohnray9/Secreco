@@ -69,11 +69,15 @@ async function loadDrafts() {
     const json = await res.json();
 
     if (json.statuses) {
-      const drafts = Object.entries(json.statuses).filter(([t, st]) => st === 'draft');
+      const canonTables = Object.keys(TABLE_TITLES);
+      const drafts = canonTables
+        .map(tNo => ({ tableNo: tNo, status: json.statuses[tNo] || json.statuses[tNo.toUpperCase()] || json.statuses[tNo.toLowerCase()] || '' }))
+        .filter(item => item.status === 'draft');
+
       if (drafts.length === 0) {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:32px;color:#6b7280">No draft tables found for CY ' + year + '.<br><span style="font-size:12px;color:#9ca3af">Saved draft tables will appear here.</span></td></tr>';
       } else {
-        tbody.innerHTML = drafts.map(([tableNo, st]) => `
+        tbody.innerHTML = drafts.map(({ tableNo }) => `
           <tr>
             <td><strong>Table ${tableNo}</strong> — ${TABLE_TITLES[tableNo] || ''}</td>
             <td><span class="badge badge-orange" style="background:#fff7ed;color:#d97706;padding:4px 10px;border-radius:12px;font-weight:600;font-size:11.5px">⏳ DRAFT</span></td>

@@ -12,8 +12,10 @@ class FormatTemplate extends Model
         'year',
         'table_no',
         'title',
+        'subtitle',
         'section',
         'is_required',
+        'is_locked',
         'columns_json',
         'sort_order',
         'status',
@@ -24,6 +26,7 @@ class FormatTemplate extends Model
 
     protected $casts = [
         'is_required'  => 'boolean',
+        'is_locked'    => 'boolean',
         'columns_json' => 'array',
         'created_at'   => 'datetime',
         'updated_at'   => 'datetime',

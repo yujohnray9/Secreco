@@ -23,11 +23,11 @@ window.CMI_TABLES = (function () {
   const SECTIONS = [
     {
       label: 'R&D Mgt. & Coord.',
-      tables: ['T1', 'T2A', 'T2B', 'T3', 'T4', 'T5', 'T6', 'T7A', 'T7B'],
+      tables: ['T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b'],
     },
     {
       label: 'Strategic R&D',
-      tables: ['T8A', 'T8B', 'T9'],
+      tables: ['T8a', 'T8b', 'T9'],
     },
     {
       label: 'Results Utilization',
@@ -39,7 +39,7 @@ window.CMI_TABLES = (function () {
     },
     {
       label: 'Policy Analysis',
-      tables: ['T20A', 'T20B'],
+      tables: ['T20a', 'T20b'],
     },
   ];
 
@@ -70,10 +70,6 @@ window.CMI_TABLES = (function () {
     /* ───────────────────────── T2A ───────────────────────── */
     T2A: {
       title: 'Table 2a. Summary of Regional Symposium on R&D Highlights',
-      meta: [
-        { key: 'date',  label: 'Date' },
-        { key: 'venue', label: 'Venue' },
-      ],
       columns: [
         { key: 'title',   label: 'Title',                  type: 'text', width: 220 },
         { key: 'agency',  label: 'Implementing Agency(ies)', type: 'text', width: 160 },
@@ -399,11 +395,23 @@ window.CMI_TABLES = (function () {
 
   };
 
+  // Add lowercase/canonical key aliases for TABLES
+  ['T2A', 'T2B', 'T7A', 'T7B', 'T8A', 'T8B', 'T20A', 'T20B'].forEach(k => {
+    const canon = k.charAt(0) + k.slice(1).toLowerCase();
+    if (TABLES[k] && !TABLES[canon]) {
+      TABLES[canon] = TABLES[k];
+    }
+  });
+
   // Flat ordered list with section assignment, used for the sidebar
   function buildNavData() {
     return SECTIONS.map(s => ({
       label: s.label,
-      tables: s.tables.map(no => ({ no, title: TABLES[no].title.split('.')[0] + '. ' + (TABLES[no].title.split('. ')[1] || '').split(',')[0] }))
+      tables: s.tables.map(no => {
+        const tbl = TABLES[no] || TABLES[no.toUpperCase()] || TABLES[no.toLowerCase()];
+        const title = tbl ? tbl.title : no;
+        return { no, title: title.split('.')[0] + '. ' + (title.split('. ')[1] || '').split(',')[0] };
+      })
     }));
   }
 
@@ -411,7 +419,7 @@ window.CMI_TABLES = (function () {
     SECTIONS,
     TABLES,
     buildNavData,
-    getTable: (no) => TABLES[no],
+    getTable: (no) => TABLES[no] || TABLES[no?.toUpperCase()] || TABLES[no?.toLowerCase()],
     allTableNos: () => Object.keys(TABLES),
   };
 

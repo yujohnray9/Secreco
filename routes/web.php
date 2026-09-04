@@ -25,3 +25,11 @@ Route::prefix('dashboard')->group(function () {
     Route::get('/pta/{page?}', [PtaPageController::class, 'show'])->middleware(['auth.custom', 'role:pta']);
     Route::get('/viewer/{page?}', [ViewerPageController::class, 'show'])->middleware(['auth.custom', 'role:viewer']);
 });
+
+Route::post('/api/session-keepalive', function () {
+    if (Auth::check()) {
+        session()->put('last_activity', now()->timestamp);
+        return response()->json(['ok' => true, 'time' => now()->toDateTimeString()]);
+    }
+    return response()->json(['ok' => false, 'error' => 'Unauthenticated'], 401);
+});

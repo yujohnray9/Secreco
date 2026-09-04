@@ -192,14 +192,20 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+  window.IS_PTA_USER = {{ Auth::user()?->role === 'pta' ? 'true' : 'false' }};
+  window.CURRENT_USER_ROLE = '{{ Auth::user()?->role }}';
+  window.TARGET_CMI_USER_ID = {{ (int) request('cmi_user_id', 0) }};
+</script>
+
 <!-- Core engine first, then per-table scripts -->
-<script src="/assets/js/cmi/table-utils.js?v=5"></script>
-<script src="/assets/js/cmi/fillup-core.js?v=5"></script>
-<script src="/assets/js/cmi/fillup-docs-modal.js?v=5"></script>
+<script src="/assets/js/cmi/table-utils.js?v=8"></script>
+<script src="/assets/js/cmi/fillup-core.js?v=11"></script>
+<script src="/assets/js/cmi/fillup-docs-modal.js?v=7"></script>
 
 <!-- Section 1: R&D Mgt. & Coord. -->
 <script src="/assets/js/cmi/tables/t1_aihrs.js?v=3"></script>
-<script src="/assets/js/cmi/tables/t2a_rsrdh_summary.js?v=3"></script>
+<script src="/assets/js/cmi/tables/t2a_rsrdh_summary.js?v=4"></script>
 <script src="/assets/js/cmi/tables/t2b_rsrdh_participants.js?v=3"></script>
 <script src="/assets/js/cmi/tables/t3_projects_monitored.js?v=3"></script>
 <script src="/assets/js/cmi/tables/t4_resources_shared.js?v=3"></script>

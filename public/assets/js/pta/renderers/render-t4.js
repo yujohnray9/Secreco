@@ -1,7 +1,9 @@
 /**
  * render-t4.js — Report renderer for Table 4: Resources Shared
- * Columns: Donor/Source | Activity/Project | Amount Shared | Remarks
- * Shows per-institution totals + grand total of Amount Shared.
+ * Exactly 2 tables:
+ * 1. Summary Table: Institution | No. of Entries | Total Amount Shared | GRAND TOTAL
+ * 2. Merged Detail Table: # | Donor / Source | Activity / Project | Amount Shared | Remarks
+ * Continuous numbering (1, 2, 3...) across all institutions with no institution labels in between.
  */
 
 (function () {
@@ -13,97 +15,107 @@
       return;
     }
 
-    // ── Summary table ──
+    // ── Calculate summary statistics & collect all detail rows ──
+    let grandTotal = 0;
+    let totalEntries = 0;
+    const detailRows = [];
+
+    const summaryList = allRows.map(inst => {
+      const rows = (inst.rows || []).filter(r => (r.donor && r.donor.trim()) || (r.activity && r.activity.trim()) || (r.amount && String(r.amount).trim()));
+      let instTotal = 0;
+
+      rows.forEach(r => {
+        const amt = parseFloat(String(r.amount || '0').replace(/[^0-9.]/g, '')) || 0;
+        instTotal += amt;
+        detailRows.push({
+          donor: r.donor || '—',
+          activity: r.activity || '—',
+          amount: amt,
+          rawAmount: r.amount,
+          remarks: r.remarks || '—',
+        });
+      });
+
+      grandTotal += instTotal;
+      totalEntries += rows.length;
+
+      return {
+        institution: inst.institution || '—',
+        count: rows.length,
+        total: instTotal,
+      };
+    });
+
+    // ── Table 1: Summary Table ──
     let html = `
-      <table class="rpt-table merged">
+      <table class="rpt-table summary-table" style="width:100%;margin-bottom:28px">
         <thead>
           <tr>
-            <th style="width:200px">Institution</th>
-            <th style="width:80px">No. of Entries</th>
-            <th style="width:140px">Total Amount Shared</th>
+            <th>Institution</th>
+            <th style="width:160px;text-align:center">No. of Entries</th>
+            <th style="width:200px;text-align:right">Total Amount Shared</th>
           </tr>
         </thead>
         <tbody>`;
 
-    let grandTotal = 0;
-
-    allRows.forEach(inst => {
-      const rows  = (inst.rows || []).filter(r => r.donor?.trim() || r.activity?.trim());
-      const total = rows.reduce((sum, r) => sum + (parseFloat(String(r.amount).replace(/[^0-9.]/g,'')) || 0), 0);
-      grandTotal += total;
-
+    summaryList.forEach(s => {
       html += `
         <tr>
-          <td>${esc(inst.institution || '—')}</td>
-          <td style="text-align:center">${rows.length || '—'}</td>
-          <td style="text-align:right;font-weight:700;color:var(--green)">${total > 0 ? fmtAmt(total) : '—'}</td>
+          <td>${esc(s.institution)}</td>
+          <td style="text-align:center">${s.count > 0 ? s.count : '—'}</td>
+          <td style="text-align:right">${s.total > 0 ? fmtAmt(s.total) : '—'}</td>
         </tr>`;
     });
 
     html += `
         </tbody>
         <tfoot>
-          <tr style="font-weight:700;background:var(--bg-soft)">
-            <td colspan="2" style="text-align:right;padding-right:12px">GRAND TOTAL</td>
-            <td style="text-align:right;color:var(--green)">${grandTotal > 0 ? fmtAmt(grandTotal) : '—'}</td>
+          <tr style="font-weight:700;background:var(--bg-soft,#f8fafc)">
+            <td style="text-align:right;padding-right:16px">GRAND TOTAL</td>
+            <td style="text-align:center;font-weight:700">${totalEntries > 0 ? totalEntries : '—'}</td>
+            <td style="text-align:right;color:var(--green,#075b42);font-weight:700">${grandTotal > 0 ? fmtAmt(grandTotal) : '₱ 0.00'}</td>
           </tr>
         </tfoot>
       </table>`;
 
-    // ── Drill-down ──
-    html += '<div class="rpt-drilldown">';
-    allRows.forEach(inst => {
-      const rows = (inst.rows || []).filter(r => r.donor?.trim() || r.activity?.trim());
-      if (!rows.length) return;
-      html += `<details class="rpt-detail-block">
-        <summary><strong>${esc(inst.institution || '—')}</strong> — ${rows.length} entry(ies)</summary>
-        <table class="rpt-table merged" style="margin-top:8px">
-          <thead><tr>
-            <th style="width:36px">#</th>
-            <th style="width:180px">Donor / Source</th>
+    // ── Table 2: Merged Detail Table (continuous numbering, no institution label) ──
+    html += `
+      <table class="rpt-table detail-table" style="width:100%">
+        <thead>
+          <tr>
+            <th style="width:40px;text-align:center">#</th>
+            <th style="width:200px">Donor / Source</th>
             <th>Activity / Project</th>
-            <th style="width:140px">Amount Shared</th>
-            <th style="width:160px">Remarks</th>
-          </tr></thead>
-          <tbody>`;
-      let instTotal = 0;
-      rows.forEach((r, i) => {
-        const amt = parseFloat(String(r.amount).replace(/[^0-9.]/g,'')) || 0;
-        instTotal += amt;
-        html += `<tr>
-          <td style="text-align:center">${i + 1}.</td>
-          <td>${esc(r.donor || '—')}</td>
-          <td>${esc(r.activity || '—')}</td>
-          <td style="text-align:right">${esc(r.amount || '—')}</td>
-          <td>${esc(r.remarks || '')}</td>
-        </tr>`;
+            <th style="width:160px;text-align:right">Amount Shared</th>
+            <th style="width:170px">Remarks</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    if (detailRows.length === 0) {
+      html += `<tr><td colspan="5" style="text-align:center;padding:30px;color:#9ca3af">No entries recorded.</td></tr>`;
+    } else {
+      detailRows.forEach((r, idx) => {
+        html += `
+          <tr>
+            <td style="text-align:center">${idx + 1}.</td>
+            <td>${esc(r.donor)}</td>
+            <td>${esc(r.activity)}</td>
+            <td style="text-align:right">${r.amount > 0 ? fmtAmt(r.amount) : esc(r.rawAmount || '—')}</td>
+            <td>${esc(r.remarks)}</td>
+          </tr>`;
       });
-      html += `<tr style="font-weight:700;background:var(--bg-soft)">
-        <td colspan="3" style="text-align:right;padding-right:12px">Total</td>
-        <td style="text-align:right;color:var(--green)">${instTotal > 0 ? fmtAmt(instTotal) : '—'}</td>
-        <td></td>
-      </tr>`;
-      html += '</tbody></table></details>';
-    });
-    html += '</div>';
+    }
+
+    html += `
+        </tbody>
+      </table>`;
 
     container.innerHTML = html;
   };
 
   function fmtAmt(n) {
     return '₱ ' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-  function statusBadge(s) {
-    const map = {
-      accepted:      ['✅', '#ecfdf5', '#0d9488', 'Accepted'],
-      submitted:     ['📤', '#e6f4ea', 'var(--green,#1e7e34)', 'Submitted'],
-      done:          ['✅', '#e6f4ea', 'var(--green,#1e7e34)', 'Done'],
-      returned:      ['↩️', '#f5f3ff', '#7c3aed', 'Returned'],
-      draft:         ['✏️', '#fff4e5', '#b06b00', 'Draft'],
-      'not-started': ['—',  '#f1f1f1', '#777', 'Not Started'],
-    };
-    const [icon, bg, fg, label] = map[s] || map['not-started'];
-    return `<span style="background:${bg};color:${fg};padding:1px 7px;border-radius:8px;font-size:11px;font-weight:600">${icon} ${label}</span>`;
   }
   function esc(s) {
     return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

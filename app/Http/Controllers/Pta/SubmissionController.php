@@ -25,13 +25,36 @@ class SubmissionController extends Controller
             ->whereIn('status', ['active', 'approved', 'pending'])
             ->get();
 
-        $formatTables = \App\Models\FormatTemplate::where('year', $year)
+        $tableSectionMap = [];
+        $tableTitleMap   = [];
+        $formatTemplateRows = \App\Models\FormatTemplate::where('year', $year)
             ->orderBy('sort_order', 'asc')
-            ->pluck('table_no')
-            ->toArray();
+            ->get();
+        foreach ($formatTemplateRows as $ft) {
+            $tableSectionMap[$ft->table_no] = $ft->section;
+            $tableSectionMap[strtoupper($ft->table_no)] = $ft->section;
+            $tableSectionMap[strtolower($ft->table_no)] = $ft->section;
+            $tableTitleMap[$ft->table_no] = $ft->title;
+            $tableTitleMap[strtoupper($ft->table_no)] = $ft->title;
+            $tableTitleMap[strtolower($ft->table_no)] = $ft->title;
+        }
 
-        if (empty($formatTables)) {
-            $formatTables = ['T1','T2a','T2b','T3','T4','T5','T6','T7a','T7b','T8a','T8b','T9','T10','T11','T12','T13','T14','T15','T16','T17','T18','T19','T20a','T20b'];
+        $secDefs = config('secreco.sections', [
+            'R&D Mgt. & Coord.'       => ['T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b'],
+            'Strategic R&D'           => ['T8a', 'T8b', 'T9'],
+            'Results Utilization'     => ['T10', 'T11', 'T12', 'T13'],
+            'Capability & Governance' => ['T14', 'T15', 'T16', 'T17', 'T18', 'T19'],
+            'Policy Analysis'         => ['T20a', 'T20b'],
+        ]);
+
+        foreach ($secDefs as $secName => $tList) {
+            foreach ($tList as $tKey) {
+                if (!isset($tableSectionMap[$tKey])) {
+                    $tableSectionMap[$tKey] = $secName;
+                    $tableSectionMap[strtoupper($tKey)] = $secName;
+                    $tableSectionMap[strtolower($tKey)] = $secName;
+                }
+            }
         }
 
         $tableRecords = ReportTable::where('reporting_year', $year)
@@ -44,6 +67,18 @@ class SubmissionController extends Controller
             $key = $tr->user_id . '_' . $tr->table_no;
             $tableMap[$key] = $tr;
         }
+
+        $defaultTables = config('secreco.all_tables', [
+            'T1','T2a','T2b','T3','T4','T5','T6','T7a','T7b',
+            'T8a','T8b','T9','T10','T11','T12','T13','T14','T15',
+            'T16','T17','T18','T19','T20a','T20b'
+        ]);
+
+        $formatTables = array_values(array_unique(array_merge(
+            $defaultTables,
+            $formatTemplateRows->pluck('table_no')->toArray(),
+            $tableRecords->pluck('table_no')->toArray()
+        )));
 
         $userIds = $cmiUsers->pluck('id')->toArray();
 
@@ -184,6 +219,8 @@ class SubmissionController extends Controller
                     'institution'         => $instName,
                     'encoder'             => $foundUser->name,
                     'table_no'            => $tNo,
+                    'section'             => $tableSectionMap[$tNo] ?? ($tableSectionMap[strtoupper($tNo)] ?? 'R&D Mgt. & Coord.'),
+                    'title'               => $tableTitleMap[$tNo] ?? ($tableTitleMap[strtoupper($tNo)] ?? ''),
                     'table_status'        => $st,
                     'submitted_at'        => $submittedAt,
                     'updated_at'          => $foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null,
@@ -209,7 +246,12 @@ class SubmissionController extends Controller
         $submissionId = (int) $request->input('submission_id', 0);
         $id           = (int) $request->input('id', 0);
         $cmiUserId    = (int) $request->input('cmi_user_id', 0);
-        $tableNo      = strtoupper(trim($request->input('table_no', '')));
+        $rawTable     = trim($request->input('table_no', ''));
+        $canonicalMap = [];
+        foreach (config('secreco.all_tables', []) as $stTable) {
+            $canonicalMap[strtoupper($stTable)] = $stTable;
+        }
+        $tableNo      = $canonicalMap[strtoupper($rawTable)] ?? $rawTable;
         $year         = (int) ($request->input('year') ?? date('Y'));
 
         $sub = null;
@@ -231,7 +273,8 @@ class SubmissionController extends Controller
         if ($cmiUserId > 0) {
             $q = ReportTable::where('user_id', $cmiUserId)->where('reporting_year', $year);
             if ($tableNo !== '') {
-                $q->where('table_no', $tableNo);
+                $candidates = array_unique([$tableNo, strtoupper($tableNo), strtolower($tableNo)]);
+                $q->whereIn('table_no', $candidates);
             }
             $q->update(['status' => 'accepted', 'updated_at' => now()]);
         }
@@ -296,7 +339,12 @@ class SubmissionController extends Controller
     public function requestCorrection(Request $request): JsonResponse
     {
         $cmiUserId = (int) $request->input('cmi_user_id', 0);
-        $tableNo   = strtoupper(trim($request->input('table_no', '')));
+        $rawTable  = trim($request->input('table_no', ''));
+        $canonicalMap = [];
+        foreach (config('secreco.all_tables', []) as $stTable) {
+            $canonicalMap[strtoupper($stTable)] = $stTable;
+        }
+        $tableNo   = $canonicalMap[strtoupper($rawTable)] ?? $rawTable;
         $year      = (int) ($request->input('year') ?? date('Y'));
         $reason    = trim($request->input('reason', ''));
         $ptaUserId = (int) (Auth::id() ?? session('user_id'));
@@ -313,9 +361,11 @@ class SubmissionController extends Controller
             return response()->json(['ok' => false, 'error' => 'CMI user not found.']);
         }
 
+        $candidates = array_unique([$tableNo, strtoupper($tableNo), strtolower($tableNo)]);
+
         ReportTable::where('user_id', $cmiUserId)
             ->where('reporting_year', $year)
-            ->where('table_no', $tableNo)
+            ->whereIn('table_no', $candidates)
             ->update(['status' => 'returned', 'updated_at' => now()]);
 
         CorrectionRequest::create([
@@ -371,7 +421,12 @@ class SubmissionController extends Controller
     public function delete(Request $request): JsonResponse
     {
         $cmiUserId = (int) $request->input('cmi_user_id', 0);
-        $tableNo   = strtoupper(trim($request->input('table_no', '')));
+        $rawTable  = trim($request->input('table_no', ''));
+        $canonicalMap = [];
+        foreach (config('secreco.all_tables', []) as $stTable) {
+            $canonicalMap[strtoupper($stTable)] = $stTable;
+        }
+        $tableNo   = $canonicalMap[strtoupper($rawTable)] ?? $rawTable;
         $year      = (int) ($request->input('year') ?? date('Y'));
         $ptaUserId = (int) (Auth::id() ?? session('user_id'));
 
@@ -390,9 +445,11 @@ class SubmissionController extends Controller
             $allIds = array_values(array_unique(array_merge($allIds, $mateIds)));
         }
 
+        $candidates = array_unique([$tableNo, strtoupper($tableNo), strtolower($tableNo)]);
+
         ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $year)
-            ->where('table_no', $tableNo)
+            ->whereIn('table_no', $candidates)
             ->update([
                 'status'     => 'deleted',
                 'rows_json'  => [],
@@ -454,7 +511,12 @@ class SubmissionController extends Controller
     public function updateTable(Request $request): JsonResponse
     {
         $cmiUserId = (int) $request->input('cmi_user_id', 0);
-        $tableNo   = strtoupper(trim($request->input('table_no', '')));
+        $rawTable  = trim($request->input('table_no', ''));
+        $canonicalMap = [];
+        foreach (config('secreco.all_tables', []) as $stTable) {
+            $canonicalMap[strtoupper($stTable)] = $stTable;
+        }
+        $tableNo   = $canonicalMap[strtoupper($rawTable)] ?? $rawTable;
         $year      = (int) ($request->input('year') ?? date('Y'));
         $rows      = $request->input('rows', []);
         $meta      = $request->input('meta', []);

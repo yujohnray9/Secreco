@@ -228,6 +228,7 @@
     openDocs,
     _renumber(catKey) { renumber(catKey); },
   };
+  window.T7B = window.T7b;
 
   (window.CMI = window.CMI || {});
   function register() {

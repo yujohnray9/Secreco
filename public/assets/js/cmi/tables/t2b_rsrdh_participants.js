@@ -361,6 +361,7 @@
     openDocs,
     _recalc(catKey)  { recalcCategory(catKey); },
   };
+  window.T2B = window.T2b;
 
   /* ─────────────────────────────────────────
      REGISTER WITH CORE

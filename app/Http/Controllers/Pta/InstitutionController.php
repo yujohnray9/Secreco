@@ -79,10 +79,14 @@ class InstitutionController extends Controller
             $logoUrl = "/assets/img/logo{$logoId}.{$ext}";
             $idx++;
 
+            $firstUser = $cmiUsersByInst->get($instName)?->first();
+            $userId = $firstUser?->id ?? 0;
+
             $institutions[] = [
                 'name'         => $instName,
                 'short'        => $meta['short'],
                 'type'         => $meta['type'],
+                'user_id'      => $userId,
                 'encoder'      => $db ? $db['encoder'] : '—',
                 'has_cmi'      => (bool) $db,
                 'tables_done'  => $tablesDone,
@@ -103,11 +107,19 @@ class InstitutionController extends Controller
             'no_cmi'      => count(array_filter($institutions, fn($i) => !$i['has_cmi'])),
         ];
 
+        $lockedTables = \App\Models\FormatTemplate::where('year', $year)
+            ->where('is_locked', true)
+            ->pluck('table_no')
+            ->map(fn($t) => strtoupper($t))
+            ->values()
+            ->toArray();
+
         return response()->json([
-            'ok'           => true,
-            'year'         => $year,
-            'institutions' => $institutions,
-            'summary'      => $summary,
+            'ok'            => true,
+            'year'          => $year,
+            'institutions'  => $institutions,
+            'summary'       => $summary,
+            'locked_tables' => $lockedTables,
         ]);
     }
 }

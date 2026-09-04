@@ -233,6 +233,7 @@
     _renumber:     renumber,
     _recalc:       recalcTotal,
   };
+  window.T8B = window.T8b;
 
   (window.CMI = window.CMI || {});
   function register() {

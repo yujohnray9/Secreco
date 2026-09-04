@@ -107,6 +107,7 @@
 @section('scripts')
 <script>
 let instData = [];
+let lockedTables = [];
 let currentView = 'cards';
 
 function setView(v) {
@@ -146,11 +147,17 @@ function renderCards(data) {
           <span class="inst-encoder">${inst.encoder}</span>
           <span class="inst-tables">${inst.tables_done}/${inst.total_tables} tables</span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:6px;flex-wrap:wrap">
           <span class="badge ${badgeClass}">${inst.status}</span>
-          <a href="/dashboard/pta/submissions" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;text-decoration:none;transition:background .15s" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'">
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
-          </a>
+          <div style="display:flex;gap:6px">
+            ${lockedTables.length > 0 ? `
+            <a href="/dashboard/cmi/fillup?year=${currentYear}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name)}&table=${lockedTables[0]}" style="display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;transition:all .15s" title="Fill out locked tables for this institution">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out
+            </a>` : ''}
+            <a href="/dashboard/pta/submissions" style="display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;text-decoration:none;border:1px solid #a7f3d0;transition:background .15s" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
+            </a>
+          </div>
         </div>
         <div class="inst-prog">
           <div class="inst-prog-head">
@@ -187,9 +194,15 @@ function renderTable(data) {
         </td>
         <td><span class="badge ${badgeClass}">${inst.status}</span></td>
         <td>
-          <a href="/dashboard/pta/submissions" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;text-decoration:none;border:1px solid #a7f3d0;">
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View Submissions
-          </a>
+          <div style="display:flex;gap:6px">
+            ${lockedTables.length > 0 ? `
+            <a href="/dashboard/cmi/fillup?year=${currentYear}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name)}&table=${lockedTables[0]}" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;" title="Fill out locked tables for this institution">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out
+            </a>` : ''}
+            <a href="/dashboard/pta/submissions" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;text-decoration:none;border:1px solid #a7f3d0;">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View Submissions
+            </a>
+          </div>
         </td>
       </tr>
     `;
@@ -203,6 +216,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const res  = await fetch(`/api/pta/institutions?year=${year}`);
     const json = await res.json();
     instData = json.institutions || [];
+    lockedTables = (json.locked_tables || []).map(t => String(t).toUpperCase());
     document.getElementById('instCount').textContent = `${instData.length} institutions`;
     renderCards(instData);
     renderTable(instData);

@@ -4,12 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SecReCo — PTA Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/assets/css/pta/base.css?v=3"/>
-<link rel="stylesheet" href="/assets/css/pta/header.css?v=3"/>
-<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=4"/>
-<link rel="stylesheet" href="/assets/css/pta/modals.css?v=3"/>
-<link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=3"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/assets/css/pta/base.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/header.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/modals.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=20260903"/>
 @yield('styles')
 </head>
 <body>
@@ -34,61 +34,6 @@
     </div>
   </div>
 </div>
-
-<!-- ═══ HEADER ═══ -->
-<header class="app-header">
-  <div class="hdr-left-group">
-    <button class="hdr-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu" title="Menu">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
-      </svg>
-    </button>
-
-    <!-- Title & Subtitle -->
-    <div class="hdr-title-group">
-      <div class="hdr-page-title">SecReCo Dashboard</div>
-      <div class="hdr-page-sub">Analyze consortium submissions, metrics, and institutional accomplishments.</div>
-    </div>
-  </div>
-
-  <!-- Right Actions -->
-  <div class="hdr-right-actions">
-    <!-- Notification Bell -->
-    <button class="notif-btn" onclick="window.location.href='/dashboard/pta/notifications'" title="Notifications">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
-      <span class="notif-dot"></span>
-    </button>
-
-    @php
-      $photoUrl = Auth::user()?->profile_picture ?? $userPhoto;
-      if ($photoUrl) {
-          $photoUrl = ltrim($photoUrl, '/');
-          if (!str_starts_with($photoUrl, 'storage/') && !str_starts_with($photoUrl, 'assets/')) {
-              $photoUrl = 'storage/' . $photoUrl;
-          }
-          $photoUrl = '/' . $photoUrl;
-      } else {
-          $photoUrl = '/assets/img/default-avatar.svg';
-      }
-    @endphp
-    <!-- User Profile Badge -->
-    <div class="hdr-user-profile">
-      <img class="hdr-user-avatar" src="{{ $photoUrl }}" alt="avatar"/>
-      <div class="hdr-user-details">
-        <span class="hdr-user-name">{{ $userName }}</span>
-        <span class="hdr-user-email">PTA Admin</span>
-      </div>
-    </div>
-
-    <!-- Sign Out Button -->
-    <button class="signout-btn" onclick="confirmSignOut()" title="Sign Out">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
-  </div>
-</header>
 
 <script src="/assets/js/pta/core.js?v=3"></script>
 <script src="/assets/js/pta/upload_photo.js?v=3"></script>
@@ -132,7 +77,7 @@ function showConfirmModal(opts) {
   const title       = opts.title || 'Confirmation';
   const desc        = opts.message || 'Are you sure you want to proceed?';
   const confirmText = opts.confirmText || 'Confirm';
-  const type        = opts.type || 'green'; // green, red, orange, blue
+  const type        = opts.type || 'green';
   const onConfirm   = opts.onConfirm || null;
 
   document.getElementById('gModalTitle').textContent = title;
@@ -146,7 +91,6 @@ function showConfirmModal(opts) {
   btn.className = 'modal-fc-btn modal-fc-btn-' + type;
   btn.textContent = confirmText;
 
-  // Set SVG Icon
   const iconSvg = document.getElementById('gModalIcon');
   if (type === 'green') {
     iconSvg.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
@@ -232,7 +176,7 @@ function confirmSignOut() {
     const res  = await fetch(`/api/pta/notifications?year=${year}`);
     const json = await res.json();
     if (!json.ok) return;
-    const dot = document.querySelector('.notif-dot');
+    const dot = document.querySelector('.notif-dot') || document.querySelector('.notification em');
     if (!dot) return;
     if (json.unread_count > 0) {
       dot.textContent = json.unread_count > 99 ? '99+' : json.unread_count;
@@ -247,23 +191,28 @@ function confirmSignOut() {
 })();
 </script>
 
-<!-- SIDEBAR BACKDROP FOR MOBILE -->
-<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
+<!-- ═══ FULL APP SHELL ═══ -->
+<div class="app-shell">
+  <!-- SIDEBAR BACKDROP FOR MOBILE -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
 
-<!-- ═══ BODY ═══ -->
-<div class="app-body">
+  <!-- ═══ SIDEBAR ═══ -->
   <aside class="sidebar">
     <div class="sb-header-wrap">
       <!-- Brand Header -->
-      <div class="sb-brand" onclick="window.location.href='/dashboard/pta/dashboard'" style="cursor:pointer">
-        <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo" style="height:40px;width:40px;object-fit:contain;margin-right:10px;border-radius:6px;" onerror="this.src='/assets/img/cvaarrd.png'"/>
+      <div class="sidebar-brand" onclick="window.location.href='/dashboard/pta/dashboard'" style="cursor:pointer">
+        <div class="brand-mark">
+          <img src="/assets/img/logo26.png" alt="CVAARRD Logo" onerror="this.src='/assets/img/cvaarrd.png'"/>
+        </div>
         <div>
-          <div class="sb-brand-title">SecReCo</div>
-          <div class="sb-brand-sub">CVAARRD Consortium</div>
+          <strong>SecReCo</strong>
+          <span>Secure Reporting and Consolidation System for CVAARRD Consortium</span>
         </div>
       </div>
       <button class="sb-close-btn" onclick="closeMobileSidebar()" aria-label="Close Sidebar">&times;</button>
     </div>
+
+    <div class="sidebar-rule"></div>
 
     <!-- MAIN NAV -->
     <div class="nav-section">
@@ -301,18 +250,94 @@ function confirmSignOut() {
         <span class="nav-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
         Settings
       </a>
-      <a href="#" onclick="confirmSignOut(); return false;" class="nav-item">
+      <a href="#" onclick="confirmSignOut(); return false;" class="nav-item logout">
         <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
         Logout
       </a>
     </div>
   </aside>
 
-  <div class="main-content" id="mainContent">
-    @yield('content')
+  <!-- ═══ MAIN AREA (Header + Page Content) ═══ -->
+  <div class="main-area">
+    <!-- ═══ HEADER / TOPBAR ═══ -->
+    <header class="app-header topbar">
+      <div class="hdr-left-group">
+        <button class="hdr-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu" title="Menu">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+
+        <!-- Title & Subtitle -->
+        <div class="hdr-title-group">
+          <div class="hdr-page-title">SecReCo Dashboard</div>
+          <div class="hdr-page-sub">Analyze consortium submissions, metrics, and institutional accomplishments.</div>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="hdr-right-actions">
+        <!-- Notification Bell -->
+        <button class="notif-btn" onclick="window.location.href='/dashboard/pta/notifications'" title="Notifications">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="notif-dot">3</span>
+        </button>
+
+        <div class="profile-divider"></div>
+
+        @php
+          $photoUrl = Auth::user()?->profile_picture ?? $userPhoto;
+          if ($photoUrl) {
+              $photoUrl = ltrim($photoUrl, '/');
+              if (!str_starts_with($photoUrl, 'storage/') && !str_starts_with($photoUrl, 'assets/')) {
+                  $photoUrl = 'storage/' . $photoUrl;
+              }
+              $photoUrl = '/' . $photoUrl;
+          } else {
+              $photoUrl = '/assets/img/default-avatar.svg';
+          }
+        @endphp
+        <!-- User Profile Badge -->
+        <div class="hdr-user-profile" onclick="window.location.href='/dashboard/pta/settings'">
+          <div class="hdr-user-avatar">
+            <img src="{{ $photoUrl }}" alt="avatar" onerror="this.src='/assets/img/default-avatar.svg'"/>
+          </div>
+          <div class="hdr-user-details">
+            <span class="hdr-user-name">{{ $userName }}</span>
+            <span class="hdr-user-email">PTA Admin</span>
+          </div>
+        </div>
+
+        <!-- Sign Out Button -->
+        <button class="signout-btn" onclick="confirmSignOut()" title="Sign Out">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ═══ PAGE CONTENT ═══ -->
+    <main class="main-content page-content" id="mainContent">
+      @yield('content')
+    </main>
   </div>
 </div>
 
+@yield('modals')
+
+<script>
+// Automatically portal any modal overlays to document.body so they are never trapped in page-content stacking contexts
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+    if (modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+    }
+  });
+});
+</script>
+<script src="/assets/js/session-timeout.js?v=3"></script>
 @yield('scripts')
 </body>
 </html>

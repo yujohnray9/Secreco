@@ -132,8 +132,12 @@
       <!-- PER CMI VIEW -->
       <div id="viewPerCMI" style="display:none">
         <div class="card">
-          <div class="card-hdr">
+          <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
             <div class="card-title" id="cmiCardTitle">Select a CMI</div>
+            <a id="btnPtaCmiFillOut" href="#" class="btn btn-sm btn-primary" style="display:none;background:var(--forest,#075b42);color:#fff;border-radius:8px;font-weight:700;padding:7px 16px;text-decoration:none;align-items:center;gap:6px;">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+              Fill Out Report for this CMI
+            </a>
           </div>
           <div class="tbl-wrap" id="cmiContainer">
             <div class="loading-state" style="padding:40px;text-align:center;color:#9ca3af">Select an institution to view their tables.</div>
@@ -144,17 +148,17 @@
     </div>
     @endsection
 
-    @section('scripts')
+    @section('scripts') 
     <script src="/assets/js/pta/reports-helpers.js"></script>
     <script src="/assets/js/pta/reports-docs-lightbox.js"></script>
 
     <!-- ── Table renderers (must load before reports-tabledefs.js) ── -->
     <script src="/assets/js/pta/renderers/render-t1.js?v=3"></script>
-    <script src="/assets/js/pta/renderers/render-t2a.js?v=3"></script>
+    <script src="/assets/js/pta/renderers/render-t2a.js?v=4"></script>
     <script src="/assets/js/pta/renderers/render-t2b.js?v=3"></script>
-    <script src="/assets/js/pta/renderers/render-t3.js?v=3"></script>
-    <script src="/assets/js/pta/renderers/render-t4.js?v=3"></script>
-    <script src="/assets/js/pta/renderers/render-t5.js?v=3"></script>
+    <script src="/assets/js/pta/renderers/render-t3.js?v=5"></script>
+    <script src="/assets/js/pta/renderers/render-t4.js?v=5"></script>
+    <script src="/assets/js/pta/renderers/render-t5.js?v=5"></script>
     <script src="/assets/js/pta/renderers/render-t6.js?v=3"></script>
     <script src="/assets/js/pta/renderers/render-t7a.js?v=3"></script>
     <script src="/assets/js/pta/renderers/render-t7b.js?v=3"></script>
@@ -176,11 +180,11 @@
     <script src="/assets/js/pta/renderers/render-generic.js?v=3"></script>
     <!-- ── End renderers ── -->
 
-    <script src="/assets/js/pta/reports-renderers.js?v=4"></script>
-    <script src="/assets/js/pta/reports-tabledefs.js?v=4"></script>
-    <script src="/assets/js/pta/reports-api.js?v=4"></script>
-    <script src="/assets/js/pta/reports-view-table.js?v=4"></script>
-    <script src="/assets/js/pta/reports-view-cmi.js?v=4"></script>
-    <script src="/assets/js/pta/reports-export.js?v=4"></script>
-    <script src="/assets/js/pta/reports-boot.js?v=4"></script>
+    <script src="/assets/js/pta/reports-renderers.js?v=5"></script>
+    <script src="/assets/js/pta/reports-tabledefs.js?v=5"></script>
+    <script src="/assets/js/pta/reports-api.js?v=5"></script>
+    <script src="/assets/js/pta/reports-view-table.js?v=5"></script>
+    <script src="/assets/js/pta/reports-view-cmi.js?v=5"></script>
+    <script src="/assets/js/pta/reports-export.js?v=5"></script>
+    <script src="/assets/js/pta/reports-boot.js?v=5"></script>
     @endsection
