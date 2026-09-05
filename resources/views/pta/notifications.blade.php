@@ -2,93 +2,488 @@
 
 @section('styles')
 <style>
-.pg-banner { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
-.pg-banner-title { font-size:22px; font-weight:700; color:#111827; letter-spacing:-.4px; }
-.pg-banner-sub   { font-size:13px; color:#6b7280; margin-top:3px; }
-.fc-card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; box-shadow:0 2px 12px rgba(16,185,129,.05); margin-bottom:24px; overflow:hidden; }
-.fc-card-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 14px; border-bottom:1px solid #f3f4f6; }
-.fc-card-title { font-size:15px; font-weight:700; color:#111827; display:flex; align-items:center; gap:8px; }
-.fc-card-title svg { color:#10b981; }
-.fc-card-body  { padding:0 24px 24px; }
-.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600; }
-.badge-green  { background:#ecfdf5; color:#059669; }
-.badge-orange { background:#fff7ed; color:#d97706; }
-.badge-gray   { background:#f3f4f6; color:#6b7280; }
-.badge-blue   { background:#eff6ff; color:#2563eb; }
+:root {
+  --forest: #005b45;
+  --forest-dark: #004534;
+  --forest-light: #e9f7f1;
+  --ink: #111827;
+  --muted: #64748b;
+  --card-border: #e6ece8;
+  --white: #ffffff;
+  --danger: #dc2626;
+  --danger-bg: #fff2f2;
+  --danger-border: #fed7d7;
+  --info: #0284c7;
+  --info-bg: #eaf4fd;
+  --success: #059669;
+  --success-bg: #e8f8f0;
+  --radius: 12px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 12px -2px rgba(0, 91, 69, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+}
 
-/* ── Notification Item ── */
-.notif-list { display:flex; flex-direction:column; gap:8px; padding:16px 0; }
-.notif-item { display:flex; align-items:flex-start; gap:14px; padding:14px 16px; border-radius:12px; background:#fff; border:1px solid #f0f0f0; transition:background .15s, border-color .15s; }
-.notif-item:hover { background:#f9fafe; }
-.notif-item.unread { background:#f0fdf4; border-color:#a7f3d0; }
+.notif-page-wrap {
+  padding: 6px 0 40px;
+  max-width: 1280px;
+}
 
-.notif-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.notif-icon.blue   { background:#eff6ff; color:#2563eb; border:1px solid #dbeafe; }
-.notif-icon.green  { background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; }
-.notif-icon.red    { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
-.notif-icon.yellow { background:#fffbeb; color:#d97706; border:1px solid #fde68a; }
+/* ── Header ── */
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
 
-.notif-body { flex:1; min-width:0; }
-.notif-msg  { font-size:13.5px; color:#1f2937; font-weight:500; line-height:1.45; }
-.notif-item.unread .notif-msg { font-weight:600; color:#111827; }
-.notif-time { font-size:11.5px; color:#9ca3af; margin-top:4px; display:flex; align-items:center; gap:5px; }
-.notif-time svg { width:12px; height:12px; }
+.notif-title-group h1 {
+  font-size: 30px;
+  font-weight: 800;
+  color: #0d2b22;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin: 0;
+}
 
-.notif-action { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-.btn-sm-fc { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; border:none; cursor:pointer; text-decoration:none; transition:all .15s; }
-.btn-sm-view { background:#ecfdf5; color:#059669; }
-.btn-sm-view:hover { background:#d1fae5; }
-.btn-sm-read { background:#e5e7eb; color:#374151; }
-.btn-sm-read:hover { background:#d1d5db; }
-.btn-sm-del { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
-.btn-sm-del:hover { background:#fee2e2; }
+.notif-title-group p {
+  font-size: 14px;
+  color: #5a6e66;
+  margin-top: 5px;
+  font-weight: 400;
+}
 
-.btn-mark-read { border:1.5px solid #10b981; background:#fff; color:#10b981; border-radius:10px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:7px; }
-.btn-mark-read:hover { background:#ecfdf5; }
-.btn-delete-all { border:1.5px solid #ef4444; background:#fff; color:#ef4444; border-radius:10px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:7px; transition:all .15s; }
-.btn-delete-all:hover { background:#fef2f2; }
+.unread-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: #e6f7f0;
+  color: var(--forest);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: all 0.2s ease;
+}
+
+/* ── Toolbar (Search Removed) ── */
+.toolbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill-btn {
+  border: 1px solid #d1dbd5;
+  background: transparent;
+  color: #4b5a54;
+  padding: 7px 18px;
+  border-radius: 24px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill-btn:hover {
+  background: #edf3f0;
+  color: var(--forest-dark);
+  border-color: #b5c7be;
+}
+
+.pill-btn.active {
+  background: var(--forest-light);
+  color: var(--forest);
+  border-color: #a3d9c3;
+  font-weight: 700;
+}
+
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.btn-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+  border: 1px solid #cbd5d1;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s ease;
+}
+
+.btn-filter:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-mark-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 6px;
+  border: none;
+  background: var(--forest);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 91, 69, 0.2);
+  transition: all 0.15s ease;
+}
+
+.btn-mark-all:hover {
+  background: var(--forest-dark);
+  box-shadow: 0 4px 10px rgba(0, 91, 69, 0.28);
+}
+
+/* ── Loading Spinner ── */
+.pta-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #64748b;
+  gap: 12px;
+}
+
+.pta-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(0, 91, 69, 0.15);
+  border-top-color: var(--forest);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Notification List & Cards ── */
+.notif-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notif-card {
+  background: #ffffff;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.notif-card:hover {
+  border-color: #bcd4c8;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.notif-card.unread {
+  background: #ffffff;
+  border-left: 3.5px solid var(--forest);
+}
+
+.notif-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Icon Box ── */
+.notif-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.icon-blue {
+  background: #eaf4fd;
+  color: #1976d2;
+}
+
+.icon-green {
+  background: #e8f8f0;
+  color: #087443;
+}
+
+.icon-yellow {
+  background: #fef9c3;
+  color: #ca8a04;
+}
+
+.icon-red {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.notif-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-card-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #13221b;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.notif-card-desc {
+  font-size: 13.5px;
+  color: #556760;
+  line-height: 1.45;
+  margin-bottom: 7px;
+}
+
+.notif-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #7b8c84;
+}
+
+.notif-meta-row .meta-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.notif-meta-row .bullet {
+  color: #94a39d;
+  font-size: 10px;
+}
+
+.notif-meta-row .table-tag {
+  font-weight: 500;
+  color: #4b5d56;
+}
+
+/* ── Right Actions ── */
+.notif-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-action-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  border-radius: 6px;
+  background: var(--forest-light);
+  color: var(--forest);
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-action-view:hover {
+  background: #d8f2e5;
+  color: var(--forest-dark);
+}
+
+.btn-action-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #f1f5f3;
+  color: #374151;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid #d1dbd5;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-action-read:hover {
+  background: #e2e8e5;
+  color: var(--forest);
+}
+
+.btn-action-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-action-delete:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* ── Empty State ── */
+.empty-state {
+  display: none;
+  padding: 60px 20px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px dashed var(--card-border);
+  border-radius: var(--radius);
+  color: var(--muted);
+}
+
+.empty-state svg {
+  margin-bottom: 12px;
+  color: #94a3b8;
+}
+
+.empty-state h3 {
+  font-size: 16px;
+  color: #334155;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.empty-state p {
+  font-size: 13.5px;
+}
+
+@media (max-width: 768px) {
+  .notif-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .actions-group {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+  .notif-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .notif-actions {
+    justify-content: flex-end;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f3;
+  }
+}
 </style>
 @endsection
 
 @section('content')
-<div class="page active" id="page-notifications">
+<div class="page active notif-page-wrap" id="page-notifications">
 
-  <div class="pg-banner">
-    <div>
-      <div class="pg-banner-title">Notifications</div>
-      <div class="pg-banner-sub">System notifications, user registrations, and submission updates</div>
+  <!-- Header / Title -->
+  <header class="notif-header">
+    <div class="notif-title-group">
+      <h1>Notifications</h1>
+      <p>Monitor institutional submissions, updates, and platform activity.</p>
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <button type="button" class="btn-mark-read" id="btnMarkAllRead">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <div class="unread-pill-badge" id="unreadBadge">
+      <span id="unreadCountNum">0</span> unread
+    </div>
+  </header>
+
+  <!-- Toolbar: Filter Pills & Action Buttons (Search Removed) -->
+  <div class="toolbar-row">
+    <div class="filter-pills" role="tablist">
+      <button type="button" class="pill-btn active" data-filter="all">All</button>
+      <button type="button" class="pill-btn" data-filter="unread">Unread</button>
+      <button type="button" class="pill-btn" data-filter="submissions">Submissions</button>
+      <button type="button" class="pill-btn" data-filter="updates">Updates</button>
+    </div>
+
+    <div class="actions-group">
+      <button type="button" class="btn-filter" id="btnFilterToggle">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="6" x2="20" y2="6"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+          <line x1="10" y1="18" x2="14" y2="18"/>
+        </svg>
+        Filter
+      </button>
+      <button type="button" class="btn-mark-all" id="btnMarkAllRead">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        Mark All as Read
-      </button>
-      <button type="button" class="btn-delete-all" id="btnDeleteAll">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
-        </svg>
-        Delete All
+        Mark all as read
       </button>
     </div>
   </div>
 
-  <div class="fc-card">
-    <div class="fc-card-head">
-      <div class="fc-card-title">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
-        All Notifications
-      </div>
-      <span class="badge badge-orange" id="unreadBadge" style="display:none">0 unread</span>
-    </div>
-    <div class="fc-card-body">
-      <div id="notifContainer" class="notif-list">
-        <div style="padding:40px;text-align:center;color:#9ca3af">Loading notifications...</div>
-      </div>
-    </div>
+  <!-- Loading State -->
+  <div class="pta-loading-state" id="ptaLoadingState">
+    <div class="pta-spinner"></div>
+    <span>Loading notifications...</span>
+  </div>
+
+  <!-- Notification List -->
+  <div class="notif-list-container" id="notifContainer"></div>
+
+  <!-- Empty State -->
+  <div class="empty-state" id="emptyState">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+    <h3>No notifications found</h3>
+    <p>There are no notifications matching the selected filter.</p>
   </div>
 
 </div>
@@ -96,55 +491,131 @@
 
 @section('scripts')
 <script>
-function getPtaNotifSvg(type, notifType, icon) {
-  const t = ((notifType || '') + ' ' + (type || '')).toLowerCase();
-  const ic = (icon || '').toLowerCase();
+let _allPtaNotifications = [];
+let _currentFilter = 'all';
 
-  // 1. Edit / Update
-  if (t.includes('edit') || t.includes('update') || ic.includes('edit') || ic.includes('pencil') || ic === '✏️' || ic === '📝') {
-    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
-  }
-
-  // 2. Correction / Returned / Urgent
-  if (t.includes('corr') || t.includes('return') || t.includes('flag') || t === 'red' || ic.includes('alert') || ic === '🔴' || ic === '↩️') {
-    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
-  }
-
-  // 3. Accepted / Approved
-  if (t.includes('accept') || t.includes('approv') || t === 'green' || ic.includes('check') || ic === '✅') {
-    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
-  }
-
-  // 4. Submitted / Sent / Mail
-  if (t.includes('submit') || ic.includes('mail') || ic.includes('send') || ic === '📨') {
-    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`;
-  }
-
-  // 5. User / Account / Registrations
-  if (t.includes('user') || ic.includes('user') || ic === '👥') {
-    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
-  }
-
-  // 6. Delete / Trash
-  if (t.includes('delete') || ic.includes('trash') || ic === '🗑️') {
-    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
-  }
-
-  // 7. Year Activation / Calendar
-  if (t.includes('year') || t.includes('activ') || ic.includes('calendar') || ic === '🎉') {
-    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
-  }
-
-  // Default: Document / Log
-  return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
+function getPtaCardCategory(n) {
+  const t = ((n.notif_type || '') + ' ' + (n.type || '') + ' ' + (n.msg || '')).toLowerCase();
+  if (t.includes('submit') || t.includes('submission') || t.includes('accomplishment')) return 'submissions';
+  if (t.includes('update') || t.includes('table') || t.includes('edit')) return 'updates';
+  return 'updates';
 }
 
-function getPtaColorClass(type, notifType) {
-  const t = ((notifType || '') + ' ' + (type || '')).toLowerCase();
-  if (t.includes('corr') || t.includes('return') || t.includes('red') || t.includes('delete')) return 'red';
-  if (t.includes('accept') || t.includes('green') || t.includes('activ')) return 'green';
-  if (t.includes('user') || t.includes('yellow') || t.includes('pend')) return 'yellow';
-  return 'blue';
+function getPtaNotifSvg(category) {
+  if (category === 'submissions') {
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
+      <polyline points="9 12 11 14 15 10"/>
+    </svg>`;
+  }
+  return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20h9"/>
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+  </svg>`;
+}
+
+function getPtaTagLabel(n) {
+  if (n.table_name) return n.table_name;
+  if (n.table_id) return 'Table ' + String(n.table_id).toUpperCase();
+  const m = (n.msg || '');
+  const match = m.match(/Table\s+[A-Za-z0-9]+/i);
+  if (match) return match[0];
+  if (m.toLowerCase().includes('accomplishment')) return 'Accomplishment reports';
+  return 'System Report';
+}
+
+function renderPtaCards() {
+  const container = document.getElementById('notifContainer');
+  const emptyState = document.getElementById('emptyState');
+  const loadingState = document.getElementById('ptaLoadingState');
+
+  if (loadingState) loadingState.style.display = 'none';
+
+  let filtered = _allPtaNotifications.filter(n => {
+    const isUnread = !!n.unread;
+    const cat = getPtaCardCategory(n);
+    if (_currentFilter === 'all') return true;
+    if (_currentFilter === 'unread') return isUnread;
+    if (_currentFilter === 'submissions') return cat === 'submissions';
+    if (_currentFilter === 'updates') return cat === 'updates';
+    return true;
+  });
+
+  const unreadCount = _allPtaNotifications.filter(n => n.unread).length;
+  const countNum = document.getElementById('unreadCountNum');
+  const badge = document.getElementById('unreadBadge');
+  if (countNum) countNum.textContent = unreadCount;
+  if (badge) badge.style.opacity = unreadCount > 0 ? '1' : '0.6';
+
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  container.innerHTML = filtered.map(n => {
+    const category = getPtaCardCategory(n);
+    const isUnread = !!n.unread;
+    const iconClass = category === 'submissions' ? 'icon-green' : 'icon-blue';
+    const svgIcon = getPtaNotifSvg(category);
+    const tag = getPtaTagLabel(n);
+    const timeStr = n.time ? n.time.substring(0, 16).replace('T', ' ') : 'Just now';
+
+    let desc = 'Institutional report information was updated and is ready for review.';
+    if (category === 'submissions') {
+      desc = 'A new institutional submission has been received and requires processing.';
+    }
+
+    const actionUrl = n.action ? (n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action) : '/dashboard/pta/submissions';
+    const actionLabel = category === 'submissions' ? 'View' : 'View Submissions';
+
+    return `
+    <article class="notif-card ${isUnread ? 'unread' : ''}" data-id="${n.id || ''}" data-key="${n.key || ''}">
+      <div class="notif-left">
+        <div class="notif-icon-box ${iconClass}">
+          ${svgIcon}
+        </div>
+        <div class="notif-content">
+          <h2 class="notif-card-title">${n.msg}</h2>
+          <p class="notif-card-desc">${desc}</p>
+          <div class="notif-meta-row">
+            <span class="meta-time">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              ${timeStr}
+            </span>
+            <span class="bullet">•</span>
+            <span class="table-tag">${tag}</span>
+          </div>
+        </div>
+      </div>
+      <div class="notif-actions">
+        ${isUnread ? `
+          <button type="button" class="btn-action-read" onclick="markPtaItemRead(${n.id || 'null'}, '${n.key || ''}')" title="Mark as read">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Mark read
+          </button>
+        ` : ''}
+        <a href="${actionUrl}" class="btn-action-view">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          ${actionLabel}
+        </a>
+        <button type="button" class="btn-action-delete" onclick="deletePtaNotifItem(${n.id || 'null'}, '${n.key || ''}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          </svg>
+          Delete
+        </button>
+      </div>
+    </article>`;
+  }).join('');
 }
 
 async function updateBellBadge(unreadCount) {
@@ -159,79 +630,43 @@ async function updateBellBadge(unreadCount) {
   }
 }
 
+// Mark single notification as read in PTA
 window.markPtaItemRead = async function(id, key) {
-  await fetch('/api/pta/notifications/mark-read', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: id, key: key }),
-  });
+  try {
+    await fetch('/api/pta/notifications/mark-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id || null, key: key || null }),
+    });
+  } catch(e) {
+    console.warn('markPtaItemRead error:', e);
+  }
+  const item = _allPtaNotifications.find(n => (n.id && n.id == id) || (n.key && n.key == key));
+  if (item) item.unread = false;
+  const unread = _allPtaNotifications.filter(n => n.unread).length;
+  updateBellBadge(unread);
+  renderPtaCards();
   if (typeof showToast === 'function') showToast('Marked as read');
-  loadNotifs();
 };
 
 async function loadNotifs() {
-  const year      = new Date().getFullYear();
-  const container = document.getElementById('notifContainer');
+  const year = new Date().getFullYear();
   try {
-    const res  = await fetch(`/api/pta/notifications?year=${year}`);
+    const res = await fetch(`/api/pta/notifications?year=${year}`);
     const json = await res.json();
-    const notifs = json.notifications || [];
-    const unread = json.unread_count || 0;
-
-    updateBellBadge(unread);
-
-    const badge = document.getElementById('unreadBadge');
-    if (badge) {
-      badge.textContent = `${unread} unread`;
-      badge.style.display = unread > 0 ? 'inline-flex' : 'none';
+    if (json.ok && Array.isArray(json.notifications)) {
+      _allPtaNotifications = json.notifications;
+      const unread = json.unread_count ?? _allPtaNotifications.filter(n => n.unread).length;
+      updateBellBadge(unread);
+    } else {
+      _allPtaNotifications = [];
     }
+  } catch(e) {
+    console.warn('PTA notif API load failed:', e);
+    _allPtaNotifications = [];
+  }
 
-    if (notifs.length === 0) {
-      container.innerHTML = `
-        <div style="padding:48px 24px;text-align:center;color:#9ca3af">
-          <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 12px">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          <div style="font-size:14px;font-weight:600;color:#6b7280">No notifications yet</div>
-          <div style="font-size:12px;color:#9ca3af;margin-top:3px">All user submissions and registration queues are clear.</div>
-        </div>`;
-      return;
-    }
-
-    container.innerHTML = `<div class="notif-list">${notifs.map(n => {
-      const colorClass = getPtaColorClass(n.type, n.notif_type);
-      const svgIcon = getPtaNotifSvg(n.type, n.notif_type, n.icon);
-      return `
-      <div class="notif-item ${n.unread ? 'unread' : ''}">
-        <div class="notif-icon ${colorClass}">${svgIcon}</div>
-        <div class="notif-body">
-          <div class="notif-msg">${n.msg}</div>
-          <div class="notif-time">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            ${n.time ? n.time.substring(0,16).replace('T',' ') : 'Just now'}
-          </div>
-        </div>
-        <div class="notif-action">
-          ${n.unread ? `
-            <button type="button" class="btn-sm-fc btn-sm-read" onclick="markPtaItemRead(${n.id || 'null'}, '${n.key || ''}')" title="Mark as read">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Mark read
-            </button>` : ''}
-          ${n.action ? `
-            <a href="${n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action}" class="btn-sm-fc btn-sm-view">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              ${n.action_label || 'View'}
-            </a>` : ''}
-          <button type="button" class="btn-sm-fc btn-sm-del" onclick="deletePtaNotifItem(${n.id || 'null'}, '${n.key || ''}')" title="Delete notification">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-            Delete
-          </button>
-        </div>
-      </div>`;
-    }).join('')}</div>`;
-  } catch(e) { console.error('Notif load error:', e); }
+  renderPtaCards();
 }
 
 window.deletePtaNotifItem = async function(id, key) {
@@ -241,37 +676,57 @@ window.deletePtaNotifItem = async function(id, key) {
     confirmText: 'Delete Notification',
     type: 'red',
     onConfirm: async function() {
-      await fetch('/api/notifications/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: id, key: key }),
-      });
+      try {
+        await fetch('/api/notifications/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id, key: key }),
+        });
+      } catch(e) {}
+      _allPtaNotifications = _allPtaNotifications.filter(n => (n.id != id && n.key != key));
+      renderPtaCards();
       if (typeof showToast === 'function') showToast('Notification deleted');
-      loadNotifs();
     }
   });
 };
 
-document.getElementById('btnMarkAllRead').addEventListener('click', async function() {
-  await fetch('/api/pta/notifications/mark-read', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({all:true}) });
-  if (typeof showToast === 'function') showToast('All notifications marked as read');
+document.addEventListener('DOMContentLoaded', () => {
+  // Filter pills
+  const pillButtons = document.querySelectorAll('.pill-btn');
+  pillButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      pillButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _currentFilter = btn.dataset.filter;
+      renderPtaCards();
+    });
+  });
+
+  // Mark all as read
+  document.getElementById('btnMarkAllRead').addEventListener('click', async function() {
+    try {
+      await fetch('/api/pta/notifications/mark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true })
+      });
+    } catch(e) {}
+    _allPtaNotifications.forEach(n => n.unread = false);
+    updateBellBadge(0);
+    renderPtaCards();
+    if (typeof showToast === 'function') showToast('All notifications marked as read');
+  });
+
+  // Filter toggle button
+  document.getElementById('btnFilterToggle').addEventListener('click', function() {
+    _currentFilter = _currentFilter === 'all' ? 'unread' : 'all';
+    pillButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === _currentFilter);
+    });
+    renderPtaCards();
+  });
+
   loadNotifs();
 });
-
-document.getElementById('btnDeleteAll')?.addEventListener('click', function() {
-  showConfirmModal({
-    title: 'Delete All Notifications?',
-    message: 'Are you sure you want to delete all notifications? This action cannot be undone.',
-    confirmText: 'Delete All',
-    type: 'red',
-    onConfirm: async function() {
-      await fetch('/api/notifications/delete-all', { method: 'POST' });
-      if (typeof showToast === 'function') showToast('All notifications deleted');
-      loadNotifs();
-    }
-  });
-});
-
-document.addEventListener('DOMContentLoaded', loadNotifs);
 </script>
 @endsection

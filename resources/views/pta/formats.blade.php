@@ -264,7 +264,10 @@
             </div>
             <div class="form-group" style="flex-direction:row;align-items:center;gap:10px">
               <input type="checkbox" id="editTableLocked" style="width:16px;height:16px;accent-color:#d97706"/>
-              <label for="editTableLocked" class="form-label" style="margin:0;cursor:pointer;color:#92400e;font-weight:700">🔒 Lock for CMI (PTA Only)</label>
+              <label for="editTableLocked" class="form-label" style="margin:0;cursor:pointer;color:#92400e;font-weight:700;display:inline-flex;align-items:center;gap:4px">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Lock for CMI (PTA Only)
+              </label>
             </div>
           </div>
         </div>
@@ -580,7 +583,9 @@
             <input type="checkbox" class="add-tbl-req" style="accent-color:#10b981" ${initialData.is_required !== false ? 'checked' : ''}/> Required field
           </label>
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#92400e;font-weight:600">
-            <input type="checkbox" class="add-tbl-locked" style="accent-color:#d97706" ${initialData.is_locked ? 'checked' : ''}/> 🔒 Lock for CMI (PTA Only)
+            <input type="checkbox" class="add-tbl-locked" style="accent-color:#d97706" ${initialData.is_locked ? 'checked' : ''}/>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Lock for CMI (PTA Only)
           </label>
         </div>
       `;

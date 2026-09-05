@@ -36,9 +36,12 @@
           <div class="sc-fc-val" id="statComplete">—</div>
           <span class="sc-fc-badge up" id="statCompleteBadge">↑ 0%</span>
         </div>
+        <span class="sc-fc-sub" id="statCompleteSub">of 24 required tables</span>
         <div class="sc-fc-foot">
-          <span class="sc-fc-sub" id="statCompleteSub">of 24 required tables</span>
-          <button class="sc-fc-arrow" onclick="goToYearPage('/dashboard/cmi/fillup')">→</button>
+          <a href="#" onclick="goToYearPage('/dashboard/cmi/fillup'); return false;" class="sc-fc-link">
+            <span>Fill out report</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
         </div>
       </div>
 
@@ -54,9 +57,12 @@
           <div class="sc-fc-val" id="statDraft">—</div>
           <span class="sc-fc-badge up">Active</span>
         </div>
+        <span class="sc-fc-sub">Saved, pending submit</span>
         <div class="sc-fc-foot">
-          <span class="sc-fc-sub">Saved, pending submit</span>
-          <button class="sc-fc-arrow" onclick="goToYearPage('/dashboard/cmi/drafts')">→</button>
+          <a href="#" onclick="goToYearPage('/dashboard/cmi/drafts'); return false;" class="sc-fc-link">
+            <span>View drafts</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
         </div>
       </div>
 
@@ -72,9 +78,12 @@
           <div class="sc-fc-val" id="statNotStarted">—</div>
           <span class="sc-fc-badge down">To Begin</span>
         </div>
+        <span class="sc-fc-sub">Tables remaining</span>
         <div class="sc-fc-foot">
-          <span class="sc-fc-sub">Tables remaining</span>
-          <button class="sc-fc-arrow" onclick="goToYearPage('/dashboard/cmi/fillup')">→</button>
+          <a href="#" onclick="goToYearPage('/dashboard/cmi/fillup'); return false;" class="sc-fc-link">
+            <span>Start filling out</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
         </div>
       </div>
 
@@ -90,9 +99,12 @@
           <div class="sc-fc-val" id="statCorrection">—</div>
           <span class="sc-fc-badge up">Action Required</span>
         </div>
+        <span class="sc-fc-sub" id="statCorrectionMeta">Check remarks</span>
         <div class="sc-fc-foot">
-          <span class="sc-fc-sub" id="statCorrectionMeta">Check remarks</span>
-          <button class="sc-fc-arrow" onclick="goToYearPage('/dashboard/cmi/submissions')">→</button>
+          <a href="#" onclick="goToYearPage('/dashboard/cmi/submissions'); return false;" class="sc-fc-link">
+            <span>View remarks</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
         </div>
       </div>
     </div>

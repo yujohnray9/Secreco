@@ -90,7 +90,7 @@ async function renderCMIAllTables(institution) {
         : `<td style="text-align:center;color:#9ca3af;font-size:13px">—</td>`;
 
       rows += `<tr>
-        <td><strong>${key}</strong> ${isLocked ? '<span style="font-size:10px;color:#d97706;" title="Locked: PTA only">🔒</span>' : ''}</td>
+        <td><strong>${key}</strong> ${isLocked ? '<span style="display:inline-flex;vertical-align:middle;color:#d97706;margin-left:3px;" title="Locked: PTA only"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>' : ''}</td>
         <td>${esc(title)}</td>
         <td>${badge}</td>
         <td style="text-align:center">${rowCount || '—'}</td>

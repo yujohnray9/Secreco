@@ -244,6 +244,28 @@
   color: #b07e1e;
 }
 
+.sc-fc-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--mint, #e8f5e9);
+  color: var(--forest, #075b42);
+  border: 1px solid #cce9da;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.sc-fc-arrow:hover {
+  background: var(--forest, #075b42);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
 /* ── Middle Row (Line & Bar Charts) ── */
 .middle-charts-grid,
 .dashboard-chart-grid {

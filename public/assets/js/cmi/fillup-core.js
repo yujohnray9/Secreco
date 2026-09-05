@@ -256,7 +256,12 @@
                         (window._cmiActiveTable && String(window._cmiActiveTable).toLowerCase() === String(no).toLowerCase()) ? " active" : "";
                     const tDef = _templateDefs[no] || _templateDefs[no.toUpperCase()] || _templateDefs[no.toLowerCase()] || _templateDefs[normalizeTableNo(no)];
                     const isLocked = tDef && !!tDef.is_locked;
-                    const lockBadge = isLocked ? '<span style="margin-left:auto;font-size:11px;color:#d97706;padding-left:4px" title="Locked: Only PTA can fill out">🔒</span>' : '';
+                    const lockBadge = isLocked
+                        ? '<span style="margin-left:auto;display:inline-flex;align-items:center;color:#d97706;padding-left:4px" title="Locked: Only PTA can fill out">' +
+                          '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+                          '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
+                          '</span>'
+                        : '';
                     return (
                         `<div class="fill-nav-sub ${st}${active}" onclick="CMI.showTable('${no}')" style="display:flex;align-items:center;gap:4px">` +
                         `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${STATUS_ICON[st] ?? STATUS_ICON["not-started"]} ${no} — ${ttl}</span>${lockBadge}</div>`
@@ -367,6 +372,9 @@
             return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
+        const isPtaLocked = !!(tDef && tDef.is_locked);
+        const isLockedForCmi = isPtaLocked && !window.IS_PTA_USER;
+
         const ths = cols.map(c => {
             const name = typeof c === "string" ? c : (c.name || c.label || "Column");
             return `<th class="group">${escHtml(name)}</th>`;
@@ -374,12 +382,14 @@
 
         const hasCategories = categories.length > 0;
         let addButtonsHTML = "";
-        if (hasCategories) {
-            addButtonsHTML = categories.map(cat =>
-                `<button class="btn btn-sm dyn-add-cat-btn" data-cat="${escHtml(cat)}" type="button" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;font-weight:600">+ Add ${escHtml(cat)}</button>`
-            ).join(" ");
-        } else {
-            addButtonsHTML = `<button class="btn btn-sm" id="dyn_${tableNo}_add_btn" type="button" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;font-weight:600">+ Add Row</button>`;
+        if (!isLockedForCmi) {
+            if (hasCategories) {
+                addButtonsHTML = categories.map(cat =>
+                    `<button class="btn btn-sm dyn-add-cat-btn" data-cat="${escHtml(cat)}" type="button" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;font-weight:600">+ Add ${escHtml(cat)}</button>`
+                ).join(" ");
+            } else {
+                addButtonsHTML = `<button class="btn btn-sm" id="dyn_${tableNo}_add_btn" type="button" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;font-weight:600">+ Add Row</button>`;
+            }
         }
 
         container.innerHTML = `
@@ -425,28 +435,34 @@
                 const colKey = typeof c === "string" ? c : (c.key || c.name || "col");
                 const colType = typeof c === "string" ? "text" : (c.type || "text");
                 const val = escHtml(dataObj ? (dataObj[colKey] ?? dataObj[c.name] ?? "") : "");
+                const disAttr = isLockedForCmi
+                    ? ' disabled style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #e5e7eb;border-radius:6px;background:#f9fafb;color:#9ca3af;cursor:not-allowed;"'
+                    : ' style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:6px"';
                 if (colType === "number") {
-                    return `<td><input type="number" class="dyn-col-val" data-key="${escHtml(colKey)}" step="any" placeholder="0" value="${val}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:6px"/></td>`;
+                    return `<td><input type="number" class="dyn-col-val" data-key="${escHtml(colKey)}" step="any" placeholder="0" value="${val}"${disAttr}/></td>`;
                 } else if (colType === "date") {
-                    return `<td><input type="date" class="dyn-col-val" data-key="${escHtml(colKey)}" value="${val}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:6px"/></td>`;
+                    return `<td><input type="date" class="dyn-col-val" data-key="${escHtml(colKey)}" value="${val}"${disAttr}/></td>`;
                 } else {
-                    return `<td><input type="text" class="dyn-col-val" data-key="${escHtml(colKey)}" placeholder="${escHtml(c.name || colKey)}" value="${val}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:6px"/></td>`;
+                    return `<td><input type="text" class="dyn-col-val" data-key="${escHtml(colKey)}" placeholder="${escHtml(c.name || colKey)}" value="${val}"${disAttr}/></td>`;
                 }
             }).join("");
 
             const catAttr = catKey ? ` data-cat="${escHtml(catKey)}"` : "";
             const numText = (idx != null) ? `${idx + 1}.` : "1.";
             const catParam = catKey ? `'${escHtml(catKey)}'` : "null";
+            const delTd = isLockedForCmi
+                ? `<td style="text-align:center"></td>`
+                : `<td style="text-align:center">
+                    <button type="button" class="row-remove-btn" onclick="this.closest('tr').remove(); CMI.renumberDynRows('${tableNo}', ${catParam});">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                    </button>
+                  </td>`;
 
             return `
             <tr class="dyn-data-row"${catAttr}>
               <td class="dyn-row-no" style="text-align:center;font-weight:600;font-size:13px">${numText}</td>
               ${tds}
-              <td style="text-align:center">
-                <button type="button" class="row-remove-btn" onclick="this.closest('tr').remove(); CMI.renumberDynRows('${tableNo}', ${catParam});">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                </button>
-              </td>
+              ${delTd}
             </tr>`;
         }
 
@@ -554,9 +570,12 @@
         window[tableNo.toUpperCase()] = window[tableNo];
         window[tableNo.toLowerCase()] = window[tableNo];
 
-        saveBtn.addEventListener("click", function () {
-            performDynamicSave('done');
-        });
+        if (saveBtn) {
+            if (isLockedForCmi) saveBtn.style.display = "none";
+            saveBtn.addEventListener("click", function () {
+                performDynamicSave('done');
+            });
+        }
 
         // Load existing row data
         const yr = window.CMI_REPORTING_YEAR || new Date().getFullYear();
@@ -589,6 +608,7 @@
                 if (res && res.docs && typeof updateDocsBadge === "function") {
                     updateDocsBadge(tableNo, res.docs.length);
                 }
+                applyLock(tableNo);
             })
             .catch(() => {
                 if (hasCategories) {
@@ -601,6 +621,7 @@
                 } else {
                     tbody.innerHTML = makeRowHTML({}, 0, null);
                 }
+                applyLock(tableNo);
             });
     }
 
@@ -702,9 +723,11 @@
                         banner.id = "cmi-locked-cmi-banner";
                         banner.style.cssText = "display:flex;align-items:center;gap:12px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 18px;margin-bottom:16px;font-size:13px;color:#9a3412;box-shadow:0 2px 8px rgba(217,119,6,0.06);";
                         banner.innerHTML = `
-                          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                          <div style="width:36px;height:36px;border-radius:8px;background:#ffedd5;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#c2410c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                          </div>
                           <div>
-                            <strong style="font-size:13.5px">🔒 Table Locked by PTA</strong><br>
+                            <strong style="font-size:13.5px;color:#9a3412">Table Locked by PTA</strong><br>
                             <span style="font-size:12px;color:#b45309">This table is designated as PTA-only. Only PTA administrators can input or fill out this report. CMI users cannot make entries here.</span>
                           </div>`;
                         body.insertBefore(banner, body.firstChild);
@@ -718,8 +741,13 @@
                     });
                     body.querySelectorAll("button").forEach((el) => {
                         const text = (el.textContent || '').toLowerCase();
-                        if (!el.classList.contains("t-docs-btn") && !el.getAttribute("onclick")?.includes("openDocs") &&
-                            (text.includes('save') || text.includes('add') || text.includes('remove') || text.includes('delete') || el.dataset.action === 'save')) {
+                        const title = (el.getAttribute("title") || '').toLowerCase();
+                        const isDocs = el.classList.contains("t-docs-btn") || (el.getAttribute("onclick") || '').includes("openDocs");
+                        const isActionBtn = text.includes('save') || text.includes('add') || text.includes('remove') || text.includes('delete') ||
+                                            title.includes('remove') || title.includes('delete') ||
+                                            el.classList.contains("row-remove-btn") || el.classList.contains("row-del-btn") || el.classList.contains("btn-del") ||
+                                            el.dataset.action === 'save';
+                        if (!isDocs && isActionBtn) {
                             el.style.display = "none";
                         }
                     });
@@ -735,9 +763,16 @@
                     el.style.color = "#999";
                     el.style.cursor = "not-allowed";
                 });
-                body.querySelectorAll("button[onclick]").forEach((el) => {
+                body.querySelectorAll("button[onclick], button").forEach((el) => {
                     const onclickAttr = el.getAttribute("onclick") || "";
-                    if (!el.classList.contains("t-docs-btn") && !onclickAttr.includes("openDocs")) {
+                    const text = (el.textContent || '').toLowerCase();
+                    const title = (el.getAttribute("title") || '').toLowerCase();
+                    const isDocs = el.classList.contains("t-docs-btn") || onclickAttr.includes("openDocs");
+                    const isActionBtn = text.includes('save') || text.includes('add') || text.includes('remove') || text.includes('delete') ||
+                                        title.includes('remove') || title.includes('delete') ||
+                                        el.classList.contains("row-remove-btn") || el.classList.contains("row-del-btn") || el.classList.contains("btn-del") ||
+                                        el.dataset.action === 'save';
+                    if (!isDocs && (onclickAttr || isActionBtn)) {
                         el.style.display = "none";
                     }
                 });
@@ -784,6 +819,8 @@
         }
     }
 
+    CMI.applyLock = applyLock;
+
     CMI.lockReport = function () {
         _isSubmitted = true;
         const no = window._cmiActiveTable;
@@ -791,8 +828,17 @@
     };
 
     CMI.saveDraft = function () {
-        window._cmiSavingDraft = true;
         const active = window._cmiActiveTable || 'T1';
+        const tDef = _templateDefs[active] || _templateDefs[normalizeTableNo(active)] || _templateDefs[String(active).toUpperCase()] || _templateDefs[String(active).toLowerCase()];
+        const isPtaLocked = tDef && !!tDef.is_locked;
+        if (isPtaLocked && !window.IS_PTA_USER) {
+            if (typeof window.showToast === "function") {
+                window.showToast("Table " + active + " is designated as PTA-only and locked for CMI entry.");
+            }
+            return;
+        }
+
+        window._cmiSavingDraft = true;
         const winModule = window[active] || window[active.toUpperCase()] || window[active.toLowerCase()];
         if (winModule && typeof winModule.save === 'function') {
             winModule.save('draft');

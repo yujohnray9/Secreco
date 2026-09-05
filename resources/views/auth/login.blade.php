@@ -148,10 +148,10 @@
                  onerror="this.src='/assets/logo/cvaarrd.jpeg'"/>
           </div>
           <p class="hero-label">WELCOME TO</p>
-          <h1 class="hero-brand">SecReCo<span class="amber-bar"></span></h1>
+          <h1 class="hero-brand">SecReCo</h1>
           <p class="hero-tagline">
-            A Secure Reporting and Consolidation System<br/>
-            for CVAARRD Consortium
+            A Secure Reporting and Consolidation<br/>
+            System for CVAARRD Consortium
           </p>
           <div class="hero-amber-line"></div>
         </div>

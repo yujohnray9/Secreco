@@ -124,6 +124,17 @@ window.CMIUtils = {
       }
     }
 
-    return origFetch.call(this, resource, config);
+    const isLoadCall = url.includes('/api/cmi/tables/load');
+    const fetchPromise = origFetch.call(this, resource, config);
+    if (isLoadCall) {
+      fetchPromise.then(() => {
+        setTimeout(() => {
+          if (window._cmiActiveTable && typeof CMI !== 'undefined' && typeof CMI.applyLock === 'function') {
+            CMI.applyLock(window._cmiActiveTable);
+          }
+        }, 60);
+      }).catch(() => {});
+    }
+    return fetchPromise;
   };
 })();
