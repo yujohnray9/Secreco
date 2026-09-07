@@ -1,7 +1,7 @@
 @extends('layouts.pta')
 
 @section('styles')
-<link rel="stylesheet" href="/assets/css/pta/dashboard.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/dashboard.css?v=20260905"/>
 @endsection
 
 @section('content')
@@ -25,7 +25,7 @@
     <!-- ── TOP ROW: 4 STAT / KPI CARDS ── -->
     <div class="stats-cards-grid">
       <!-- Total CMIs -->
-      <div class="stat-card-fc kpi-green">
+      <div class="stat-card-fc pta-kpi-total">
         <div class="sc-fc-head">
           <span class="sc-fc-title">Total CMIs</span>
           <div class="sc-fc-icon icon-green">
@@ -51,7 +51,7 @@
       </div>
 
       <!-- Submitted -->
-      <div class="stat-card-fc kpi-green">
+      <div class="stat-card-fc pta-kpi-submitted">
         <div class="sc-fc-head">
           <span class="sc-fc-title">Submitted</span>
           <div class="sc-fc-icon icon-green">
@@ -76,7 +76,7 @@
       </div>
 
       <!-- In Progress -->
-      <div class="stat-card-fc kpi-gold">
+      <div class="stat-card-fc pta-kpi-inprogress">
         <div class="sc-fc-head">
           <span class="sc-fc-title">In Progress</span>
           <div class="sc-fc-icon icon-gold">
@@ -107,7 +107,7 @@
       </div>
 
       <!-- Unstarted -->
-      <div class="stat-card-fc kpi-orange">
+      <div class="stat-card-fc pta-kpi-unstarted">
         <div class="sc-fc-head">
           <span class="sc-fc-title">Unstarted</span>
           <div class="sc-fc-icon icon-orange">
@@ -256,6 +256,14 @@ let trendChartInst = null;
 let barChartInst = null;
 let donutChartInst = null;
 
+function getProgressColorSpec(pct) {
+  if (pct === 0) return { fill: '#A63A2E', text: '#501313' };
+  if (pct < 30) return { fill: '#8A9A5B', text: '#3f4b23' };
+  if (pct < 60) return { fill: '#D4A017', text: '#412402' };
+  if (pct < 90) return { fill: '#6B8E4E', text: '#2b421a' };
+  return { fill: '#1F5C4A', text: '#173404' };
+}
+
 function goToPtaYearPage(base) {
   const yr = document.getElementById('ptaDashYearFilter')?.value || currentPtaDashYear;
   window.location.href = `${base}?year=${yr}`;
@@ -276,7 +284,7 @@ async function loadPtaDashboard(year) {
     document.getElementById('statInProgress').textContent  = stats.in_progress !== undefined ? stats.in_progress : '0';
     document.getElementById('statNotStarted').textContent  = stats.not_started !== undefined ? stats.not_started : '0';
 
-    // 1. Line Growth Trend Chart
+    // 1. Line Growth Trend Chart (SecReCo Forest Green #1F5C4A)
     const monthlyLabels   = json.monthly_labels   || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const monthlyValues   = json.monthly_values   || [0,0,0,0,0,0,0,0,0,0,0,0];
     const quarterlyLabels = json.quarterly_labels || ['Q1 (Jan–Mar)', 'Q2 (Apr–Jun)', 'Q3 (Jul–Sep)', 'Q4 (Oct–Dec)'];
@@ -288,8 +296,8 @@ async function loadPtaDashboard(year) {
       const ctx = document.getElementById('growthTrendChart')?.getContext('2d');
       if (!ctx) return;
       const grad = ctx.createLinearGradient(0, 0, 0, 240);
-      grad.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
-      grad.addColorStop(1, 'rgba(16, 185, 129, 0.01)');
+      grad.addColorStop(0, 'rgba(31, 92, 74, 0.28)');
+      grad.addColorStop(1, 'rgba(31, 92, 74, 0.01)');
       if (trendChartInst) trendChartInst.destroy();
       trendChartInst = new Chart(ctx, {
         type: 'line',
@@ -298,13 +306,13 @@ async function loadPtaDashboard(year) {
           datasets: [{
             label: 'Submissions',
             data: values,
-            borderColor: '#10b981',
+            borderColor: '#1F5C4A',
             borderWidth: 2.5,
             backgroundColor: grad,
             fill: true,
             tension: 0.35,
             pointBackgroundColor: '#ffffff',
-            pointBorderColor: '#10b981',
+            pointBorderColor: '#1F5C4A',
             pointBorderWidth: 2.5,
             pointRadius: 4.5,
             pointHoverRadius: 6.5
@@ -388,7 +396,7 @@ async function loadPtaDashboard(year) {
     if (fillAcc) fillAcc.style.width = Math.round((cAcc / maxStatusVal) * 100) + '%';
     if (fillRet) fillRet.style.width = Math.round((cRet / maxStatusVal) * 100) + '%';
 
-    // 3. Donut Chart (Status Breakdown) & Custom Legend
+    // 3. Donut Chart (Status Breakdown) & Custom Legend - SecReCo Palette Spec
     const ctxDonut = document.getElementById('statusDonutChart')?.getContext('2d');
     if (ctxDonut) {
       if (donutChartInst) donutChartInst.destroy();
@@ -401,7 +409,8 @@ async function loadPtaDashboard(year) {
         s.not_started || 0
       ];
       const dLabels = ['Submitted', 'Accepted', 'In Progress', 'Returned', 'Unstarted'];
-      const dColors = ['#1aaa80', '#075b42', '#d8a520', '#df443d', '#dfe4e1'];
+      // Palette Spec: Submitted (#6B8E4E), Accepted (#1F5C4A), In Progress (#D4A017), Returned (#A63A2E), Unstarted (#8A9A5B)
+      const dColors = ['#6B8E4E', '#1F5C4A', '#D4A017', '#A63A2E', '#8A9A5B'];
 
       donutChartInst = new Chart(ctxDonut, {
         type: 'doughnut',
@@ -439,21 +448,22 @@ async function loadPtaDashboard(year) {
       }
     }
 
-    // 4. Real Institution Progress Bars
+    // 4. Real Institution Progress Bars - Dynamic SecReCo Percentage Colors
     const progWrap = document.getElementById('institutionProgressList');
     if (progWrap) {
       const cmiList = json.cmi_status_list || json.cmi_list || [];
       if (cmiList && cmiList.length > 0) {
         progWrap.innerHTML = cmiList.map(item => {
           const pct = item.total_tables > 0 ? Math.round((item.tables_done / item.total_tables) * 100) : 0;
+          const color = getProgressColorSpec(pct);
           return `
             <div class="progress-item">
               <div class="progress-info">
                 <span class="progress-label" title="${item.institution}">${item.institution}</span>
-                <span class="progress-pct">${item.tables_done}/${item.total_tables} (${pct}%)</span>
+                <span class="progress-pct" style="color:${color.text}; font-weight:700;">${item.tables_done}/${item.total_tables} (${pct}%)</span>
               </div>
               <div class="progress-track">
-                <div class="progress-fill" style="width: ${pct}%;"></div>
+                <div class="progress-fill" style="width: ${pct}%; background:${color.fill};"></div>
               </div>
             </div>
           `;

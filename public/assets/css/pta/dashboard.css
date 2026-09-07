@@ -95,21 +95,158 @@
   box-shadow: 0 14px 30px rgba(25, 60, 47, 0.09);
 }
 
-/* Top colored accent borders */
-.stat-card-fc.kpi-green,
-.stat-card-fc:nth-child(1),
-.stat-card-fc:nth-child(2) {
-  border-top: 3.5px solid #2bb58a;
+/* ═════════════════════════════════════════════════════════════════
+   SecReCo Dashboard — Color Palette Specification (CVAARRD Identity)
+   #1F5C4A: Deep Forest Green (Complete / Total CMIs / Accepted)
+   #6B8E4E: Sage Green (Submitted / 60–89% progress)
+   #D4A017: Golden Yellow (In Draft / In Progress / 30–59%)
+   #8A9A5B: Muted Olive (Not Started / Unstarted / 1–29%)
+   #A63A2E: Deep Brick Red (For Correction / Returned / 0%)
+   #EEF0E6: Progress Bar Track Fill
+═════════════════════════════════════════════════════════════════ */
+
+/* Top colored accent borders (Fallback default) */
+.stat-card-fc:nth-child(1) { border-top: 4px solid #1F5C4A; }
+.stat-card-fc:nth-child(2) { border-top: 4px solid #6B8E4E; }
+.stat-card-fc:nth-child(3) { border-top: 4px solid #D4A017; }
+.stat-card-fc:nth-child(4) { border-top: 4px solid #A63A2E; }
+
+/* ── CMI Dashboard Top Cards (SecReCo Spec) ── */
+/* 1. Tables Complete (#1F5C4A) */
+.stat-card-fc.cmi-kpi-complete {
+  border-top: 4px solid #1F5C4A;
+}
+.stat-card-fc.cmi-kpi-complete .sc-fc-icon {
+  background: rgba(31, 92, 74, 0.12);
+  color: #1F5C4A;
+  border: 1px solid rgba(31, 92, 74, 0.25);
+}
+.stat-card-fc.cmi-kpi-complete .sc-fc-val {
+  color: #1F5C4A;
+}
+.stat-card-fc.cmi-kpi-complete .sc-fc-badge {
+  background: rgba(31, 92, 74, 0.12);
+  color: #1F5C4A;
 }
 
-.stat-card-fc.kpi-gold,
-.stat-card-fc:nth-child(3) {
-  border-top: 3.5px solid #d0a43e;
+/* 2. In Draft (#D4A017) */
+.stat-card-fc.cmi-kpi-draft {
+  border-top: 4px solid #D4A017;
+}
+.stat-card-fc.cmi-kpi-draft .sc-fc-icon {
+  background: rgba(212, 160, 23, 0.12);
+  color: #D4A017;
+  border: 1px solid rgba(212, 160, 23, 0.25);
+}
+.stat-card-fc.cmi-kpi-draft .sc-fc-val {
+  color: #D4A017;
+}
+.stat-card-fc.cmi-kpi-draft .sc-fc-badge {
+  background: rgba(212, 160, 23, 0.12);
+  color: #926a05;
 }
 
-.stat-card-fc.kpi-orange,
-.stat-card-fc:nth-child(4) {
-  border-top: 3.5px solid #e88a35;
+/* 3. Not Started (#8A9A5B) */
+.stat-card-fc.cmi-kpi-notstarted {
+  border-top: 4px solid #8A9A5B;
+}
+.stat-card-fc.cmi-kpi-notstarted .sc-fc-icon {
+  background: rgba(138, 154, 91, 0.14);
+  color: #8A9A5B;
+  border: 1px solid rgba(138, 154, 91, 0.28);
+}
+.stat-card-fc.cmi-kpi-notstarted .sc-fc-val {
+  color: #5d6b38;
+}
+.stat-card-fc.cmi-kpi-notstarted .sc-fc-badge {
+  background: rgba(138, 154, 91, 0.14);
+  color: #5d6b38;
+}
+
+/* 4. For Correction (#A63A2E) */
+.stat-card-fc.cmi-kpi-correction {
+  border-top: 4px solid #A63A2E;
+}
+.stat-card-fc.cmi-kpi-correction .sc-fc-icon {
+  background: rgba(166, 58, 46, 0.12);
+  color: #A63A2E;
+  border: 1px solid rgba(166, 58, 46, 0.25);
+}
+.stat-card-fc.cmi-kpi-correction .sc-fc-val {
+  color: #A63A2E;
+}
+.stat-card-fc.cmi-kpi-correction .sc-fc-badge {
+  background: rgba(166, 58, 46, 0.12);
+  color: #A63A2E;
+}
+
+/* ── PTA Dashboard Top Cards (SecReCo Spec) ── */
+/* 1. Total CMIs (#1F5C4A) */
+.stat-card-fc.pta-kpi-total {
+  border-top: 4px solid #1F5C4A;
+}
+.stat-card-fc.pta-kpi-total .sc-fc-icon {
+  background: rgba(31, 92, 74, 0.12);
+  color: #1F5C4A;
+  border: 1px solid rgba(31, 92, 74, 0.25);
+}
+.stat-card-fc.pta-kpi-total .sc-fc-val {
+  color: #1F5C4A;
+}
+.stat-card-fc.pta-kpi-total .sc-fc-badge {
+  background: rgba(31, 92, 74, 0.12);
+  color: #1F5C4A;
+}
+
+/* 2. Submitted (#6B8E4E) */
+.stat-card-fc.pta-kpi-submitted {
+  border-top: 4px solid #6B8E4E;
+}
+.stat-card-fc.pta-kpi-submitted .sc-fc-icon {
+  background: rgba(107, 142, 78, 0.14);
+  color: #6B8E4E;
+  border: 1px solid rgba(107, 142, 78, 0.28);
+}
+.stat-card-fc.pta-kpi-submitted .sc-fc-val {
+  color: #4d6934;
+}
+.stat-card-fc.pta-kpi-submitted .sc-fc-badge {
+  background: rgba(107, 142, 78, 0.14);
+  color: #4d6934;
+}
+
+/* 3. In Progress (#D4A017) */
+.stat-card-fc.pta-kpi-inprogress {
+  border-top: 4px solid #D4A017;
+}
+.stat-card-fc.pta-kpi-inprogress .sc-fc-icon {
+  background: rgba(212, 160, 23, 0.12);
+  color: #D4A017;
+  border: 1px solid rgba(212, 160, 23, 0.25);
+}
+.stat-card-fc.pta-kpi-inprogress .sc-fc-val {
+  color: #D4A017;
+}
+.stat-card-fc.pta-kpi-inprogress .sc-fc-badge {
+  background: rgba(212, 160, 23, 0.12);
+  color: #926a05;
+}
+
+/* 4. Unstarted (#A63A2E) */
+.stat-card-fc.pta-kpi-unstarted {
+  border-top: 4px solid #A63A2E;
+}
+.stat-card-fc.pta-kpi-unstarted .sc-fc-icon {
+  background: rgba(166, 58, 46, 0.12);
+  color: #A63A2E;
+  border: 1px solid rgba(166, 58, 46, 0.25);
+}
+.stat-card-fc.pta-kpi-unstarted .sc-fc-val {
+  color: #A63A2E;
+}
+.stat-card-fc.pta-kpi-unstarted .sc-fc-badge {
+  background: rgba(166, 58, 46, 0.12);
+  color: #A63A2E;
 }
 
 .sc-fc-head {
@@ -119,7 +256,7 @@
 }
 
 .sc-fc-title {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #4c5b55;
   letter-spacing: -0.01em;
@@ -134,30 +271,6 @@
   justify-content: center;
   flex-shrink: 0;
   transition: transform 0.15s ease;
-}
-
-.sc-fc-icon.icon-green {
-  background: var(--mint);
-  color: var(--forest);
-  border: 1px solid #cce9da;
-}
-
-.sc-fc-icon.icon-gold {
-  background: #fff6dc;
-  color: #a47a15;
-  border: 1px solid #f1dfaa;
-}
-
-.sc-fc-icon.icon-orange {
-  background: #fff0e8;
-  color: var(--orange);
-  border: 1px solid #f2d2bd;
-}
-
-.sc-fc-icon.icon-blue {
-  background: var(--mint);
-  color: var(--forest);
-  border: 1px solid #cce9da;
 }
 
 .sc-fc-icon svg {
@@ -460,8 +573,8 @@
 }
 
 .progress-track {
-  height: 8px;
-  background: #eef1ef;
+  height: 9px;
+  background: #EEF0E6 !important;
   border-radius: 20px;
   overflow: hidden;
 }
@@ -469,11 +582,11 @@
 .progress-fill {
   height: 100%;
   border-radius: 20px;
-  background: linear-gradient(90deg, #087454 0%, #2ab48a 100%);
-  transition: width 0.8s ease;
+  background: #1F5C4A;
+  transition: width 0.8s ease, background-color 0.3s ease;
 }
 
-/* ── Submissions Status Comparison (Manus Match) ── */
+/* ── Submissions Status Comparison (SecReCo Spec Match) ── */
 .submissions-status-bars {
   display: flex;
   flex-direction: column;
@@ -510,7 +623,7 @@
 
 .status-bar-track {
   height: 10px;
-  background: #edf2ef;
+  background: #EEF0E6 !important;
   border-radius: 999px;
   overflow: hidden;
   position: relative;
@@ -522,10 +635,10 @@
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.bar-fill-submitted  { background: linear-gradient(90deg, #26ab82, #3bd4a4); }
-.bar-fill-inprogress { background: linear-gradient(90deg, #d5a82e, #f2c94c); }
-.bar-fill-accepted   { background: linear-gradient(90deg, #075b42, #0d8360); }
-.bar-fill-returned   { background: linear-gradient(90deg, #df443d, #f87171); }
+.bar-fill-submitted  { background: #6B8E4E !important; }
+.bar-fill-inprogress { background: #D4A017 !important; }
+.bar-fill-accepted   { background: #1F5C4A !important; }
+.bar-fill-returned   { background: #A63A2E !important; }
 
 /* Responsive adjustments */
 @media (max-width: 1080px) {

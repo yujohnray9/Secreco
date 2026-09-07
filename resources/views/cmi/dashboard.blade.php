@@ -1,7 +1,7 @@
 @extends('layouts.cmi')
 
 @section('styles')
-<link rel="stylesheet" href="/assets/css/pta/dashboard.css?v=3"/>
+<link rel="stylesheet" href="/assets/css/pta/dashboard.css?v=20260905"/>
 @endsection
 
 @section('content')
@@ -25,7 +25,7 @@
     <!-- ── TOP ROW: 4 STAT CARDS ── -->
     <div class="stats-cards-grid">
       <!-- Tables Complete -->
-      <div class="stat-card-fc">
+      <div class="stat-card-fc cmi-kpi-complete">
         <div class="sc-fc-head">
           <span class="sc-fc-title">Tables Complete</span>
           <div class="sc-fc-icon icon-green">
@@ -46,7 +46,7 @@
       </div>
 
       <!-- In Draft -->
-      <div class="stat-card-fc">
+      <div class="stat-card-fc cmi-kpi-draft">
         <div class="sc-fc-head">
           <span class="sc-fc-title">In Draft</span>
           <div class="sc-fc-icon icon-orange">
@@ -67,7 +67,7 @@
       </div>
 
       <!-- Not Started -->
-      <div class="stat-card-fc">
+      <div class="stat-card-fc cmi-kpi-notstarted">
         <div class="sc-fc-head">
           <span class="sc-fc-title">Not Started</span>
           <div class="sc-fc-icon icon-purple">
@@ -88,7 +88,7 @@
       </div>
 
       <!-- For Correction -->
-      <div class="stat-card-fc">
+      <div class="stat-card-fc cmi-kpi-correction">
         <div class="sc-fc-head">
           <span class="sc-fc-title">For Correction</span>
           <div class="sc-fc-icon icon-blue">
@@ -140,6 +140,14 @@
 <script>
 let currentDashYear = 2026;
 
+function getProgressColorSpec(pct) {
+  if (pct === 0) return { fill: '#A63A2E', text: '#501313' };
+  if (pct < 30) return { fill: '#8A9A5B', text: '#3f4b23' };
+  if (pct < 60) return { fill: '#D4A017', text: '#412402' };
+  if (pct < 90) return { fill: '#6B8E4E', text: '#2b421a' };
+  return { fill: '#1F5C4A', text: '#173404' };
+}
+
 function goToYearPage(base) {
   const yr = document.getElementById('cmiDashYearFilter')?.value || currentDashYear;
   window.location.href = `${base}?year=${yr}`;
@@ -176,15 +184,18 @@ async function loadDashboard(year) {
 
     if (json.sectionProgress) {
       const spContainer = document.getElementById('sectionProgress');
-      spContainer.innerHTML = json.sectionProgress.map(sp => `
+      spContainer.innerHTML = json.sectionProgress.map(sp => {
+        const color = getProgressColorSpec(sp.pct);
+        return `
         <div class="progress-item">
           <div class="progress-info">
             <span class="progress-label">${sp.section}</span>
-            <span class="progress-pct">${sp.done}/${sp.total} (${sp.pct}%)</span>
+            <span class="progress-pct" style="color:${color.text}; font-weight:700;">${sp.done}/${sp.total} (${sp.pct}%)</span>
           </div>
-          <div class="progress-track"><div class="progress-fill" style="width:${sp.pct}%;"></div></div>
+          <div class="progress-track"><div class="progress-fill" style="width:${sp.pct}%; background:${color.fill};"></div></div>
         </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     if (json.recentActivity && json.recentActivity.length > 0) {
