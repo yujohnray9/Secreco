@@ -565,7 +565,7 @@ function renderPtaCards() {
 
     let desc = 'Institutional report information was updated and is ready for review.';
     if (category === 'submissions') {
-      desc = 'A new institutional submission has been received and requires processing.';
+      desc = 'A new institutional submission has been received and is ready for validation.';
     }
 
     const actionUrl = n.action ? (n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action) : '/dashboard/pta/submissions';

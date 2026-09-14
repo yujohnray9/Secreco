@@ -162,7 +162,7 @@ class DashboardController extends Controller
                     $icon = 'draft';
                     break;
                 case 'error':
-                    $desc = '<strong>' . $label . '</strong> flagged for correction — review remarks';
+                    $desc = '<strong>' . $label . '</strong> was returned for revision — review remarks';
                     $icon = 'flagged';
                     break;
                 default:

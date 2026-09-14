@@ -163,67 +163,27 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           </div>
         </div>
-        <div class="submissions-status-bars" id="submissionsStatusBars">
-          <div class="status-bar-row">
-            <div class="status-bar-meta">
-              <span class="status-bar-label">Submitted</span>
-              <strong class="status-bar-count" id="barCountSubmitted">0</strong>
-            </div>
-            <div class="status-bar-track">
-              <div class="status-bar-fill bar-fill-submitted" id="barFillSubmitted" style="width: 0%"></div>
-            </div>
-          </div>
-          <div class="status-bar-row">
-            <div class="status-bar-meta">
-              <span class="status-bar-label">In Progress</span>
-              <strong class="status-bar-count" id="barCountInProgress">0</strong>
-            </div>
-            <div class="status-bar-track">
-              <div class="status-bar-fill bar-fill-inprogress" id="barFillInProgress" style="width: 0%"></div>
-            </div>
-          </div>
-          <div class="status-bar-row">
-            <div class="status-bar-meta">
-              <span class="status-bar-label">Accepted</span>
-              <strong class="status-bar-count" id="barCountAccepted">0</strong>
-            </div>
-            <div class="status-bar-track">
-              <div class="status-bar-fill bar-fill-accepted" id="barFillAccepted" style="width: 0%"></div>
-            </div>
-          </div>
-          <div class="status-bar-row">
-            <div class="status-bar-meta">
-              <span class="status-bar-label">Returned</span>
-              <strong class="status-bar-count" id="barCountReturned">0</strong>
-            </div>
-            <div class="status-bar-track">
-              <div class="status-bar-fill bar-fill-returned" id="barFillReturned" style="width: 0%"></div>
-            </div>
-          </div>
+        <div style="height:250px; position:relative; padding:10px 0;">
+          <canvas id="statusBarComparisonChart"></canvas>
         </div>
       </div>
     </div>
 
     <!-- ── BOTTOM ROW: DONUT CHART & INSTITUTION PROGRESS ── -->
     <div class="bottom-widgets-grid">
-      <!-- Status Distribution (Donut Chart) -->
+      <!-- Recent Activity Feed -->
       <div class="card-fc">
         <div class="card-fc-header">
           <div>
-            <h2 class="card-fc-title">Status Distribution</h2>
-            <p class="card-fc-sub">Proportion of submissions by status</p>
+            <h2 class="card-fc-title">Recent Activity</h2>
+            <p class="card-fc-sub">Latest submissions, reviews &amp; system updates</p>
           </div>
           <div class="section-badge-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
         </div>
-        <div class="donut-layout">
-          <div class="donut-chart-wrap">
-            <canvas id="statusDonutChart"></canvas>
-          </div>
-          <div class="donut-legend" id="donutLegendList">
-            <!-- Populated dynamically -->
-          </div>
+        <div class="activity-feed-list" id="ptaRecentActivityList" style="max-height:330px;overflow-y:auto;padding:8px 4px;display:flex;flex-direction:column;gap:10px;">
+          <div style="text-align:center; color:#74807c; font-size:12px; padding:30px;">Loading recent activities...</div>
         </div>
       </div>
 
@@ -254,14 +214,13 @@
 let currentPtaDashYear = 2026;
 let trendChartInst = null;
 let barChartInst = null;
-let donutChartInst = null;
 
 function getProgressColorSpec(pct) {
-  if (pct === 0) return { fill: '#A63A2E', text: '#501313' };
-  if (pct < 30) return { fill: '#8A9A5B', text: '#3f4b23' };
-  if (pct < 60) return { fill: '#D4A017', text: '#412402' };
-  if (pct < 90) return { fill: '#6B8E4E', text: '#2b421a' };
-  return { fill: '#1F5C4A', text: '#173404' };
+  if (pct === 0) return { fill: '#d1d5db', text: '#6b7280' };
+  if (pct < 30) return { fill: '#10b981', text: '#059669' };
+  if (pct < 60) return { fill: '#059669', text: '#047857' };
+  if (pct < 90) return { fill: '#047857', text: '#064e3b' };
+  return { fill: '#034a36', text: '#022c20' };
 }
 
 function goToPtaYearPage(base) {
@@ -284,45 +243,94 @@ async function loadPtaDashboard(year) {
     document.getElementById('statInProgress').textContent  = stats.in_progress !== undefined ? stats.in_progress : '0';
     document.getElementById('statNotStarted').textContent  = stats.not_started !== undefined ? stats.not_started : '0';
 
-    // 1. Line Growth Trend Chart (SecReCo Forest Green #1F5C4A)
-    const monthlyLabels   = json.monthly_labels   || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const monthlyValues   = json.monthly_values   || [0,0,0,0,0,0,0,0,0,0,0,0];
-    const quarterlyLabels = json.quarterly_labels || ['Q1 (Jan–Mar)', 'Q2 (Apr–Jun)', 'Q3 (Jul–Sep)', 'Q4 (Oct–Dec)'];
-    const quarterlyValues = json.quarterly_values || [0, 0, 0, 0];
-    const annualLabels    = json.annual_labels    || ['2022','2023','2024','2025','2026'];
-    const annualValues    = json.annual_values    || [0,0,0,0,0];
+    // 1. Line Growth Trend Chart with 3 lines: Submitted (Green), Accepted (Yellow), Returned (Red)
+    const monthlyLabels    = json.monthly_labels    || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthlySubmitted = json.monthly_submitted || new Array(12).fill(0);
+    const monthlyAccepted  = json.monthly_accepted  || new Array(12).fill(0);
+    const monthlyReturned  = json.monthly_returned  || new Array(12).fill(0);
 
-    function buildTrendChart(labels, values) {
+    const quarterlyLabels    = json.quarterly_labels    || ['Q1 (Jan–Mar)', 'Q2 (Apr–Jun)', 'Q3 (Jul–Sep)', 'Q4 (Oct–Dec)'];
+    const quarterlySubmitted = json.quarterly_submitted || [0, 0, 0, 0];
+    const quarterlyAccepted  = json.quarterly_accepted  || [0, 0, 0, 0];
+    const quarterlyReturned  = json.quarterly_returned  || [0, 0, 0, 0];
+
+    const annualLabels    = json.annual_labels    || ['2022','2023','2024','2025','2026'];
+    const annualSubmitted = json.annual_submitted || [0,0,0,0,0];
+    const annualAccepted  = json.annual_accepted  || [0,0,0,0,0];
+    const annualReturned  = json.annual_returned  || [0,0,0,0,0];
+
+    function buildTrendChart(labels, subVals, accVals, retVals) {
       const ctx = document.getElementById('growthTrendChart')?.getContext('2d');
       if (!ctx) return;
-      const grad = ctx.createLinearGradient(0, 0, 0, 240);
-      grad.addColorStop(0, 'rgba(31, 92, 74, 0.28)');
-      grad.addColorStop(1, 'rgba(31, 92, 74, 0.01)');
+
       if (trendChartInst) trendChartInst.destroy();
       trendChartInst = new Chart(ctx, {
         type: 'line',
         data: {
           labels,
-          datasets: [{
-            label: 'Submissions',
-            data: values,
-            borderColor: '#1F5C4A',
-            borderWidth: 2.5,
-            backgroundColor: grad,
-            fill: true,
-            tension: 0.35,
-            pointBackgroundColor: '#ffffff',
-            pointBorderColor: '#1F5C4A',
-            pointBorderWidth: 2.5,
-            pointRadius: 4.5,
-            pointHoverRadius: 6.5
-          }]
+          datasets: [
+            {
+              label: 'Submitted',
+              data: subVals,
+              borderColor: '#10b981', // Green
+              backgroundColor: 'rgba(16, 185, 129, 0.08)',
+              borderWidth: 2.5,
+              fill: false,
+              tension: 0.35,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#10b981',
+              pointBorderWidth: 2.5,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            },
+            {
+              label: 'Accepted',
+              data: accVals,
+              borderColor: '#eab308', // Yellow
+              backgroundColor: 'rgba(234, 179, 8, 0.08)',
+              borderWidth: 2.5,
+              fill: false,
+              tension: 0.35,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#eab308',
+              pointBorderWidth: 2.5,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            },
+            {
+              label: 'Returned',
+              data: retVals,
+              borderColor: '#ef4444', // Red
+              backgroundColor: 'rgba(239, 68, 68, 0.08)',
+              borderWidth: 2.5,
+              fill: false,
+              tension: 0.35,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#ef4444',
+              pointBorderWidth: 2.5,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false },
+            legend: {
+              display: true,
+              position: 'top',
+              align: 'end',
+              labels: {
+                boxWidth: 10,
+                boxHeight: 10,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                font: { family: 'DM Sans', size: 11, weight: '600' },
+                color: '#374151',
+                padding: 12
+              }
+            },
             tooltip: {
               backgroundColor: '#16352d',
               titleFont: { family: 'DM Sans', size: 12 },
@@ -363,107 +371,113 @@ async function loadPtaDashboard(year) {
       const el = document.getElementById('trendSubtitle');
       if (el) el.textContent = subs[period] || '';
 
-      if (period === 'monthly')   buildTrendChart(monthlyLabels, monthlyValues);
-      if (period === 'quarterly') buildTrendChart(quarterlyLabels, quarterlyValues);
-      if (period === 'annually')  buildTrendChart(annualLabels, annualValues);
+      if (period === 'monthly')   buildTrendChart(monthlyLabels, monthlySubmitted, monthlyAccepted, monthlyReturned);
+      if (period === 'quarterly') buildTrendChart(quarterlyLabels, quarterlySubmitted, quarterlyAccepted, quarterlyReturned);
+      if (period === 'annually')  buildTrendChart(annualLabels, annualSubmitted, annualAccepted, annualReturned);
     };
 
     filterTrend('monthly');
 
-    // 2. Status Comparison (HTML Progress Bars matching Manus design)
-    const s = stats;
-    const cSub = s.submitted || 0;
-    const cProg = s.in_progress || 0;
-    const cAcc = s.accepted || 0;
-    const cRet = s.returned || 0;
-    const maxStatusVal = Math.max(cSub, cProg, cAcc, cRet, 1);
-
-    const elSub = document.getElementById('barCountSubmitted');
-    const elProg = document.getElementById('barCountInProgress');
-    const elAcc = document.getElementById('barCountAccepted');
-    const elRet = document.getElementById('barCountReturned');
-    if (elSub) elSub.textContent = cSub;
-    if (elProg) elProg.textContent = cProg;
-    if (elAcc) elAcc.textContent = cAcc;
-    if (elRet) elRet.textContent = cRet;
-
-    const fillSub = document.getElementById('barFillSubmitted');
-    const fillProg = document.getElementById('barFillInProgress');
-    const fillAcc = document.getElementById('barFillAccepted');
-    const fillRet = document.getElementById('barFillReturned');
-    if (fillSub) fillSub.style.width = Math.round((cSub / maxStatusVal) * 100) + '%';
-    if (fillProg) fillProg.style.width = Math.round((cProg / maxStatusVal) * 100) + '%';
-    if (fillAcc) fillAcc.style.width = Math.round((cAcc / maxStatusVal) * 100) + '%';
-    if (fillRet) fillRet.style.width = Math.round((cRet / maxStatusVal) * 100) + '%';
-
-    // 3. Donut Chart (Status Breakdown) & Custom Legend - SecReCo Palette Spec
-    const ctxDonut = document.getElementById('statusDonutChart')?.getContext('2d');
-    if (ctxDonut) {
-      if (donutChartInst) donutChartInst.destroy();
+    // 2. Submissions Status Comparison (Bar Graph)
+    const ctxBar = document.getElementById('statusBarComparisonChart')?.getContext('2d');
+    if (ctxBar) {
+      if (barChartInst) barChartInst.destroy();
       const s = stats;
-      const dData = [
+      const barLabels = ['Submitted', 'Accepted', 'In Progress', 'Returned', 'Unstarted'];
+      const barData   = [
         s.submitted || 0,
         s.accepted || 0,
         s.in_progress || 0,
         s.returned || 0,
         s.not_started || 0
       ];
-      const dLabels = ['Submitted', 'Accepted', 'In Progress', 'Returned', 'Unstarted'];
-      // Palette Spec: Submitted (#6B8E4E), Accepted (#1F5C4A), In Progress (#D4A017), Returned (#A63A2E), Unstarted (#8A9A5B)
-      const dColors = ['#6B8E4E', '#1F5C4A', '#D4A017', '#A63A2E', '#8A9A5B'];
+      const barColors = ['#10b981', '#eab308', '#3b82f6', '#ef4444', '#9ca3af'];
 
-      donutChartInst = new Chart(ctxDonut, {
-        type: 'doughnut',
+      barChartInst = new Chart(ctxBar, {
+        type: 'bar',
         data: {
-          labels: dLabels,
+          labels: barLabels,
           datasets: [{
-            data: dData,
-            backgroundColor: dColors,
-            borderWidth: 0,
-            hoverOffset: 4
+            label: 'Reports / CMIs',
+            data: barData,
+            backgroundColor: barColors,
+            borderRadius: 6,
+            barThickness: 28,
+            maxBarThickness: 36
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '72%',
           plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#16352d',
+              titleFont: { family: 'DM Sans', size: 12 },
+              bodyFont: { family: 'DM Sans', size: 12 },
+              padding: 10,
+              cornerRadius: 8
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#374151', font: { family: 'DM Sans', size: 11, weight: '600' } }
+            },
+            y: {
+              grid: { color: '#edf1ef' },
+              ticks: { precision: 0, color: '#74807c', font: { family: 'DM Sans', size: 10.5 } },
+              beginAtZero: true
+            }
           }
         }
       });
+    }
 
-      // Populate custom legend matching Manus
-      const legendWrap = document.getElementById('donutLegendList');
-      if (legendWrap) {
-        legendWrap.innerHTML = dLabels.map((lbl, i) => `
-          <div class="donut-legend-row">
-            <div class="donut-legend-label">
-              <span class="donut-legend-dot" style="background:${dColors[i]}"></span>
-              <span>${lbl}</span>
+    // 3. Recent Consortium Activity Feed
+    const actWrap = document.getElementById('ptaRecentActivityList');
+    if (actWrap) {
+      const activities = json.recent_activity || [];
+      if (activities.length > 0) {
+        actWrap.innerHTML = activities.map(act => {
+          const timeAgo = act.created_at ? new Date(act.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently';
+          return `
+            <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;background:#fbfcfb;border:1px solid #edf0ee;border-radius:10px;transition:background 0.15s ease;">
+              <div style="width:30px;height:30px;border-radius:50%;background:#ecfdf5;color:#059669;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;color:#1f2937;line-height:1.45;word-break:break-word;">${act.description || 'System event recorded'}</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+                  <span style="font-size:10.5px;color:#9ca3af;">${timeAgo}</span>
+                  <span style="font-size:10.5px;color:#d1d5db;">•</span>
+                  <span style="font-size:10.5px;color:#059669;font-weight:600;">${act.actor || 'System'}</span>
+                </div>
+              </div>
             </div>
-            <strong>${dData[i]}</strong>
-          </div>
-        `).join('');
+          `;
+        }).join('');
+      } else {
+        actWrap.innerHTML = '<div style="text-align:center; color:#74807c; font-size:12px; padding:30px;">No recent activities for CY ' + currentPtaDashYear + '.</div>';
       }
     }
 
     // 4. Real Institution Progress Bars - Dynamic SecReCo Percentage Colors
     const progWrap = document.getElementById('institutionProgressList');
     if (progWrap) {
-      const cmiList = json.cmi_status_list || json.cmi_list || [];
+      const cmiList = json.cmi_status_list || json.cmi_list || json.institution_progress || [];
       if (cmiList && cmiList.length > 0) {
         progWrap.innerHTML = cmiList.map(item => {
-          const pct = item.total_tables > 0 ? Math.round((item.tables_done / item.total_tables) * 100) : 0;
+          const pct = item.total_tables > 0 ? Math.round((item.tables_done / item.total_tables) * 100) : (item.pct || 0);
           const color = getProgressColorSpec(pct);
           return `
-            <div class="progress-item">
+            <div class="progress-item" style="margin-bottom:12px;">
               <div class="progress-info">
-                <span class="progress-label" title="${item.institution}">${item.institution}</span>
-                <span class="progress-pct" style="color:${color.text}; font-weight:700;">${item.tables_done}/${item.total_tables} (${pct}%)</span>
+                <span class="progress-label" title="${item.institution}" style="font-weight:600;font-size:12px;color:#374151;">${item.institution}</span>
+                <span class="progress-pct" style="color:${color.text}; font-weight:700;font-size:11.5px;">${item.tables_done}/${item.total_tables} (${pct}%)</span>
               </div>
-              <div class="progress-track">
-                <div class="progress-fill" style="width: ${pct}%; background:${color.fill};"></div>
+              <div class="progress-track" style="height:9px;background:#e5e7eb !important;border-radius:20px;overflow:hidden;position:relative;margin-top:5px;box-shadow:inset 0 1px 2px rgba(0,0,0,0.06);">
+                <div class="progress-fill" style="height:100%;border-radius:20px;width:${pct}%;background:${color.fill};transition:width 0.8s cubic-bezier(0.4,0,0.2,1);"></div>
               </div>
             </div>
           `;

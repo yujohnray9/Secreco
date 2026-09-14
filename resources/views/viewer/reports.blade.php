@@ -1,90 +1,180 @@
 @extends('layouts.viewer')
 
+@section('styles')
+<link rel="stylesheet" href="/assets/css/pta/reports.css"/>
+<style>
+/* ── Modern adjustments for Reports ── */
+.page-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.page-title { font-size:22px; font-weight:700; color:#111827; letter-spacing:-.4px; }
+.page-sub { font-size:13px; color:#6b7280; margin-top:3px; }
+
+.rpt-filter-row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:24px; }
+.toggle-group { display:flex; background:#eef7ee; border-radius:8px; padding:3px; gap:3px; border:1px solid #c8e6c9; }
+.toggle-opt { padding:7px 18px; border-radius:6px; font-size:12.5px; font-weight:600; cursor:pointer; color:#2e7d32; transition:all .2s; user-select:none; }
+.toggle-opt.active { background:#2d6a30; color:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); }
+
+.filter-select { border:1px solid #d1d5db; border-radius:8px; padding:7px 14px; font-size:13px; color:#374151; background:#fff; cursor:pointer; outline:none; }
+.filter-select:focus { border-color:#2d6a30; box-shadow:0 0 0 3px rgba(45,106,48,.12); }
+
+.card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; box-shadow:0 2px 12px rgba(0,0,0,.04); overflow:hidden; margin-bottom:24px; }
+.card-hdr { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid #f3f4f6; }
+.card-title { font-size:15px; font-weight:700; color:#111827; }
+.tbl-wrap { overflow-x:auto; }
+
+.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all .2s; }
+.btn-sm { padding:6px 14px; font-size:12.5px; }
+
+/* STRICT RULE: NO EXPORTS IN VIEWER */
+#rptExportBtns, .btn-export, #wordPreviewCard, #btnPtaCmiFillOut { display: none !important; }
+</style>
+@endsection
+
 @section('content')
 <div class="page active" id="page-reports">
+
+  <!-- PAGE HEADER -->
   <div class="page-hdr">
     <div>
-      <div class="page-title">Consolidated Reports (View Only)</div>
-      <div class="page-sub">View consolidated accomplishment data by table</div>
+      <div class="page-title">Consolidated Reports</div>
+      <div class="page-sub" id="rptSubtitle">Consolidated Annual Accomplishment Report</div>
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:20px">
-    <div class="card-hdr">
-      <div class="card-title">Select Table</div>
+  <!-- FILTERS ROW -->
+  <div class="rpt-filter-row">
+    <div class="toggle-group">
+      <div class="toggle-opt active" id="togPerTable" onclick="switchReportView('table')" style="display:flex;align-items:center;gap:6px">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Per Table
+      </div>
+      <div class="toggle-opt" id="togPerCMI" onclick="switchReportView('cmi')" style="display:flex;align-items:center;gap:6px">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 18V11"/><path d="M10 18V11"/><path d="M14 18V11"/><path d="M18 18V11"/><path d="M12 3L2 9h20L12 3z"/></svg>
+        Per CMI
+      </div>
     </div>
-    <div class="card-body">
-      <select id="vReportTableSel" class="form-select" style="max-width:300px">
-        <option value="T1">Table 1 - R&D Projects</option>
-        <option value="T2a">Table 2a - Completed R&D Projects</option>
-        <option value="T2b">Table 2b - Ongoing R&D Projects</option>
-        <option value="T3">Table 3 - Technologies Commercialized</option>
-        <option value="T4">Table 4 - Intellectual Property Applications</option>
-        <option value="T5">Table 5 - Publications</option>
-      </select>
+
+    <select class="filter-select" id="rptYearFilter">
+      <option value="">Loading...</option>
+    </select>
+
+    <!-- Per Table filters -->
+    <select class="filter-select" id="rptTableFilter">
+      @php
+      $tables = [
+        'T1'  => 'Table 1 — AIHRs',
+        'T2a' => 'Table 2a — RSRDH Summary',
+        'T2b' => 'Table 2b — RSRDH Participants',
+        'T3'  => 'Table 3 — Projects Monitored',
+        'T4'  => 'Table 4 — Resources Shared',
+        'T5'  => 'Table 5 — Resources Generated',
+        'T6'  => 'Table 6 — Linkages',
+        'T7a' => 'Table 7a — Databases',
+        'T7b' => 'Table 7b — Info Systems',
+        'T8a' => 'Table 8a — R&D Programs',
+        'T8b' => 'Table 8b — Collaborative R&D',
+        'T9'  => 'Table 9 — Technologies from R&D',
+        'T10' => 'Table 10 — TT Programs',
+        'T11' => 'Table 11 — Technologies Extended',
+        'T12' => 'Table 12 — Commercialized',
+        'T13' => 'Table 13 — Promotion Approaches',
+        'T14' => 'Table 14 — Non-degree Trainings',
+        'T15' => 'Table 15 — Equipment/Facilities',
+        'T16' => 'Table 16 — Awards',
+        'T17' => 'Table 17 — Regular Meetings',
+        'T18' => 'Table 18 — CMI Contributions',
+        'T19' => 'Table 19 — New Initiatives',
+        'T20a'=> 'Table 20a — Policy Researches',
+        'T20b'=> 'Table 20b — Policies',
+      ];
+      @endphp
+      @foreach ($tables as $key => $label)
+        <option value="{{ $key }}">{{ $label }}</option>
+      @endforeach
+    </select>
+
+    <!-- Per CMI filter -->
+    <select class="filter-select" id="rptCMIFilter" style="display:none">
+      <option value="">Select Institution...</option>
+    </select>
+
+    <!-- Hidden Export Actions Container for Viewer -->
+    <div class="card-actions" id="rptExportBtns" style="display:none !important"></div>
+  </div>
+
+  <!-- PER TABLE VIEW -->
+  <div id="viewPerTable">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title" id="tableCardTitle">Loading...</div>
+      </div>
+      <div class="tbl-wrap" id="tableContainer">
+        <div class="loading-state" style="padding:40px;text-align:center;color:#9ca3af">Loading data...</div>
+      </div>
+      <div class="tbl-note-footer" style="padding:14px 20px;border-top:1px solid #f3f4f6;font-size:11.5px;color:#6b7280;font-style:italic;">
+        Note: The Regional Consortium may prepare other tables for ease in data presentation.
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-hdr">
-      <div class="card-title" id="vRepTableHdr">Consolidated Data — Table T1</div>
-    </div>
-    <div class="tbl-wrap">
-      <table class="dt">
-        <thead>
-          <tr>
-            <th>Institution</th>
-            <th>Submission Status</th>
-            <th>Table Status</th>
-            <th>Submitted At</th>
-          </tr>
-        </thead>
-        <tbody id="vRepTbody">
-          <tr><td colspan="4" style="text-align:center;padding:16px">Loading report data...</td></tr>
-        </tbody>
-      </table>
+  <!-- PER CMI VIEW -->
+  <div id="viewPerCMI" style="display:none">
+    <div class="card">
+      <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div class="card-title" id="cmiCardTitle">Select a CMI</div>
+      </div>
+      <div class="tbl-wrap" id="cmiContainer">
+        <div class="loading-state" style="padding:40px;text-align:center;color:#9ca3af">Select an institution to view their tables.</div>
+      </div>
     </div>
   </div>
+
 </div>
 @endsection
 
-@section('scripts')
+@section('scripts') 
+<script src="/assets/js/pta/reports-helpers.js"></script>
+<script src="/assets/js/pta/reports-docs-lightbox.js"></script>
+
+<!-- ── Table renderers (must load before reports-tabledefs.js) ── -->
+<script src="/assets/js/pta/renderers/render-t1.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t2a.js?v=4"></script>
+<script src="/assets/js/pta/renderers/render-t2b.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t3.js?v=5"></script>
+<script src="/assets/js/pta/renderers/render-t4.js?v=5"></script>
+<script src="/assets/js/pta/renderers/render-t5.js?v=5"></script>
+<script src="/assets/js/pta/renderers/render-t6.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t7a.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t7b.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t8a.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t8b.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t9.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t10.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t11.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t12.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t13.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t14.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t15.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t16.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t17.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t18.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t19.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t20a.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t20b.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-generic.js?v=3"></script>
+<!-- ── End renderers ── -->
+
+<script src="/assets/js/pta/reports-renderers.js?v=5"></script>
+<script src="/assets/js/pta/reports-tabledefs.js?v=5"></script>
+<script src="/assets/js/pta/reports-api.js?v=5"></script>
+<script src="/assets/js/pta/reports-view-table.js?v=5"></script>
+<script src="/assets/js/pta/reports-view-cmi.js?v=5"></script>
+<script src="/assets/js/pta/reports-export.js?v=5"></script>
+<script src="/assets/js/pta/reports-boot.js?v=5"></script>
 <script>
-document.addEventListener('DOMContentLoaded', async function () {
-  async function loadConsolidated(table) {
-    const year = new Date().getFullYear();
-    document.getElementById('vRepTableHdr').textContent = `Consolidated Data — Table ${table}`;
-    const tbody = document.getElementById('vRepTbody');
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px">Loading report data...</td></tr>';
-
-    try {
-      const res = await fetch(`/api/pta/reports/consolidated?year=${year}&table=${table}`);
-      const json = await res.json();
-
-      if (json.data) {
-        if (json.data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:#6b7280">No data submitted for this table yet.</td></tr>';
-        } else {
-          tbody.innerHTML = json.data.map(d => `
-            <tr>
-              <td><strong>${d.institution}</strong></td>
-              <td><span class="badge badge-blue">${d.sub_status || 'Submitted'}</span></td>
-              <td><span class="badge ${d.table_status === 'done' ? 'badge-green' : 'badge-gray'}">${d.table_status}</span></td>
-              <td>${d.submitted_at ? d.submitted_at.substring(0, 16).replace('T', ' ') : '—'}</td>
-            </tr>
-          `).join('');
-        }
-      }
-    } catch (e) {
-      console.error('Report load error:', e);
-    }
-  }
-
-  document.getElementById('vReportTableSel').addEventListener('change', function(e) {
-    loadConsolidated(e.target.value);
-  });
-
-  loadConsolidated('T1');
+// Ensure export buttons never display in Viewer View
+document.addEventListener('DOMContentLoaded', function() {
+  const exportWrap = document.getElementById('rptExportBtns');
+  if (exportWrap) exportWrap.style.display = 'none';
 });
 </script>
 @endsection

@@ -43,6 +43,28 @@ class DatabaseSeeder extends Seeder
                 'status'      => 'active',
             ]
         );
+        $execUser = User::updateOrCreate(
+            ['email' => 'executive@gmail.com'],
+            [
+                'first_name'  => 'Executive',
+                'last_name'   => 'Director',
+                'password'    => Hash::make('@Executive123'),
+                'role'        => 'executive',
+                'designation' => 'Executive Director',
+                'status'      => 'active',
+            ]
+        );
+        $viewerUser = User::updateOrCreate(
+            ['email' => 'viewer@gmail.com'],
+            [
+                'first_name'  => 'Viewer',
+                'last_name'   => 'User',
+                'password'    => Hash::make('@Viewer123'),
+                'role'        => 'viewer',
+                'designation' => 'Consortium Viewer',
+                'status'      => 'active',
+            ]
+        );
 
         // ── 3. FORMAT TEMPLATES (All 24 Standard CMI Tables) ─────────
         $templates = [
@@ -84,6 +106,68 @@ class DatabaseSeeder extends Seeder
                     'updated_at'   => now(),
                 ])
             );
+        }
+
+        // ── 4. SEED SAMPLE TABLES & ACTIVITY FOR ISABELA STATE UNIVERSITY ──
+        $cmiUserRecord = User::where('email', 'ejaquino@gmail.com')->first();
+        if ($cmiUserRecord) {
+            $year = 2026;
+            $sampleData = [
+                ['table_no' => 'T1',  'status' => 'done',  'rows' => 4,  'updated_at' => Carbon::parse('2026-09-05 09:20:00')],
+                ['table_no' => 'T2a', 'status' => 'done',  'rows' => 6,  'updated_at' => Carbon::parse('2026-09-06 16:45:00')],
+                ['table_no' => 'T2b', 'status' => 'draft', 'rows' => 5,  'updated_at' => Carbon::parse('2026-09-09 11:10:00')],
+                ['table_no' => 'T3',  'status' => 'done',  'rows' => 12, 'updated_at' => Carbon::parse('2026-09-08 14:30:00')],
+                ['table_no' => 'T6',  'status' => 'done',  'rows' => 8,  'updated_at' => Carbon::parse('2026-09-07 10:15:00')],
+                ['table_no' => 'T7b', 'status' => 'draft', 'rows' => 3,  'updated_at' => Carbon::parse('2026-09-06 13:00:00')],
+            ];
+
+            foreach ($sampleData as $item) {
+                $rows = [];
+                for ($r = 1; $r <= $item['rows']; $r++) {
+                    $rows[] = [
+                        'Item Description' => "Sample entry {$r} for Table {$item['table_no']}",
+                        'Agency'           => 'ISU-Echague',
+                        'Remarks'          => 'Active',
+                    ];
+                }
+
+                ReportTable::updateOrCreate(
+                    [
+                        'user_id'        => $cmiUserRecord->id,
+                        'reporting_year' => $year,
+                        'table_no'       => $item['table_no'],
+                    ],
+                    [
+                        'rows_json'  => $rows,
+                        'status'     => $item['status'],
+                        'updated_at' => $item['updated_at'],
+                    ]
+                );
+            }
+
+            // Seed activity logs if empty
+            if (\App\Models\ActivityLog::count() === 0) {
+                \App\Models\ActivityLog::create([
+                    'user_id'     => $cmiUserRecord->id,
+                    'description' => 'EJ Aquino (Isabela State University - Echague) submitted Table T3 (Projects Monitored)',
+                    'created_at'  => Carbon::parse('2026-09-08 14:30:00'),
+                ]);
+                \App\Models\ActivityLog::create([
+                    'user_id'     => $ptaUser->id,
+                    'description' => 'PTA Admin reviewed and accepted Table T3 from Isabela State University - Echague',
+                    'created_at'  => Carbon::parse('2026-09-08 15:00:00'),
+                ]);
+                \App\Models\ActivityLog::create([
+                    'user_id'     => $cmiUserRecord->id,
+                    'description' => 'EJ Aquino (Isabela State University - Echague) submitted Table T6 (Linkages)',
+                    'created_at'  => Carbon::parse('2026-09-07 10:15:00'),
+                ]);
+                \App\Models\ActivityLog::create([
+                    'user_id'     => $cmiUserRecord->id,
+                    'description' => 'EJ Aquino saved draft for Table T2b (RSRDH Participants)',
+                    'created_at'  => Carbon::parse('2026-09-09 11:10:00'),
+                ]);
+            }
         }
 
     }

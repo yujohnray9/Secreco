@@ -181,22 +181,18 @@ function confirmSignOut() {
         <span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
         Dashboard
       </a>
-      <a href="/dashboard/viewer/submissions" class="nav-item {{ $currentPage === 'submissions' ? 'active' : '' }}">
-        <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M12 19V5m-7 7 7-7 7 7"/><path d="M5 19h14"/></svg></span>
-        Submissions
-      </a>
       <a href="/dashboard/viewer/reports" class="nav-item {{ $currentPage === 'reports' ? 'active' : '' }}">
         <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
-        Reports
-      </a>
-      <a href="/dashboard/viewer/institutions" class="nav-item {{ $currentPage === 'institutions' ? 'active' : '' }}">
-        <span class="nav-ic"><svg viewBox="0 0 24 24"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
-        Institutions
+        View Reports
       </a>
     </div>
 
     <div class="nav-section">
-      <div class="nav-sec-label">Other</div>
+      <div class="nav-sec-label">Account</div>
+      <a href="/dashboard/viewer/profile" class="nav-item {{ $currentPage === 'profile' ? 'active' : '' }}">
+        <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        Profile
+      </a>
       <a href="#" onclick="confirmSignOut(); return false;" class="nav-item logout">
         <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
         Logout

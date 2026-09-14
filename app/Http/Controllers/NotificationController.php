@@ -141,7 +141,7 @@ class NotificationController extends Controller
                     'key'          => $key,
                     'type'         => 'red',
                     'icon'         => '🔴',
-                    'msg'          => "{$cr->table_no} flagged for correction by {$ptaName}: \"{$cr->reason}\"",
+                    'msg'          => "Table {$cr->table_no} was returned for revision by the PTA Admin: \"{$cr->reason}\"",
                     'action'       => '/dashboard/cmi/fillup',
                     'action_label' => 'Go to ' . $cr->table_no,
                     'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,

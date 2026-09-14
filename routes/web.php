@@ -3,6 +3,7 @@
 use App\Http\Controllers\Pages\CmiPageController;
 use App\Http\Controllers\Pages\PtaPageController;
 use App\Http\Controllers\Pages\ViewerPageController;
+use App\Http\Controllers\Pages\ExecutivePageController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,6 +25,7 @@ Route::prefix('dashboard')->group(function () {
     Route::get('/cmi/{page?}', [CmiPageController::class, 'show'])->middleware(['auth.custom', 'role:cmi,pta']);
     Route::get('/pta/{page?}', [PtaPageController::class, 'show'])->middleware(['auth.custom', 'role:pta']);
     Route::get('/viewer/{page?}', [ViewerPageController::class, 'show'])->middleware(['auth.custom', 'role:viewer']);
+    Route::get('/executive/{page?}', [ExecutivePageController::class, 'show'])->middleware(['auth.custom', 'role:executive']);
 });
 
 Route::post('/api/session-keepalive', function () {

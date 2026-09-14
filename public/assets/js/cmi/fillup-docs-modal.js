@@ -92,11 +92,11 @@
         <div class="dm-body">
           <!-- Upload trigger -->
           <label class="dm-upload-btn" id="dm-upload-label">
-            <span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Add Image(s)</span>
-            <input type="file" id="dm-file-input" accept="image/*" multiple style="display:none"
+            <span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Add Photo(s) / PDF</span>
+            <input type="file" id="dm-file-input" accept="image/*,.pdf,application/pdf" multiple style="display:none"
               onchange="DocsModal._upload(this)"/>
           </label>
-          <p class="dm-hint">Supported: JPG, PNG, GIF · Max 5MB each</p>
+          <p class="dm-hint">Supported: JPG, PNG, GIF, WEBP, PDF · Max 5MB each</p>
 
           <!-- Thumbnail gallery — no per-image caption inputs -->
           <div id="dm-gallery" class="dm-gallery"></div>
@@ -157,20 +157,35 @@
     if (!gallery) return;
 
     if (!_images.length) {
-      gallery.innerHTML = `<p class="dm-empty">No images attached yet.</p>`;
+      gallery.innerHTML = `<p class="dm-empty">No attachments uploaded yet.</p>`;
       return;
     }
 
-    gallery.innerHTML = _images.map((img, idx) => `
-      <div class="dm-item" data-idx="${idx}">
-        <div class="dm-thumb-wrap">
-          <img src="${esc(img.file_path)}" class="dm-thumb"
-            onclick="window.open('${esc(img.file_path)}','_blank')"
-            title="Click to view full size"/>
-          <button class="dm-del" onclick="DocsModal._delete(${idx})" title="Remove image">✕</button>
+    gallery.innerHTML = _images.map((img, idx) => {
+      const isPdf = /\.pdf$/i.test(img.file_path || '');
+      if (isPdf) {
+        return `
+          <div class="dm-item" data-idx="${idx}">
+            <div class="dm-thumb-wrap" style="background:#fef2f2;border:1px solid #fecaca;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:6px;width:100px;height:100px;box-sizing:border-box"
+              onclick="window.open('${esc(img.file_path)}','_blank')" title="Click to open PDF">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#dc2626" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+              <span style="font-size:10px;font-weight:700;color:#b91c1c;margin-top:4px">PDF FILE</span>
+              <span style="font-size:9.5px;color:#6b7280;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(img.caption || 'Document')}</span>
+              <button class="dm-del" onclick="event.stopPropagation();DocsModal._delete(${idx})" title="Remove file" style="position:absolute;top:4px;right:4px">✕</button>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="dm-item" data-idx="${idx}">
+          <div class="dm-thumb-wrap">
+            <img src="${esc(img.file_path)}" class="dm-thumb"
+              onclick="window.open('${esc(img.file_path)}','_blank')"
+              title="Click to view full size"/>
+            <button class="dm-del" onclick="DocsModal._delete(${idx})" title="Remove image">✕</button>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   /** Populate the group caption field when opening the modal. */
@@ -202,6 +217,12 @@
     const fd = new FormData();
     files.forEach(f => fd.append('images[]', f));
     fd.append('table_no', _tableNo);
+
+    const yearVal = (document.getElementById('fillupYearSel')?.value) || window.CMI_REPORTING_YEAR || new Date().getFullYear();
+    fd.append('year', yearVal);
+    if (window.CMI_TARGET_USER_ID) {
+      fd.append('cmi_user_id', window.CMI_TARGET_USER_ID);
+    }
 
     fetch(API_UPLOAD, { method: 'POST', body: fd })
       .then(async r => {
@@ -242,7 +263,7 @@
               });
           }
 
-          let msg = `${res.files.length} image(s) uploaded.`;
+          let msg = `${res.files.length} file(s) uploaded.`;
           if (res.warnings?.length) msg += ' Some files were skipped: ' + res.warnings.join('; ');
           setStatus(msg);
         } else {

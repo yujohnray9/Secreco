@@ -101,10 +101,11 @@ class AuthController extends Controller
         ]);
 
         $redirect = match ($user->role) {
-            'pta'    => '/dashboard/pta',
-            'cmi'    => '/dashboard/cmi',
-            'viewer' => '/dashboard/viewer',
-            default  => '/login',
+            'pta'       => '/dashboard/pta',
+            'cmi'       => '/dashboard/cmi',
+            'viewer'    => '/dashboard/viewer',
+            'executive' => '/dashboard/executive',
+            default     => '/login',
         };
 
         return response()->json(['success' => true, 'redirect' => $redirect]);

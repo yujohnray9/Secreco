@@ -62,7 +62,7 @@ Route::prefix('cmi')->middleware(['auth.custom', 'role:cmi,pta'])->group(functio
 | PTA & Viewer Read-Only Routes (Requires Auth & PTA or Viewer Role)
 |--------------------------------------------------------------------------
 */
-Route::prefix('pta')->middleware(['auth.custom', 'role:pta,viewer'])->group(function () {
+Route::prefix('pta')->middleware(['auth.custom', 'role:pta,viewer,executive'])->group(function () {
     Route::get('/dashboard/stats', [PtaDashboardController::class, 'getStats']);
 
     Route::get('/submissions', [PtaSubmissionController::class, 'index']);
@@ -70,6 +70,7 @@ Route::prefix('pta')->middleware(['auth.custom', 'role:pta,viewer'])->group(func
     Route::post('/submissions/request-correction', [PtaSubmissionController::class, 'requestCorrection'])->middleware('role:pta');
     Route::post('/submissions/delete', [PtaSubmissionController::class, 'delete'])->middleware('role:pta');
     Route::post('/submissions/update-table', [PtaSubmissionController::class, 'updateTable'])->middleware('role:pta');
+    Route::post('/submissions/send-reminder', [PtaSubmissionController::class, 'sendReminder'])->middleware('role:pta');
 
     Route::get('/users', [PtaUserController::class, 'index']);
     Route::get('/users/pending', [PtaUserController::class, 'getPending']);
@@ -79,6 +80,7 @@ Route::prefix('pta')->middleware(['auth.custom', 'role:pta,viewer'])->group(func
     Route::post('/users/toggle-user-status', [UserApprovalController::class, 'toggleUserStatus'])->middleware('role:pta');
 
     Route::get('/institutions', [PtaInstitutionController::class, 'index']);
+    Route::get('/institutions/details', [PtaInstitutionController::class, 'details']);
 
     Route::get('/formats', [PtaFormatController::class, 'index']);
     Route::post('/formats/save', [PtaFormatController::class, 'save'])->middleware('role:pta');
@@ -88,6 +90,9 @@ Route::prefix('pta')->middleware(['auth.custom', 'role:pta,viewer'])->group(func
     Route::post('/settings/save', [PtaSettingsController::class, 'saveSettings'])->middleware('role:pta');
     Route::get('/settings/audit', [PtaSettingsController::class, 'getAudit']);
 
+    Route::get('/profile', [CmiProfileController::class, 'get']);
+    Route::post('/profile/save', [CmiProfileController::class, 'save']);
+    Route::post('/profile/change-password', [CmiProfileController::class, 'changePassword']);
     Route::post('/profile/upload-photo', [PtaProfileController::class, 'uploadPhoto']);
     Route::post('/profile/remove-photo', [PtaProfileController::class, 'removePhoto']);
 

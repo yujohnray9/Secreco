@@ -75,10 +75,9 @@ class TableController extends Controller
             return response()->json(['status' => 'not-started', 'meta' => null, 'rows' => [], 'updated_at' => null]);
         }
 
-        // Docs: load from the user whose row we're showing (may be a mate's row)
-        $docOwner = $row->user_id;
-        $candidates = array_unique([$tableNo, 'TABLE ' . $tableNo, 'Table ' . $tableNo, strtolower($tableNo), strtoupper($tableNo)]);
-        $images = ReportTableDoc::where('user_id', $docOwner)
+        // Docs: load from all users belonging to this institution
+        $candidates = array_unique([$tableNo, 'TABLE ' . $tableNo, 'Table ' . $tableNo, strtolower($tableNo), strtoupper($tableNo), preg_replace('/[^A-Za-z0-9]/', '', $tableNo), strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tableNo))]);
+        $images = ReportTableDoc::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->whereIn('table_no', $candidates)
             ->orderBy('sort_order', 'asc')
@@ -95,6 +94,18 @@ class TableController extends Controller
             });
 
         $meta = $row->meta_json ?? [];
+        if ($images->isEmpty() && !empty($meta['images']) && is_array($meta['images'])) {
+            $images = collect($meta['images'])->map(function ($img) {
+                $p = is_array($img) ? ($img['file_path'] ?? '') : '';
+                $p = $p ? '/' . ltrim($p, '/') : '';
+                return [
+                    'id'        => (int) ($img['id'] ?? $img['doc_id'] ?? 0),
+                    'doc_id'    => (int) ($img['id'] ?? $img['doc_id'] ?? 0),
+                    'file_path' => $p,
+                    'caption'   => $img['caption'] ?? '',
+                ];
+            });
+        }
         if (is_array($meta)) {
             unset($meta['images']);
         }
@@ -406,7 +417,8 @@ class TableController extends Controller
             }
 
             $ext      = strtolower($file->getClientOriginalExtension());
-            $filename = 'img_' . bin2hex(random_bytes(8)) . '.' . time() . '.' . $ext;
+            $pfx      = ($ext === 'pdf') ? 'doc_' : 'img_';
+            $filename = $pfx . bin2hex(random_bytes(8)) . '.' . time() . '.' . $ext;
             $path     = $file->storeAs("uploads/cmi/{$tableKey}", $filename, 'public');
             $webpath  = "/storage/uploads/cmi/{$tableKey}/{$filename}";
 

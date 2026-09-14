@@ -106,20 +106,24 @@ class SubmissionController extends Controller
                 ->get();
 
             foreach ($docs as $doc) {
-                $cleanTable = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $doc->table_no));
+                $rawNo = $doc->table_no;
+                $cleanTable = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $rawNo));
                 if (str_starts_with($cleanTable, 'TABLE') && strlen($cleanTable) > 5) {
                     $cleanTable = substr($cleanTable, 5);
                 }
+                $path = $doc->file_path ? '/' . ltrim($doc->file_path, '/') : '';
                 $item = [
                     'id'        => (int) $doc->id,
                     'doc_id'    => (int) $doc->id,
-                    'file_path' => $doc->file_path,
+                    'file_path' => $path,
                     'caption'   => $doc->caption ?? '',
                 ];
-                $docsByUserTable[$doc->user_id . '_' . $doc->table_no][] = $item;
-                if ($cleanTable && $cleanTable !== $doc->table_no) {
-                    $docsByUserTable[$doc->user_id . '_' . $cleanTable][] = $item;
-                }
+                // Index under all variations to prevent any case or format mismatch
+                $docsByUserTable[$doc->user_id . '_' . $rawNo][] = $item;
+                $docsByUserTable[$doc->user_id . '_' . strtoupper($rawNo)][] = $item;
+                $docsByUserTable[$doc->user_id . '_' . strtolower($rawNo)][] = $item;
+                $docsByUserTable[$doc->user_id . '_' . $cleanTable][] = $item;
+                $docsByUserTable[$doc->user_id . '_' . strtolower($cleanTable)][] = $item;
             }
         }
 
@@ -140,6 +144,67 @@ class SubmissionController extends Controller
             return trim($u->institution) ?: ($u->name ?? 'CMI User');
         });
 
+        // If status filter is 'not-started', return institution-level rows with progress 0/24 and send reminder capability
+        if ($status === 'not-started') {
+            $masterList = config('secreco.institutions', []);
+            $instRows = [];
+            $totalTablesCount = count($formatTables) > 0 ? count($formatTables) : 24;
+
+            foreach ($masterList as $instName => $meta) {
+                $instUsers = $groupedUsers->get($instName, collect());
+                $primaryUser = $instUsers->first();
+                $uIds = $instUsers->pluck('id')->all();
+
+                $activeSub = null;
+                foreach ($instUsers as $u) {
+                    if (isset($submissionMap[$u->id])) {
+                        $s = $submissionMap[$u->id];
+                        if (in_array($s->status, ['submitted', 'pending', 'accepted', 'returned'], true)) {
+                            $activeSub = $s;
+                            break;
+                        }
+                    }
+                }
+
+                $distinctTables = [];
+                foreach ($uIds as $uid) {
+                    $userTables = ReportTable::where('user_id', $uid)->where('reporting_year', $year)->get();
+                    foreach ($userTables as $ut) {
+                        if (in_array($ut->status, ['done', 'submitted', 'accepted'], true)) {
+                            $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $ut->table_no));
+                            $distinctTables[$cleanKey] = true;
+                        }
+                    }
+                }
+
+                $doneCount = count($distinctTables);
+                // Only include if not started or has no official submission and not completed
+                if (!$activeSub && $doneCount === 0) {
+                    $instRows[] = [
+                        'cmi_user_id'         => (int) ($primaryUser?->id ?? 0),
+                        'institution'         => $instName,
+                        'encoder'             => $primaryUser ? $primaryUser->name : 'No Encoder Assigned',
+                        'progress'            => "{$doneCount}/{$totalTablesCount}",
+                        'progress_count'      => $doneCount,
+                        'total_tables'        => $totalTablesCount,
+                        'table_no'            => 'All',
+                        'section'             => 'All Sections',
+                        'title'               => 'Annual Report',
+                        'table_status'        => 'not-started',
+                        'submitted_at'        => null,
+                        'updated_at'          => null,
+                        'meta'                => [],
+                        'rows'                => [],
+                        'docs'                => [],
+                        'has_open_correction' => false,
+                    ];
+                }
+            }
+
+            usort($instRows, fn($a, $b) => strcmp($a['institution'], $b['institution']));
+            return response()->json(['ok' => true, 'year' => $year, 'rows' => $instRows]);
+        }
+
         $rows = [];
         foreach ($groupedUsers as $instName => $instUsers) {
             $primaryUser = $instUsers->first();
@@ -156,7 +221,7 @@ class SubmissionController extends Controller
                 }
             }
 
-            // If CMI only saved a draft and has NOT officially submitted yet, do not show in PTA submissions review list
+            // For draft filter or not-started filter, do not require an active submission
             if (!$activeSub && (!$status || $status === 'submitted' || $status === 'accepted' || $status === 'returned')) {
                 continue;
             }
@@ -214,6 +279,39 @@ class SubmissionController extends Controller
                 $key = $foundUser->id . '_' . $tNo;
                 $submittedAt = ($submissionDates[$foundUser->id] ?? null) ?? ($foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null);
 
+                // Robust docs resolution across all institutional users and table casing variations
+                $resolvedDocs = [];
+                foreach ($instUsers as $u) {
+                    $possibleKeys = [
+                        $u->id . '_' . $tNo,
+                        $u->id . '_' . strtoupper($tNo),
+                        $u->id . '_' . strtolower($tNo),
+                        $u->id . '_' . strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tNo)),
+                        $u->id . '_' . strtolower(preg_replace('/[^A-Za-z0-9]/', '', $tNo)),
+                    ];
+                    foreach ($possibleKeys as $pk) {
+                        if (!empty($docsByUserTable[$pk])) {
+                            $resolvedDocs = $docsByUserTable[$pk];
+                            break 2;
+                        }
+                    }
+                }
+
+                // Fallback to meta_json images if ReportTableDoc is empty
+                if (empty($resolvedDocs) && !empty($foundTr?->meta_json['images']) && is_array($foundTr->meta_json['images'])) {
+                    foreach ($foundTr->meta_json['images'] as $img) {
+                        $p = is_array($img) ? ($img['file_path'] ?? '') : '';
+                        if ($p) {
+                            $resolvedDocs[] = [
+                                'id'        => (int) ($img['id'] ?? $img['doc_id'] ?? 0),
+                                'doc_id'    => (int) ($img['id'] ?? $img['doc_id'] ?? 0),
+                                'file_path' => '/' . ltrim($p, '/'),
+                                'caption'   => $img['caption'] ?? '',
+                            ];
+                        }
+                    }
+                }
+
                 $rows[] = [
                     'cmi_user_id'         => (int) $foundUser->id,
                     'institution'         => $instName,
@@ -226,13 +324,25 @@ class SubmissionController extends Controller
                     'updated_at'          => $foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null,
                     'meta'                => $foundTr?->meta_json ?? [],
                     'rows'                => $foundTr?->rows_json ?? [],
-                    'docs'                => $docsByUserTable[$key] ?? [],
+                    'docs'                => $resolvedDocs,
                     'has_open_correction' => isset($corrByUserTable[$key]),
                 ];
             }
         }
 
+        // When all submissions or default is selected, show newest submissions first at the top
         usort($rows, function ($a, $b) {
+            $tA = max(
+                $a['submitted_at'] ? strtotime($a['submitted_at']) : 0,
+                $a['updated_at'] ? strtotime($a['updated_at']) : 0
+            );
+            $tB = max(
+                $b['submitted_at'] ? strtotime($b['submitted_at']) : 0,
+                $b['updated_at'] ? strtotime($b['updated_at']) : 0
+            );
+            if ($tA !== $tB) {
+                return $tB <=> $tA; // Newest submissions at the top
+            }
             $cmp = strcmp($a['institution'], $b['institution']);
             if ($cmp !== 0) return $cmp;
             return strcmp($a['table_no'], $b['table_no']);
@@ -322,7 +432,7 @@ class SubmissionController extends Controller
                 'type'         => 'submitted',
                 'icon'         => '✅',
                 'color'        => 'green',
-                'message'      => "Your CY {$year} Table {$tableNo} submission has been accepted by PTA. Great work!",
+                'message'      => "Your CY {$year} Table {$tableNo} submission has been accepted by the PTA Admin.",
                 'action_url'   => '/dashboard/cmi/submissions',
                 'action_label' => 'View',
                 'is_read'      => false,
@@ -380,7 +490,7 @@ class SubmissionController extends Controller
 
         $ptaUser  = User::find($ptaUserId);
         $ptaName  = $ptaUser?->name ?? 'PTA';
-        $notifMsg = "{$tableNo} has been flagged for correction by {$ptaName}: \"{$reason}\"";
+        $notifMsg = "Table {$tableNo} was returned for revision by the PTA Admin: \"{$reason}\"";
 
         Notification::create([
             'user_id'      => $cmiUserId,
@@ -600,5 +710,53 @@ class SubmissionController extends Controller
         ActivityLogService::log($ptaUserId, "PTA updated Table {$tableNo} for {$inst} (CY {$year})");
 
         return response()->json(['ok' => true, 'message' => "Table {$tableNo} for {$inst} updated successfully."]);
+    }
+
+    public function sendReminder(Request $request): JsonResponse
+    {
+        $cmiUserId   = (int) $request->input('cmi_user_id', 0);
+        $institution = trim((string) $request->input('institution', ''));
+        $year        = (int) ($request->input('year') ?? date('Y'));
+
+        $user = null;
+        if ($cmiUserId > 0) {
+            $user = User::find($cmiUserId);
+        }
+        if (!$user && $institution !== '') {
+            $user = User::where('role', 'cmi')
+                ->where('institution', $institution)
+                ->first();
+        }
+
+        if (!$user) {
+            // Find any active CMI user for this institution or fallback to any CMI user
+            $user = User::where('role', 'cmi')->where('status', 'active')->first();
+        }
+
+        if (!$user) {
+            return response()->json(['ok' => false, 'error' => 'No active CMI user found to receive reminder.'], 404);
+        }
+
+        Notification::create([
+            'user_id'      => $user->id,
+            'role'         => 'cmi',
+            'type'         => 'reminder',
+            'icon'         => '⏰',
+            'color'        => 'orange',
+            'message'      => "Reminder: Please start and submit your CY {$year} Annual Accomplishment Report.",
+            'action_url'   => "/dashboard/cmi/fillup?year={$year}",
+            'action_label' => "Start Report",
+            'is_read'      => false,
+            'created_at'   => now(),
+        ]);
+
+        $ptaUserId = Auth::id() ?? session('user_id');
+        ActivityLogService::log($ptaUserId, "Sent report reminder to {$user->name} ({$user->institution}) for CY {$year}");
+
+        $instLabel = $user->institution ?: 'CMI';
+        return response()->json([
+            'ok'      => true,
+            'message' => "Reminder sent successfully to {$user->name} ({$instLabel})."
+        ]);
     }
 }

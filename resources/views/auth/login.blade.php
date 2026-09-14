@@ -144,7 +144,7 @@
       <div class="left-panel">
         <div class="left-content">
           <div class="logo-badge">
-            <img src="/assets/img/logo26.png" alt="SecReCo Logo"
+            <img src="/assets/logo/cvaarrd.png" alt="SecReCo Logo"
                  onerror="this.src='/assets/logo/cvaarrd.jpeg'"/>
           </div>
           <p class="hero-label">WELCOME TO</p>
@@ -178,7 +178,7 @@
 
             <!-- Registration / password-reset success message -->
             <div class="success-msg" id="regSuccessMsg" @if(!request('registered')) style="display:none;" @endif>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" strokfe="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                 <polyline points="22 4 12 14.01 9 11.01"/>
               </svg>

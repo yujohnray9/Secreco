@@ -118,7 +118,7 @@
     <div class="fc-card-body">
       <div class="fc-table-wrap">
         <table class="fc-table">
-          <thead>
+          <thead id="subsThead">
             <tr>
               <th>Institution</th>
               <th>Encoder</th>
@@ -154,9 +154,21 @@
     
     <div id="vdTableWrap" style="margin-bottom:20px; overflow-x:auto;"></div>
 
-    <div style="display:flex; justify-content:flex-end; gap:10px;">
-      <button class="btn-sm-fc" onclick="closeModal('modalViewData')" style="background:#f3f4f6;color:#374151;padding:8px 20px; font-size:13px;">Close</button>
-      <button class="btn-sm-fc" onclick="savePtaModalEdit()" style="background:#10b981;color:#fff;border:none;padding:8px 22px; font-size:13px;font-weight:700;">Save / Submit Updates</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid #f0f0f0;">
+      <div style="display:flex; gap:8px;" id="modalDecisionBtns">
+        <button type="button" class="btn-sm-fc btn-sm-accept" id="modalAcceptBtn" onclick="acceptModalSub()" style="padding:8px 18px; font-size:13px;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Accept
+        </button>
+        <button type="button" class="btn-sm-fc btn-sm-return" id="modalReturnBtn" onclick="returnModalSub()" style="padding:8px 18px; font-size:13px;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.73"/></svg>
+          Return
+        </button>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-sm-fc" onclick="closeModal('modalViewData')" style="background:#f3f4f6;color:#374151;padding:8px 20px; font-size:13px;">Close</button>
+        <button class="btn-sm-fc" onclick="savePtaModalEdit()" style="background:#10b981;color:#fff;border:none;padding:8px 22px; font-size:13px;font-weight:700;">Save / Submit Updates</button>
+      </div>
     </div>
   </div>
 </div>
@@ -224,7 +236,43 @@ let subPageSize = 10;
 function renderSubsTable() {
   const query = (document.getElementById('subSearchInput')?.value || '').toLowerCase().trim();
   const sectionFilter = document.getElementById('subSectionFilter')?.value || '';
+  const statusFilter = (document.getElementById('subStatusSel')?.value || '').toLowerCase();
+  const currentYear = document.getElementById('subYearSel')?.value || new Date().getFullYear();
+  const thead = document.getElementById('subsThead');
   const tbody = document.getElementById('subsTbody');
+
+  // Configure table headers based on active status filter
+  if (thead) {
+    if (statusFilter === 'not-started') {
+      thead.innerHTML = `
+        <tr>
+          <th>Institution</th>
+          <th>Encoder</th>
+          <th>Progress</th>
+          <th style="text-align:center">Actions</th>
+        </tr>`;
+    } else if (statusFilter === 'draft') {
+      thead.innerHTML = `
+        <tr>
+          <th>Institution</th>
+          <th>Encoder</th>
+          <th>Table</th>
+          <th>Updated At</th>
+          <th style="text-align:center">Action</th>
+        </tr>`;
+    } else {
+      thead.innerHTML = `
+        <tr>
+          <th>Institution</th>
+          <th>Encoder</th>
+          <th>Table</th>
+          <th>Table Status</th>
+          <th>Date Submitted</th>
+          <th>Updated At</th>
+          <th style="text-align:center">Action</th>
+        </tr>`;
+    }
+  }
   
   const filtered = cachedSubRows.filter(r => {
     const sec = normalizeSectionName(r.section);
@@ -240,7 +288,8 @@ function renderSubsTable() {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#9ca3af">
+    const colSpan = (statusFilter === 'not-started') ? 4 : (statusFilter === 'draft' ? 5 : 7);
+    tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;padding:40px;color:#9ca3af">
       No submissions found matching current filters.
     </td></tr>`;
     const wrap = document.getElementById('subsPaginationWrap');
@@ -248,81 +297,112 @@ function renderSubsTable() {
     return;
   }
 
-  // Group filtered rows by Section (preserving standard section order)
-  const groupedBySection = {};
-  SECTION_ORDER.forEach(sec => { groupedBySection[sec] = []; });
-
-  filtered.forEach(r => {
-    const sec = normalizeSectionName(r.section);
-    if (!groupedBySection[sec]) {
-      groupedBySection[sec] = [];
-    }
-    groupedBySection[sec].push(r);
-  });
-
   const htmlParts = [];
   let renderedCount = 0;
 
-  const allSectionKeys = [
-    ...SECTION_ORDER,
-    ...Object.keys(groupedBySection).filter(k => !SECTION_ORDER.includes(k))
-  ];
-
-  allSectionKeys.forEach(secName => {
-    const sectionRows = groupedBySection[secName] || [];
-    if (sectionRows.length === 0) return;
-
-    htmlParts.push(`
-      <tr class="section-header-row" style="background:#f3f6f4 !important">
-        <td colspan="7" style="font-weight:700 !important;font-size:12px !important;text-transform:uppercase !important;letter-spacing:.06em !important;color:#059669 !important;background:#f3f6f4 !important;border-left:4px solid #10b981 !important;padding:10px 16px !important">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#059669" stroke-width="2.5" style="display:inline-block;vertical-align:-1px;margin-right:6px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          ${secName.toUpperCase()} <span style="font-size:11px;font-weight:500;color:#6b7280;text-transform:none;letter-spacing:normal;margin-left:6px">(${sectionRows.length} table${sectionRows.length > 1 ? 's' : ''})</span>
-        </td>
-      </tr>
-    `);
-
-    sectionRows.forEach(r => {
+  if (statusFilter === 'not-started') {
+    filtered.forEach(r => {
       renderedCount++;
-      const subDate = formatPHDate(r.submitted_at);
-      const ts = formatPHDate(r.updated_at);
-      const actionTs = r.action_at ? `<span class="ts-label">${formatPHDate(r.action_at)}</span>` : '';
-      const isActioned = r.table_status === 'accepted' || r.table_status === 'returned' || r.table_status === 'deleted';
       const origIdx = cachedSubRows.indexOf(r);
-
+      const prog = r.progress || '0/24';
+      const instEsc = (r.institution || '').replace(/'/g, "\\'");
       htmlParts.push(`
         <tr>
           <td><strong>${r.institution}</strong></td>
           <td>${r.encoder}</td>
-          <td><span class="badge badge-blue">Table ${r.table_no}</span></td>
-          <td>${statusBadge(r.table_status || 'done')}${actionTs}</td>
-          <td style="color:#059669;font-weight:600;font-size:12.5px">${subDate}</td>
-          <td style="color:#6b7280;font-size:12.5px">${ts}</td>
-          <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${origIdx})" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              Edit/View Data
+          <td><span class="badge badge-gray" style="font-weight:700;font-size:12px">${prog}</span></td>
+          <td style="text-align:center">
+            <button type="button" class="btn-sm-fc" onclick="sendPtaReminder(${origIdx}, '${instEsc}')" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;font-weight:700;padding:6px 14px">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:-1px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Send Reminder
             </button>
-            ${!isActioned ? `
-            <button class="btn-sm-fc btn-sm-accept" onclick="acceptSub(${origIdx})">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              Accept
-            </button>
-            <button class="btn-sm-fc btn-sm-return" onclick="returnSub(${origIdx})">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.73"/></svg>
-              Return
-            </button>
-            <button class="btn-sm-fc btn-sm-delete" onclick="deleteSub(${origIdx})">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-              Delete
-            </button>` : statusBadge(r.table_status)}
           </td>
         </tr>
       `);
     });
-  });
+  } else if (statusFilter === 'draft') {
+    filtered.forEach(r => {
+      renderedCount++;
+      const ts = formatPHDate(r.updated_at);
+      const origIdx = cachedSubRows.indexOf(r);
+      const cleanTNo = (r.table_no || '').toUpperCase().replace(/^TABLE\s*/i, '');
+      htmlParts.push(`
+        <tr>
+          <td><strong>${r.institution}</strong></td>
+          <td>${r.encoder}</td>
+          <td><strong>Table ${cleanTNo} - CY ${currentYear} Annual Report</strong></td>
+          <td style="color:#6b7280;font-size:12.5px">${ts}</td>
+          <td style="text-align:center">
+            <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${origIdx})" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-weight:600">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              View
+            </button>
+          </td>
+        </tr>
+      `);
+    });
+  } else {
+    // Group filtered rows by Section (preserving standard section order)
+    const groupedBySection = {};
+    SECTION_ORDER.forEach(sec => { groupedBySection[sec] = []; });
+
+    filtered.forEach(r => {
+      const sec = normalizeSectionName(r.section);
+      if (!groupedBySection[sec]) {
+        groupedBySection[sec] = [];
+      }
+      groupedBySection[sec].push(r);
+    });
+
+    const allSectionKeys = [
+      ...SECTION_ORDER,
+      ...Object.keys(groupedBySection).filter(k => !SECTION_ORDER.includes(k))
+    ];
+
+    allSectionKeys.forEach(secName => {
+      const sectionRows = groupedBySection[secName] || [];
+      if (sectionRows.length === 0) return;
+
+      htmlParts.push(`
+        <tr class="section-header-row" style="background:#f3f6f4 !important">
+          <td colspan="7" style="font-weight:700 !important;font-size:12px !important;text-transform:uppercase !important;letter-spacing:.06em !important;color:#059669 !important;background:#f3f6f4 !important;border-left:4px solid #10b981 !important;padding:10px 16px !important">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#059669" stroke-width="2.5" style="display:inline-block;vertical-align:-1px;margin-right:6px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            ${secName.toUpperCase()} <span style="font-size:11px;font-weight:500;color:#6b7280;text-transform:none;letter-spacing:normal;margin-left:6px">(${sectionRows.length} table${sectionRows.length > 1 ? 's' : ''})</span>
+          </td>
+        </tr>
+      `);
+
+      sectionRows.forEach(r => {
+        renderedCount++;
+        const subDate = formatPHDate(r.submitted_at);
+        const ts = formatPHDate(r.updated_at);
+        const actionTs = r.action_at ? `<span class="ts-label">${formatPHDate(r.action_at)}</span>` : '';
+        const origIdx = cachedSubRows.indexOf(r);
+
+        htmlParts.push(`
+          <tr>
+            <td><strong>${r.institution}</strong></td>
+            <td>${r.encoder}</td>
+            <td><span class="badge badge-blue">Table ${r.table_no}</span></td>
+            <td>${statusBadge(r.table_status || 'done')}${actionTs}</td>
+            <td style="color:#059669;font-weight:600;font-size:12.5px">${subDate}</td>
+            <td style="color:#6b7280;font-size:12.5px">${ts}</td>
+            <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center">
+              <button class="btn-sm-fc btn-sm-view" onclick="viewDataModal(${origIdx})" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit/View Data
+              </button>
+            </td>
+          </tr>
+        `);
+      });
+    });
+  }
 
   tbody.innerHTML = htmlParts.join('');
 
@@ -330,7 +410,7 @@ function renderSubsTable() {
   if (wrap) {
     wrap.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid #f3f4f6;flex-wrap:wrap;gap:10px;font-size:12.5px;color:#6b7280">
-        <div>Showing <strong>${renderedCount}</strong> submission${renderedCount !== 1 ? 's' : ''} across sections</div>
+        <div>Showing <strong>${renderedCount}</strong> submission${renderedCount !== 1 ? 's' : ''}</div>
       </div>`;
   }
 }
@@ -576,6 +656,18 @@ window.viewDataModal = function(idx) {
         ${docsList.map(d => {
           const src = '/' + (d.file_path || '').replace(/^\//, '');
           const dId = d.id || d.doc_id;
+          const isPdf = /\.pdf$/i.test(src);
+          if (isPdf) {
+            return `
+              <div id="pta-doc-card-${dId}" style="border:1px solid #fecaca;border-radius:10px;overflow:hidden;background:#fff5f5;width:130px;height:120px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;text-align:center">
+                <button type="button" onclick="deletePtaModalDoc(${dId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
+                <div onclick="window.open('${src}','_blank')" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;width:100%">
+                  <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#dc2626" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+                  <span style="font-size:11px;font-weight:700;color:#dc2626;margin-top:4px">PDF FILE</span>
+                  <div style="font-size:10px;color:#6b7280;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;margin-top:2px">${d.caption || 'Document'}</div>
+                </div>
+              </div>`;
+          }
           return `
             <div id="pta-doc-card-${dId}" style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative">
               <button type="button" onclick="deletePtaModalDoc(${dId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
@@ -588,6 +680,13 @@ window.viewDataModal = function(idx) {
     </div>`;
 
   wrap.innerHTML = html;
+
+  const isActioned = r.table_status === 'accepted' || r.table_status === 'returned' || r.table_status === 'deleted';
+  const decBtns = document.getElementById('modalDecisionBtns');
+  if (decBtns) {
+    decBtns.style.display = isActioned ? 'none' : 'flex';
+  }
+
   openModal('modalViewData');
 };
 
@@ -623,13 +722,25 @@ window.uploadPtaModalDoc = async function(input) {
         r.docs.push(f);
         const src = '/' + (f.file_path || '').replace(/^\//, '');
         const fId = f.id || f.doc_id;
+        const isPdf = /\.pdf$/i.test(src);
         const card = document.createElement('div');
         card.id = `pta-doc-card-${fId}`;
-        card.style.cssText = 'border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative';
-        card.innerHTML = `
-          <button type="button" onclick="deletePtaModalDoc(${fId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
-          <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${f.caption||'View photo'}"/>
-          <div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.caption || 'Attached photo'}</div>`;
+        if (isPdf) {
+          card.style.cssText = 'border:1px solid #fecaca;border-radius:10px;overflow:hidden;background:#fff5f5;width:130px;height:120px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;text-align:center';
+          card.innerHTML = `
+            <button type="button" onclick="deletePtaModalDoc(${fId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
+            <div onclick="window.open('${src}','_blank')" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;width:100%">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#dc2626" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+              <span style="font-size:11px;font-weight:700;color:#dc2626;margin-top:4px">PDF FILE</span>
+              <div style="font-size:10px;color:#6b7280;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;margin-top:2px">${f.caption || 'Document'}</div>
+            </div>`;
+        } else {
+          card.style.cssText = 'border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative';
+          card.innerHTML = `
+            <button type="button" onclick="deletePtaModalDoc(${fId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
+            <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${f.caption||'View photo'}"/>
+            <div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.caption || 'Attached photo'}</div>`;
+        }
         gallery.appendChild(card);
       });
 
@@ -812,6 +923,54 @@ window.deleteSub = function(idx) {
       const json = await res.json();
       showToast(json.message || 'Submission deleted.');
       loadSubs();
+    }
+  });
+};
+
+window.acceptModalSub = function() {
+  if (currentEditSubIdx < 0) return;
+  const idx = currentEditSubIdx;
+  closeModal('modalViewData');
+  acceptSub(idx);
+};
+
+window.returnModalSub = function() {
+  if (currentEditSubIdx < 0) return;
+  const idx = currentEditSubIdx;
+  closeModal('modalViewData');
+  returnSub(idx);
+};
+
+window.sendPtaReminder = async function(idx, instName) {
+  const r = cachedSubRows[idx];
+  const year = document.getElementById('subYearSel').value;
+  const targetInst = instName || r?.institution || 'Institution';
+  
+  showConfirmModal({
+    title: 'Send Reminder?',
+    message: `Send an official notification reminder to ${targetInst} to encode and submit their CY ${year} tables?`,
+    confirmText: 'Send Reminder',
+    type: 'green',
+    onConfirm: async function() {
+      try {
+        const res = await fetch('/api/pta/submissions/send-reminder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cmi_user_id: r?.cmi_user_id || null,
+            institution: targetInst,
+            year: year
+          })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast(`🔔 Reminder sent to ${targetInst}!`);
+        } else {
+          showToast('Failed to send reminder: ' + (json.error || 'Unknown error'));
+        }
+      } catch(e) {
+        showToast('Failed to send reminder.');
+      }
     }
   });
 };

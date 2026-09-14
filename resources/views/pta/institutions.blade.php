@@ -47,6 +47,14 @@
 .view-toggle-btn { border:none; background:transparent; border-radius:8px; padding:6px 12px; cursor:pointer; color:#6b7280; transition:all .15s; display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; }
 .view-toggle-btn.active { background:#fff; color:#111827; box-shadow:0 1px 4px rgba(0,0,0,.1); }
 
+/* ── Detail Page Responsive ── */
+.detail-stat-card { flex: 1; min-width: 105px; border-radius: 12px; padding: 12px 18px; box-sizing: border-box; }
+
+@media (max-width: 860px) {
+  .detail-header-flex { flex-direction: column; align-items: flex-start !important; }
+  .detail-header-flex > div { width: 100%; max-width: 100% !important; }
+}
+
 @media (max-width: 640px) {
   .pg-banner { flex-direction: column; align-items: stretch; gap: 12px; }
   .view-toggle { align-self: flex-start; }
@@ -59,46 +67,162 @@
 @section('content')
 <div class="page active" id="page-institutions">
 
-  <div class="pg-banner">
-    <div>
-      <div class="pg-banner-title">Member Institutions</div>
-      <div class="pg-banner-sub">CVAARRD Region 2 Consortium Member Institutions</div>
+  <!-- Main Institutions Overview -->
+  <div id="viewInstMain">
+    <div class="pg-banner">
+      <div>
+        <div class="pg-banner-title">Member Institutions</div>
+        <div class="pg-banner-sub">CVAARRD Region 2 Consortium Member Institutions</div>
+      </div>
+      <div class="view-toggle">
+        <button class="view-toggle-btn active" id="btnCardView" onclick="setView('cards')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Cards
+        </button>
+        <button class="view-toggle-btn" id="btnTableView" onclick="setView('table')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Table
+        </button>
+      </div>
     </div>
-    <div class="view-toggle">
-      <button class="view-toggle-btn active" id="btnCardView" onclick="setView('cards')">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        Cards
-      </button>
-      <button class="view-toggle-btn" id="btnTableView" onclick="setView('table')">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        Table
-      </button>
+
+    <div class="fc-card">
+      <div class="fc-card-head">
+        <div class="fc-card-title">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Institutions Status Overview
+        </div>
+        <span class="badge badge-green" id="instCount">—</span>
+      </div>
+      <div class="fc-card-body">
+        <!-- Card View -->
+        <div id="viewCards" class="inst-card-grid"></div>
+        <!-- Table View -->
+        <div id="viewTable" style="display:none" class="fc-table-wrap">
+          <table class="fc-table">
+            <thead>
+              <tr><th>Institution</th><th>Type</th><th>CMI Representative</th><th>Tables Done</th><th>Progress</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="instTbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="fc-card">
-    <div class="fc-card-head">
-      <div class="fc-card-title">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+  <!-- Detailed Institution View Container (Replicating exact reference design) -->
+  <div id="viewInstDetail" style="display:none">
+    
+    <!-- ← Back to Institutions -->
+    <div style="margin-bottom:20px;">
+      <button type="button" onclick="backToInstList()" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:#047857;font-weight:700;font-size:13.5px;cursor:pointer;padding:4px 0;transition:opacity .15s" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
         </svg>
-        Institutions Status Overview
-      </div>
-      <span class="badge badge-green" id="instCount">—</span>
+        Back to Institutions
+      </button>
     </div>
-    <div class="fc-card-body">
-      <!-- Card View -->
-      <div id="viewCards" class="inst-card-grid"></div>
-      <!-- Table View -->
-      <div id="viewTable" style="display:none" class="fc-table-wrap">
-        <table class="fc-table">
+
+    <!-- Profile & KPI Stats Card -->
+    <div class="fc-card" style="padding:22px 26px;margin-bottom:24px;border:1px solid #e5e7eb;box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+      <div class="detail-header-flex" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px;">
+        
+        <!-- Institution Identity (Logo, Name, Type, Location) -->
+        <div style="display:flex;align-items:center;gap:16px;min-width:260px;">
+          <img id="detailInstLogo" src="/assets/img/logo1.jpg" alt="Logo" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:1px solid #e5e7eb;box-shadow:0 2px 5px rgba(0,0,0,0.06);flex-shrink:0;">
+          <div>
+            <div id="detailInstName" style="font-size:18px;font-weight:800;color:#111827;line-height:1.25;">Isabela State University – Echague</div>
+            <div id="detailInstType" style="font-size:13px;color:#6b7280;font-weight:500;margin-top:2px;">State University</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:#6b7280;margin-top:4px;">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span id="detailInstLocation">Echague, Isabela</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overall Progress Track -->
+        <div style="min-width:220px;max-width:280px;flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:#111827;">Overall Progress</span>
+            <span id="detailInstPct" style="font-size:12px;font-weight:700;color:#111827;">25%</span>
+          </div>
+          <div style="width:100%;height:8px;background:#e5e7eb;border-radius:9999px;overflow:hidden;">
+            <div id="detailInstBar" style="width:25%;height:100%;background:#10b981;border-radius:9999px;transition:width 0.6s ease;"></div>
+          </div>
+          <div id="detailInstCompletedText" style="font-size:12px;color:#6b7280;margin-top:6px;">6 / 24 tables completed</div>
+        </div>
+
+        <!-- 3 Status KPI Cards -->
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <!-- Submitted -->
+          <div class="detail-stat-card" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#15803d;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+              Submitted
+            </div>
+            <div id="detailStatSubmitted" style="font-size:22px;font-weight:800;color:#111827;line-height:1;margin-top:6px;">4</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;">tables</div>
+          </div>
+
+          <!-- In Progress -->
+          <div class="detail-stat-card" style="background:#eff6ff;border:1px solid #bfdbfe;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#1d4ed8;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 15 14"/></svg>
+              In Progress
+            </div>
+            <div id="detailStatInProgress" style="font-size:22px;font-weight:800;color:#111827;line-height:1;margin-top:6px;">2</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;">tables</div>
+          </div>
+
+          <!-- Not Started -->
+          <div class="detail-stat-card" style="background:#f9fafb;border:1px solid #e5e7eb;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#4b5563;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>
+              Not Started
+            </div>
+            <div id="detailStatNotStarted" style="font-size:22px;font-weight:800;color:#111827;line-height:1;margin-top:6px;">18</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;">tables</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- All Tables (24) Card -->
+    <div class="fc-card" style="border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid #f0f0f0;background:#fff;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:#111827;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#10b981" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          All Tables (<span id="detailTablesCount">24</span>)
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px;border:1px solid #d1d5db;border-radius:8px;padding:5px 12px;background:#fff;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <select id="detailYearSel" onchange="onDetailYearChange()" style="border:none;background:transparent;outline:none;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
+            <option value="2026">CY 2026</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="fc-table-wrap">
+        <table class="fc-table" style="width:100%;border-collapse:collapse;">
           <thead>
-            <tr><th>Institution</th><th>Type</th><th>CMI Representative</th><th>Tables Done</th><th>Progress</th><th>Status</th><th>Actions</th></tr>
+            <tr style="background:#00875a;color:#ffffff;">
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:12%;border:none;">TABLE</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:35%;border:none;">TITLE</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:23%;border:none;">STATUS</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:12%;border:none;">ROWS</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:18%;border:none;">UPDATED</th>
+            </tr>
           </thead>
-          <tbody id="instTbody"></tbody>
+          <tbody id="detailTablesTbody">
+            <!-- Populated by JS -->
+          </tbody>
         </table>
       </div>
     </div>
+
   </div>
 
 </div>
@@ -109,6 +233,8 @@
 let instData = [];
 let lockedTables = [];
 let currentView = 'cards';
+let currentYear = new Date().getFullYear();
+let currentDetailInstName = '';
 
 function setView(v) {
   currentView = v;
@@ -131,6 +257,7 @@ function renderCards(data) {
   wrap.innerHTML = data.map(inst => {
     const pct = inst.total_tables > 0 ? Math.round((inst.tables_done / inst.total_tables) * 100) : 0;
     const badgeClass = inst.status === 'Submitted' ? 'badge-green' : inst.status === 'In Progress' ? 'badge-orange' : 'badge-gray';
+    const instEsc = (inst.name || '').replace(/'/g, "\\'");
     return `
       <div class="inst-card">
         <div class="inst-card-head">
@@ -154,9 +281,9 @@ function renderCards(data) {
             <a href="/dashboard/cmi/fillup?year=${currentYear}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name)}&table=${lockedTables[0]}" style="display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;transition:all .15s" title="Fill out locked tables for this institution">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out
             </a>` : ''}
-            <a href="/dashboard/pta/submissions" style="display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;text-decoration:none;border:1px solid #a7f3d0;transition:background .15s" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'">
+            <button type="button" onclick="openInstDetail('${instEsc}')" style="display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
-            </a>
+            </button>
           </div>
         </div>
         <div class="inst-prog">
@@ -177,6 +304,7 @@ function renderTable(data) {
   tbody.innerHTML = data.map(inst => {
     const pct = inst.total_tables > 0 ? Math.round((inst.tables_done / inst.total_tables) * 100) : 0;
     const badgeClass = inst.status === 'Submitted' ? 'badge-green' : inst.status === 'In Progress' ? 'badge-orange' : 'badge-gray';
+    const instEsc = (inst.name || '').replace(/'/g, "\\'");
     return `
       <tr>
         <td><div style="display:flex;align-items:center;gap:10px">
@@ -199,9 +327,9 @@ function renderTable(data) {
             <a href="/dashboard/cmi/fillup?year=${currentYear}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name)}&table=${lockedTables[0]}" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;" title="Fill out locked tables for this institution">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out
             </a>` : ''}
-            <a href="/dashboard/pta/submissions" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;text-decoration:none;border:1px solid #a7f3d0;">
-              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View Submissions
-            </a>
+            <button type="button" onclick="openInstDetail('${instEsc}')" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
+            </button>
           </div>
         </td>
       </tr>
@@ -209,17 +337,119 @@ function renderTable(data) {
   }).join('');
 }
 
+window.backToInstList = function() {
+  document.getElementById('viewInstDetail').style.display = 'none';
+  document.getElementById('viewInstMain').style.display = 'block';
+  if (history.pushState) {
+    history.pushState(null, null, window.location.pathname);
+  }
+};
+
+window.openInstDetail = async function(instName, selectedYear) {
+  currentDetailInstName = instName;
+  const yearSel = document.getElementById('detailYearSel');
+  const year = selectedYear || (yearSel ? yearSel.value : currentYear);
+
+  document.getElementById('viewInstMain').style.display = 'none';
+  document.getElementById('viewInstDetail').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const tbody = document.getElementById('detailTablesTbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:36px;color:#9ca3af">Loading institution details...</td></tr>';
+
+  try {
+    const res = await fetch(`/api/pta/institutions/details?institution=${encodeURIComponent(instName)}&year=${year}`);
+    const json = await res.json();
+    if (!json.ok) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:36px;color:#ef4444">Failed to load institution details.</td></tr>';
+      return;
+    }
+
+    const inst = json.institution;
+    document.getElementById('detailInstName').textContent = inst.name || instName;
+    document.getElementById('detailInstType').textContent = inst.type || 'State University';
+    document.getElementById('detailInstLocation').textContent = inst.location || 'Region 2, Philippines';
+    document.getElementById('detailInstPct').textContent = `${inst.progress_pct}%`;
+    document.getElementById('detailInstBar').style.width = `${inst.progress_pct}%`;
+    document.getElementById('detailInstCompletedText').textContent = `${inst.completed} / ${inst.total} tables completed`;
+    document.getElementById('detailStatSubmitted').textContent = inst.submitted;
+    document.getElementById('detailStatInProgress').textContent = inst.in_progress;
+    document.getElementById('detailStatNotStarted').textContent = inst.not_started;
+    document.getElementById('detailTablesCount').textContent = (json.tables || []).length;
+
+    const logoEl = document.getElementById('detailInstLogo');
+    if (inst.logo_url) {
+      logoEl.src = inst.logo_url;
+      logoEl.style.display = 'block';
+    }
+
+    // Render 24 tables with exact pill and column layout from screenshot
+    const tables = json.tables || [];
+    tbody.innerHTML = tables.map(t => {
+      let statusPill = '';
+      if (t.status === 'Submitted') {
+        statusPill = `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:#ecfdf5;color:#059669;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/></svg> Submitted</span>`;
+      } else if (t.status === 'In Progress') {
+        statusPill = `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 15 14"/></svg> In Progress</span>`;
+      } else {
+        statusPill = `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:#f3f4f6;color:#4b5563;font-size:12px;font-weight:600;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg> Not Started</span>`;
+      }
+
+      return `
+        <tr style="border-bottom:1px solid #f3f4f6;">
+          <td style="padding:13px 20px;color:#111827;font-weight:700;">${t.table_no}</td>
+          <td style="padding:13px 20px;color:#374151;font-weight:500;">${t.title}</td>
+          <td style="padding:13px 20px;">${statusPill}</td>
+          <td style="padding:13px 20px;color:#4b5563;">${t.rows}</td>
+          <td style="padding:13px 20px;color:#4b5563;">${t.updated}</td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch(e) {
+    console.error('Error fetching inst details:', e);
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:36px;color:#ef4444">Error loading details.</td></tr>';
+  }
+};
+
+window.onDetailYearChange = function() {
+  if (currentDetailInstName) {
+    const yr = document.getElementById('detailYearSel').value;
+    openInstDetail(currentDetailInstName, yr);
+  }
+};
 
 document.addEventListener('DOMContentLoaded', async function () {
   try {
-    const year = new Date().getFullYear();
-    const res  = await fetch(`/api/pta/institutions?year=${year}`);
+    currentYear = new Date().getFullYear();
+
+    // Populate Year Selectors
+    try {
+      const fRes = await fetch('/api/formats');
+      const fData = await fRes.json();
+      if (fData && fData.years && Array.isArray(fData.years) && fData.years.length > 0) {
+        const detailYearSel = document.getElementById('detailYearSel');
+        const activeYr = fData.active_year || currentYear;
+        if (detailYearSel) {
+          detailYearSel.innerHTML = fData.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+        }
+      }
+    } catch(err) {}
+
+    const res  = await fetch(`/api/pta/institutions?year=${currentYear}`);
     const json = await res.json();
     instData = json.institutions || [];
     lockedTables = (json.locked_tables || []).map(t => String(t).toUpperCase());
     document.getElementById('instCount').textContent = `${instData.length} institutions`;
     renderCards(instData);
     renderTable(instData);
+
+    // If query string has institution, open it directly
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetInst = urlParams.get('institution') || urlParams.get('inst');
+    if (targetInst) {
+      openInstDetail(targetInst);
+    }
   } catch(e) { console.error('Institutions load error:', e); }
 });
 </script>

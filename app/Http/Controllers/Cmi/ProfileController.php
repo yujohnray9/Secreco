@@ -111,12 +111,16 @@ class ProfileController extends Controller
 
         $currentPw = $request->input('current_password', '');
         $newPw     = $request->input('new_password', '');
+        $confirmPw = $request->input('confirm_password', $request->input('password_confirmation', ''));
 
         if ($currentPw === '' || $newPw === '') {
             return response()->json(['success' => false, 'message' => 'All fields are required.']);
         }
         if (strlen($newPw) < 8) {
             return response()->json(['success' => false, 'message' => 'New password must be at least 8 characters.']);
+        }
+        if ($confirmPw !== '' && $newPw !== $confirmPw) {
+            return response()->json(['success' => false, 'message' => 'New password and confirm password do not match.']);
         }
 
         if (!Hash::check($currentPw, $user->password)) {

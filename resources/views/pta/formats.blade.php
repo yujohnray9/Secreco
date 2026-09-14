@@ -106,12 +106,20 @@
           <div class="pg-banner-title">Manage Formats</div>
           <div class="pg-banner-sub">Annual report table templates — control what CMIs fill up each year</div>
         </div>
-        <button class="btn-primary-fc" onclick="openCloneModal()">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-          Prepare New Year
-        </button>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-outline-fc" style="background:#fff;border:1.5px solid #d1d5db;color:#374151;display:inline-flex;align-items:center;gap:6px;font-weight:600;" onclick="openBlankYearModal()">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Create Blank Year
+          </button>
+          <button class="btn-primary-fc" onclick="openCloneModal()">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Prepare New Year (Clone)
+          </button>
+        </div>
       </div>
 
       <!-- Year Tabs -->
@@ -164,6 +172,36 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- ═══ CREATE BLANK YEAR MODAL ═══ -->
+    <div class="modal-overlay" id="modalBlankYear">
+      <div class="modal-box">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          Create Blank Reporting Year
+        </div>
+        <div class="modal-desc">Create a new annual reporting cycle without copying tables from previous years. The year will start completely empty (0 tables) so you can add formats manually.</div>
+        <div class="form-group">
+          <label class="form-label">Reporting Year (e.g. {{ date('Y') + 1 }})</label>
+          <input class="form-input" type="number" id="blankYearInput" min="2020" max="2050" value="{{ date('Y') + 1 }}"/>
+        </div>
+        <div id="blankYearWarning" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:12.5px;margin-bottom:14px;">
+          <div id="blankYearWarnText" style="font-weight:600"></div>
+          <label style="display:flex;align-items:center;gap:7px;margin-top:8px;cursor:pointer;font-weight:600;font-size:12px;">
+            <input type="checkbox" id="blankYearClearConfirm" style="accent-color:#ef4444"/> Yes, clear existing tables and make this year empty
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" onclick="closeModal('modalBlankYear')">Cancel</button>
+          <button class="btn-primary-fc" onclick="submitBlankYear()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Create Blank Year
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- ═══ CLONE / PREPARE NEW YEAR MODAL ═══ -->
@@ -371,6 +409,19 @@
               (t.section || '').toLowerCase().includes(query);
       });
 
+      if (!cachedTemplates.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:56px 20px;color:#9ca3af">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 12px">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/>
+          </svg>
+          <strong style="display:block;font-size:14.5px;color:#374151;margin-bottom:6px">No format templates created for CY ${fmtCurrentYear} yet.</strong>
+          <span style="font-size:12.5px;color:#6b7280">This reporting year is empty. Click <strong>+ Add Table</strong> above to start adding formats.</span>
+        </td></tr>`;
+        const wrap = document.getElementById('fmtPaginationWrap');
+        if (wrap) wrap.innerHTML = `<div style="padding:14px 20px;color:#9ca3af;font-size:12.5px;text-align:center;">Showing 0 format tables across sections</div>`;
+        return;
+      }
+
       if (!filtered.length) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:48px;color:#9ca3af">
           <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 12px">
@@ -509,8 +560,13 @@
       let btns = `<button class="btn-outline-fc" onclick="openAddModal(${year})">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ Add Table</button>`;
       if (fmtYearStatus === 'draft') {
-        btns += `<button class="btn-primary-fc" onclick="confirmActivate(${year})">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activate CY ${year}</button>`;
+        if (templates.length > 0) {
+          btns += `<button class="btn-primary-fc" onclick="confirmActivate(${year})">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activate CY ${year}</button>`;
+        } else {
+          btns += `<button class="btn-primary-fc" disabled style="opacity:0.45;cursor:not-allowed;" title="You must add at least one table before activating this year">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activate CY ${year}</button>`;
+        }
       }
       actions.innerHTML = btns;
 
@@ -953,6 +1009,35 @@
       if (json.ok) loadFormats(fmtCurrentYear);
     }
 
+    // ── Blank Year ────────────────────────────────────────────────────
+    function openBlankYearModal() {
+      document.getElementById('blankYearWarning').style.display = 'none';
+      document.getElementById('blankYearClearConfirm').checked = false;
+      openModal('modalBlankYear');
+    }
+    async function submitBlankYear() {
+      const year = parseInt(document.getElementById('blankYearInput').value);
+      if (!year || year < 2020) { showToast('Please enter a valid reporting year.'); return; }
+      const clearExisting = document.getElementById('blankYearClearConfirm').checked;
+
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create_blank_year', year, clear_existing: clearExisting })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        closeModal('modalBlankYear');
+        showToast(json.message);
+        loadFormats(year);
+      } else if (json.exists) {
+        document.getElementById('blankYearWarnText').textContent = json.message;
+        document.getElementById('blankYearWarning').style.display = 'block';
+      } else {
+        showToast(json.message || 'Failed to create year.');
+      }
+    }
+
     // ── Clone Year ────────────────────────────────────────────────────
     function openCloneModal() { openModal('modalClone'); }
     async function submitClone() {
@@ -967,6 +1052,10 @@
 
     // ── Activate Year ─────────────────────────────────────────────────
     function confirmActivate(year) {
+      if (!cachedTemplates || cachedTemplates.length === 0) {
+        showToast(`Cannot activate CY ${year} because it has 0 tables. Add at least one table template first.`);
+        return;
+      }
       document.getElementById('activateYearLabel').textContent  = year;
       document.getElementById('activateYearLabel2').textContent = year;
       document.getElementById('activateYearVal').value          = year;
@@ -974,6 +1063,10 @@
     }
     async function submitActivate() {
       const year = parseInt(document.getElementById('activateYearVal').value);
+      if (!cachedTemplates || cachedTemplates.length === 0) {
+        showToast(`Cannot activate CY ${year} because it has 0 tables.`);
+        return;
+      }
       const res  = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'activate', year}) });
       const json = await res.json();
       if (json.ok) { closeModal('modalActivate'); showToast(json.message); loadFormats(year); }

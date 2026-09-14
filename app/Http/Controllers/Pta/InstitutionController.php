@@ -122,4 +122,194 @@ class InstitutionController extends Controller
             'locked_tables' => $lockedTables,
         ]);
     }
+
+    public function details(Request $request): JsonResponse
+    {
+        $instName = trim((string) $request->input('institution', ''));
+        $year     = (int) ($request->input('year') ?? date('Y'));
+
+        $masterList = config('secreco.institutions', []);
+
+        // Resolve metadata
+        $meta = null;
+        $matchedName = $instName;
+        foreach ($masterList as $name => $m) {
+            if (strcasecmp($name, $instName) === 0 || str_contains(strtolower($name), strtolower($instName)) || str_contains(strtolower($instName), strtolower($name))) {
+                $meta = $m;
+                $matchedName = $name;
+                break;
+            }
+        }
+        if (!$meta) {
+            $matchedName = array_key_first($masterList) ?? 'Isabela State University - Echague';
+            $meta = $masterList[$matchedName] ?? ['short' => 'ISU-E', 'type' => 'State University', 'logo' => 1];
+        }
+
+        $logoId  = $meta['logo'] ?? 1;
+        $ext     = in_array((int)$logoId, [25, 26], true) ? 'png' : 'jpg';
+        $logoUrl = "/assets/img/logo{$logoId}.{$ext}";
+
+        $locations = [
+            'Isabela State University - Echague' => 'Echague, Isabela',
+            'Isabela State University - Cabagan' => 'Cabagan, Isabela',
+            'Batanes State College' => 'Basco, Batanes',
+            'Cagayan State University' => 'Tuguegarao City, Cagayan',
+            'Nueva Vizcaya State University' => 'Bayombong, Nueva Vizcaya',
+            'Quirino State University' => 'Diffun, Quirino',
+            'University of La Salette' => 'Santiago City, Isabela',
+            'DA - Agricultural Training Institute Region II' => 'San Mateo, Isabela',
+            'DA - Regional Field Office 2' => 'Tuguegarao City, Cagayan',
+            'Bureau of Fisheries & Aquatic Resources - R2' => 'Tuguegarao City, Cagayan',
+            'Department of Environment and Natural Resources - Region II' => 'Tuguegarao City, Cagayan',
+            'Department of Science and Technology - Region II' => 'Tuguegarao City, Cagayan',
+            'Department of Trade and Industry - Region II' => 'Tuguegarao City, Cagayan',
+            'Department of Economy, Planning and Development - Region II' => 'Tuguegarao City, Cagayan',
+            'National Tobacco Administration' => 'Tuguegarao City, Cagayan',
+            'DA - Philippine Rice Research Institute - Isabela' => 'San Mateo, Isabela',
+            'Philippine Council for Agriculture, Aquatic and Natural Resources Research and Development' => 'Los Baños, Laguna',
+            'DA - Bureau of Agricultural Research' => 'Diliman, Quezon City',
+            'Watershed & Water Resources Research Development and Extension Center' => 'Los Baños, Laguna',
+            'Mabuwaya Foundation Inc.' => 'Cabagan, Isabela',
+            'Government City of Santiago' => 'Santiago City, Isabela',
+            'Commission on Higher Education - Regional Office 2' => 'Tuguegarao City, Cagayan',
+        ];
+
+        $location = $locations[$matchedName] ?? 'Region 2, Philippines';
+
+        // Find users for this institution
+        $cmiUsers = User::where('role', 'cmi')
+            ->where(function ($q) use ($matchedName, $instName) {
+                $q->where('institution', $matchedName)
+                  ->orWhere('institution', $instName);
+            })
+            ->get();
+        $uIds = $cmiUsers->pluck('id')->all();
+
+        // Find official submission
+        $sub = null;
+        if ($uIds) {
+            $sub = ReportSubmission::where('reporting_year', $year)
+                ->whereIn('user_id', $uIds)
+                ->orderByDesc('submitted_at')
+                ->first();
+        }
+
+        $allTableKeys = config('secreco.all_tables', [
+            'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
+            'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
+            'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b'
+        ]);
+
+        $shortTitles = [
+            'T1'   => 'AIHRs',
+            'T2a'  => 'RSRDH Summary',
+            'T2b'  => 'RSRDH Participants',
+            'T3'   => 'Projects Monitored',
+            'T4'   => 'Resources Shared',
+            'T5'   => 'Resources Generated',
+            'T6'   => 'Linkages',
+            'T7a'  => 'Databases',
+            'T7b'  => 'Info Systems',
+            'T8a'  => 'R&D Programs',
+            'T8b'  => 'Collaborative R&D',
+            'T9'   => 'Technologies Generated',
+            'T10'  => 'TT Projects',
+            'T11'  => 'Technologies Extended',
+            'T12'  => 'Commercialized',
+            'T13'  => 'Tech Promotion',
+            'T14'  => 'Trainings',
+            'T15'  => 'Equipment Facilities',
+            'T16'  => 'Awards',
+            'T17'  => 'Meetings',
+            'T18'  => 'CMI Contributions',
+            'T19'  => 'Governance',
+            'T20a' => 'Policy Researches',
+            'T20b' => 'Policies',
+        ];
+
+        $tablesData = [];
+        $submittedCount = 0;
+        $inProgressCount = 0;
+        $notStartedCount = 0;
+
+        $userTables = [];
+        if ($uIds) {
+            $dbTables = ReportTable::where('reporting_year', $year)
+                ->whereIn('user_id', $uIds)
+                ->get();
+            foreach ($dbTables as $tr) {
+                $clean = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tr->table_no));
+                $userTables[$clean] = $tr;
+            }
+        }
+
+        $hasActiveSub = $sub && in_array($sub->status, ['submitted', 'pending', 'accepted', 'returned'], true);
+
+        foreach ($allTableKeys as $tNo) {
+            $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tNo));
+            $tr = $userTables[$cleanKey] ?? null;
+
+            $status = 'Not Started';
+            $rowCount = '—';
+            $updatedAt = '—';
+
+            if ($tr) {
+                $numRows = is_array($tr->rows_json) ? count($tr->rows_json) : 0;
+                if ($numRows > 0) {
+                    $rowCount = (string) $numRows;
+                }
+                if ($tr->updated_at) {
+                    $m = date('M', strtotime((string)$tr->updated_at));
+                    if ($m === 'Sep') $m = 'Sept';
+                    $updatedAt = $m . '. ' . date('j, Y', strtotime((string)$tr->updated_at));
+                }
+
+                $st = $tr->status;
+                if ($st === 'done' || $st === 'submitted' || $st === 'accepted') {
+                    $status = 'Submitted';
+                    $submittedCount++;
+                } elseif ($st === 'draft' || $numRows > 0 || !empty($tr->meta_json)) {
+                    $status = 'In Progress';
+                    $inProgressCount++;
+                } else {
+                    $status = 'Not Started';
+                    $notStartedCount++;
+                }
+            } else {
+                $notStartedCount++;
+            }
+
+            $tablesData[] = [
+                'table_no' => $tNo,
+                'title'    => $shortTitles[$tNo] ?? $tNo,
+                'status'   => $status,
+                'rows'     => $rowCount,
+                'updated'  => $updatedAt,
+            ];
+        }
+
+        $totalTables = count($allTableKeys);
+        $completedCount = $submittedCount + $inProgressCount;
+        $progressPct = $totalTables > 0 ? round(($completedCount / $totalTables) * 100) : 0;
+
+        return response()->json([
+            'ok'          => true,
+            'year'        => $year,
+            'institution' => [
+                'name'         => $matchedName,
+                'short'        => $meta['short'] ?? '',
+                'type'         => $meta['type'] ?? 'State University',
+                'location'     => $location,
+                'logo_url'     => $logoUrl,
+                'encoder'      => $cmiUsers->pluck('name')->filter()->join(', ') ?: '—',
+                'progress_pct' => $progressPct,
+                'completed'    => $completedCount,
+                'total'        => $totalTables,
+                'submitted'    => $submittedCount,
+                'in_progress'  => $inProgressCount,
+                'not_started'  => $notStartedCount,
+            ],
+            'tables' => $tablesData,
+        ]);
+    }
 }

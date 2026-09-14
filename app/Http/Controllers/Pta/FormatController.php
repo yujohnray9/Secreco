@@ -43,17 +43,19 @@ class FormatController extends Controller
             ?? FormatTemplate::max('year')
             ?? date('Y')
         );
-        $years = FormatTemplate::distinct()->where('year', '>=', 2025)->orderByDesc('year')->pluck('year')->all();
+        $dbYears = FormatTemplate::distinct()->where('year', '>=', 2025)->pluck('year')->all();
+        $settingRow = SystemSetting::where('key', 'format_years')->first();
+        $savedYears = $settingRow ? (json_decode($settingRow->value, true) ?: []) : [];
+        $years = array_values(array_unique(array_merge($dbYears, $savedYears)));
+        rsort($years);
         if (empty($years)) {
-            $years = [2025];
+            $years = [2026, 2025];
         }
-        // Only show years that have been explicitly added in Manage Format (>= 2025)
-        // Do NOT auto-add current year — user controls this via Manage Format.
 
         return response()->json([
             'ok'          => true,
             'templates'   => $templates,
-            'years'       => array_values(array_unique($years)),
+            'years'       => $years,
             'year'        => $year,
             'active_year' => $activeYear,
         ]);
@@ -61,9 +63,10 @@ class FormatController extends Controller
 
     public function save(Request $request): JsonResponse
     {
-        $input  = $request->json()->all() ?: $request->all();
-        $action = trim($input['action'] ?? '');
-        $userId = (int) (Auth::id() ?? session('user_id'));
+        $input     = $request->json()->all() ?: $request->all();
+        $action    = trim($input['action'] ?? '');
+        $rawUserId = Auth::id() ?? session('user_id');
+        $userId    = ($rawUserId && User::where('id', $rawUserId)->exists()) ? (int) $rawUserId : null;
 
         switch ($action) {
             case 'add':
@@ -239,6 +242,14 @@ class FormatController extends Controller
                     return response()->json(['ok' => false, 'message' => 'Invalid year.']);
                 }
 
+                $templateCount = FormatTemplate::where('year', $year)->count();
+                if ($templateCount === 0) {
+                    return response()->json([
+                        'ok'      => false,
+                        'message' => "Cannot activate CY {$year} because it has 0 table templates. Please add table formats before activating."
+                    ]);
+                }
+
                 FormatTemplate::where('status', 'active')->update(['status' => 'archived']);
                 FormatTemplate::where('year', $year)->update(['status' => 'active']);
 
@@ -294,7 +305,56 @@ class FormatController extends Controller
                     $count++;
                 }
 
+                // Register year
+                $settingRow = SystemSetting::where('key', 'format_years')->first();
+                $savedYears = $settingRow ? (json_decode($settingRow->value, true) ?: []) : [];
+                $dbYears    = FormatTemplate::distinct()->where('year', '>=', 2025)->pluck('year')->all();
+                $allYears   = array_values(array_unique(array_merge($dbYears, $savedYears, [$toYear])));
+                SystemSetting::updateOrCreate(
+                    ['key' => 'format_years'],
+                    ['value' => json_encode($allYears), 'updated_by' => $userId, 'updated_at' => now()]
+                );
+
                 return response()->json(['ok' => true, 'message' => "CY {$toYear} draft created with {$count} tables cloned from CY {$fromYear}."]);
+
+            case 'create_blank_year':
+                $targetYear = (int) ($input['year'] ?? 0);
+                if (!$targetYear || $targetYear < 2020 || $targetYear > 2100) {
+                    return response()->json(['ok' => false, 'message' => 'Please enter a valid reporting year.']);
+                }
+
+                $clearExisting = !empty($input['clear_existing']);
+                $hasExisting = FormatTemplate::where('year', $targetYear)->exists();
+
+                if ($hasExisting && !$clearExisting) {
+                    return response()->json([
+                        'ok'     => false,
+                        'exists' => true,
+                        'message' => "CY {$targetYear} already has tables. Would you like to clear them to start empty?"
+                    ]);
+                }
+
+                if ($hasExisting && $clearExisting) {
+                    FormatTemplate::where('year', $targetYear)->delete();
+                }
+
+                // Register year in SystemSetting so it appears in tabs even with 0 tables
+                $settingRow = SystemSetting::where('key', 'format_years')->first();
+                $savedYears = $settingRow ? (json_decode($settingRow->value, true) ?: []) : [];
+                $dbYears    = FormatTemplate::distinct()->where('year', '>=', 2025)->pluck('year')->all();
+                $allYears   = array_values(array_unique(array_merge($dbYears, $savedYears, [$targetYear])));
+                sort($allYears);
+
+                SystemSetting::updateOrCreate(
+                    ['key' => 'format_years'],
+                    ['value' => json_encode($allYears), 'updated_by' => $userId, 'updated_at' => now()]
+                );
+
+                return response()->json([
+                    'ok'      => true,
+                    'message' => "CY {$targetYear} created as an empty reporting year. You can now add tables.",
+                    'year'    => $targetYear,
+                ]);
 
             default:
                 return response()->json(['ok' => false, 'message' => "Unknown action: {$action}"]);
