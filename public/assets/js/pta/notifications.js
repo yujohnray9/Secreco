@@ -78,7 +78,10 @@ function renderItem(n) {
     const timeStr     = formatRelativeTime(n.time);
     const unreadClass = n.unread ? ' notif-unread' : '';
     const unreadDot   = n.unread ? '<div class="notif-dot-unread"></div>' : '';
-    const actionBtn   = n.action
+    const isApprovalOrActivation = n.notif_type === 'year_activation' || n.type === 'year_activation' ||
+        n.notif_type === 'user_approval' || n.notif_type === 'accepted' ||
+        (n.msg && (n.msg.toLowerCase().includes('is now active') || n.msg.toLowerCase().includes('accepted') || n.msg.toLowerCase().includes('approved')));
+    const actionBtn = (!isApprovalOrActivation && n.action)
         ? `<div class="notif-action"><button class="btn-notif${n.unread ? '' : ' outline'}" onclick="navTo('${esc(n.action)}')">${esc(n.action_label ?? 'View')}</button></div>`
         : '';
     const badgeLabel  = typeBadgeLabel(n.type, n.status);

@@ -166,7 +166,7 @@
 
       <!-- Rate-limit lockout notice -->
       <div class="rate-notice" id="rateNotice">
-        Too many failed attempts. Please wait <strong id="rateCooldown">15</strong> minute(s) before trying again.
+        Too many failed attempts. Please wait <strong id="rateCooldown">30</strong> minute(s) before trying again.
       </div>
 
       <!-- Error message -->
@@ -257,7 +257,7 @@ document.getElementById('displayEmail').textContent = pendingEmail || '—';
 
 /* ── CLIENT-SIDE RATE LIMIT CHECK ON LOAD ── */
 (function() {
-  const MAX = 5, WINDOW_MS = 15 * 60 * 1000;
+  const MAX = 3, WINDOW_MS = 30 * 60 * 1000;
   const attempts = parseInt(sessionStorage.getItem('_rl_attempts') || '0');
   const firstTs  = parseInt(sessionStorage.getItem('_rl_ts')       || '0');
   const now      = Date.now();
@@ -329,7 +329,7 @@ function handleVerify() {
   }
 
   // Client-side lockout check before sending
-  const MAX = 5, WINDOW_MS = 15 * 60 * 1000;
+  const MAX = 3, WINDOW_MS = 30 * 60 * 1000;
   const attempts = parseInt(sessionStorage.getItem('_rl_attempts') || '0');
   const firstTs  = parseInt(sessionStorage.getItem('_rl_ts')       || '0');
   if (attempts >= MAX && (Date.now() - firstTs) < WINDOW_MS) {

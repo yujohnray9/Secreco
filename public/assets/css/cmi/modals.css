@@ -206,6 +206,10 @@
   border: 1px solid rgba(255, 255, 255, 0.25);
   word-break: break-word;
 }
+.toast.toast-error, .toast.toast-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4) !important;
+}
 @keyframes toastSlideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes toastFadeOut { to { opacity: 0; transform: translateY(-10px); } }
 

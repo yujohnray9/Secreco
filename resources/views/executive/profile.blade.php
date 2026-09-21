@@ -38,7 +38,7 @@
             Change Photo
           </label>
           <input type="file" id="execAvatarFile" accept="image/*" style="display:none"/>
-          <div class="profile-photo-hint">JPG, PNG or WEBP (Max 5MB)</div>
+          <div class="profile-photo-hint" id="photoHint">JPG, PNG or WEBP (Max 5MB)</div>
         </div>
       </div>
 
@@ -158,61 +158,92 @@ function checkPwStrength(val) {
   hint.style.color = color;
 }
 
+let pendingPhotoFile = null;
+
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     const res  = await fetch('/api/pta/profile');
     const json = await res.json();
-    if (json.user) {
-      const u = json.user;
-      document.getElementById('profFirstName').value = u.first_name || '';
-      document.getElementById('profLastName').value  = u.last_name  || '';
-      document.getElementById('profEmail').value     = u.email      || '';
-      if (u.profile_picture) {
-        document.getElementById('execAvatarPreview').src = '/' + u.profile_picture.replace(/^\//, '');
+    if (json.success !== false) {
+      document.getElementById('profFirstName').value = json.first_name || '';
+      document.getElementById('profLastName').value  = json.last_name  || '';
+      document.getElementById('profEmail').value     = json.email      || '';
+      const photo = json.photo || json.profile_picture || '';
+      if (photo) {
+        document.getElementById('execAvatarPreview').src = '/' + photo.replace(/^\//, '');
       }
     }
   } catch(e) {
     console.error('Profile load error:', e);
   }
 
-  // Upload photo
+  // Preview photo locally — do NOT upload yet
   const avatarFile = document.getElementById('execAvatarFile');
   if (avatarFile) {
-    avatarFile.addEventListener('change', async function () {
+    avatarFile.addEventListener('change', function () {
       if (!this.files || !this.files[0]) return;
-      const formData = new FormData();
-      formData.append('photo', this.files[0]);
-      try {
-        const res  = await fetch('/api/pta/profile/upload-photo', { method: 'POST', body: formData });
-        const json = await res.json();
-        if (json.success) {
-          document.getElementById('execAvatarPreview').src = '/' + json.path.replace(/^\//, '');
-          showToast('Profile photo updated!');
-        } else {
-          showToast(json.message || 'Failed to upload photo.');
-        }
-      } catch (e) {
-        showToast('Error uploading photo.');
-      }
+      pendingPhotoFile = this.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('execAvatarPreview').src = e.target.result;
+        const hint = document.getElementById('photoHint');
+        if (hint) hint.textContent = 'Photo selected — click Save Profile to apply.';
+      };
+      reader.readAsDataURL(pendingPhotoFile);
     });
   }
 
-  // Save profile
+  // Save profile — upload photo first (if selected), then save name
   document.getElementById('profileForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const pRes  = await fetch('/api/pta/profile/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        first_name: document.getElementById('profFirstName').value,
-        last_name:  document.getElementById('profLastName').value,
-      }),
-    });
-    const pJson = await pRes.json();
-    if (pJson.success) {
-      showToast('Profile saved!');
-    } else {
-      showToast(pJson.message || 'Error saving profile.');
+    const btn = this.querySelector('button[type="submit"]');
+    const origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span style="opacity:.6">Saving...</span>';
+
+    try {
+      // 1. Upload photo if one was selected
+      if (pendingPhotoFile) {
+        const formData = new FormData();
+        formData.append('photo', pendingPhotoFile);
+        const photoRes  = await fetch('/api/pta/profile/upload-photo', { method: 'POST', body: formData });
+        const photoJson = await photoRes.json();
+        if (photoJson.success) {
+          const photoSrc = photoJson.photo || photoJson.path || '';
+          if (photoSrc) {
+            document.getElementById('execAvatarPreview').src = '/' + photoSrc.replace(/^\//, '') + '?t=' + Date.now();
+          }
+          pendingPhotoFile = null;
+          const hint = document.getElementById('photoHint');
+          if (hint) hint.textContent = 'JPG, PNG or WEBP (Max 5MB)';
+        } else {
+          showToast(photoJson.message || 'Failed to upload photo.');
+          btn.disabled = false;
+          btn.innerHTML = origText;
+          return;
+        }
+      }
+
+      // 2. Save name fields
+      const pRes  = await fetch('/api/pta/profile/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: document.getElementById('profFirstName').value,
+          last_name:  document.getElementById('profLastName').value,
+        }),
+      });
+      const pJson = await pRes.json();
+      if (pJson.success) {
+        showToast('✅ Profile saved successfully!');
+      } else {
+        showToast(pJson.message || 'Error saving profile.');
+      }
+    } catch(err) {
+      showToast('Error saving profile. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origText;
     }
   });
 

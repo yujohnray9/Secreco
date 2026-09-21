@@ -131,8 +131,8 @@
 <script src="/assets/js/cmi/tables-config.js?v=6"></script>
 <script src="/assets/js/cmi/submissions-helpers.js?v=6"></script>
 <script src="/assets/js/cmi/submissions-state.js?v=6"></script>
-<script src="/assets/js/cmi/submissions-load.js?v=6"></script>
-<script src="/assets/js/cmi/submissions-render.js?v=6"></script>
+<script src="/assets/js/cmi/submissions-load.js?v=7"></script>
+<script src="/assets/js/cmi/submissions-render.js?v=7"></script>
 <script src="/assets/js/cmi/submissions-view.js?v=6"></script>
 <script src="/assets/js/cmi/submissions-lightbox.js?v=6"></script>
 <script src="/assets/js/cmi/submissions-edit-state.js?v=6"></script>

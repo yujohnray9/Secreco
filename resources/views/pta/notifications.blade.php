@@ -568,7 +568,10 @@ function renderPtaCards() {
       desc = 'A new institutional submission has been received and is ready for validation.';
     }
 
-    const actionUrl = n.action ? (n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action) : '/dashboard/pta/submissions';
+    const isApprovalOrActivation = n.notif_type === 'user_approval' || n.notif_type === 'year_activation' || n.type === 'year_activation' || !n.action ||
+      (n.msg && (n.msg.toLowerCase().includes('is now active') || n.msg.toLowerCase().includes('approved') || n.msg.toLowerCase().includes('accepted')));
+
+    const actionUrl = n.action ? (n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action) : '';
     const actionLabel = category === 'submissions' ? 'View' : 'View Submissions';
 
     return `
@@ -600,13 +603,14 @@ function renderPtaCards() {
             Mark read
           </button>
         ` : ''}
+        ${(!isApprovalOrActivation && actionUrl) ? `
         <a href="${actionUrl}" class="btn-action-view">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
           ${actionLabel}
-        </a>
+        </a>` : ''}
         <button type="button" class="btn-action-delete" onclick="deletePtaNotifItem(${n.id || 'null'}, '${n.key || ''}')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>

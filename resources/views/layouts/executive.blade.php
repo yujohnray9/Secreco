@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/assets/css/pta/base.css?v=20260903"/>
 <link rel="stylesheet" href="/assets/css/pta/header.css?v=20260903"/>
-<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=20260914c"/>
 <link rel="stylesheet" href="/assets/css/pta/modals.css?v=20260903"/>
 <link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=20260903"/>
 @yield('styles')
@@ -166,6 +166,10 @@ function confirmSignOut() {
         <span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
         Dashboard
       </a>
+      <a href="/dashboard/executive/institutions" class="nav-item {{ in_array($currentPage, ['institutions', 'institution']) ? 'active' : '' }}">
+        <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Institutions
+      </a>
     </div>
 
     <div class="nav-section">
@@ -200,15 +204,14 @@ function confirmSignOut() {
         <div class="profile-divider"></div>
 
         @php
-          $photoUrl = $userPhoto ?? null;
-          if ($photoUrl) {
-              $photoUrl = ltrim($photoUrl, '/');
-              if (!str_starts_with($photoUrl, 'storage/') && !str_starts_with($photoUrl, 'assets/')) {
-                  $photoUrl = 'storage/' . $photoUrl;
+          $rawPhoto = Auth::user()?->profile_picture ?? ($userPhoto ?? null);
+          $photoUrl = '/assets/img/default-avatar.svg';
+          if (!empty($rawPhoto)) {
+              $trimmed = ltrim((string) $rawPhoto, '/');
+              if (!str_starts_with($trimmed, 'storage/') && !str_starts_with($trimmed, 'assets/')) {
+                  $trimmed = 'storage/' . $trimmed;
               }
-              $photoUrl = '/' . $photoUrl;
-          } else {
-              $photoUrl = '/assets/img/default-avatar.svg';
+              $photoUrl = '/' . $trimmed;
           }
         @endphp
 

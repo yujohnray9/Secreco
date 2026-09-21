@@ -31,8 +31,9 @@
       .then(data => {
         window.SubState.statuses = data?.statuses ?? {};
 
+        // Fetch data for both accepted and returned tables
         const relevant = [...new Set(Object.keys(window.SubState.statuses)
-          .filter(no => window.SubState.statuses[no] === 'accepted')
+          .filter(no => ['accepted', 'returned'].includes(window.SubState.statuses[no]))
           .map(no => no.toUpperCase()))];
 
         if (!relevant.length) { window.SubRender.renderTable(); return; }

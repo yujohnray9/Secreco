@@ -139,61 +139,63 @@
     }
 
     CMI.setFormatTemplates = function (templates) {
-        // Always start with deep copy of default SECTIONS so all 24 standard tables are preserved
-        const sections = SECTIONS.map(s => ({
-            label: s.label,
-            tables: [...s.tables]
-        }));
-        const titles = Object.assign({}, TABLE_TITLES);
         _templateDefs = {};
 
         if (Array.isArray(templates) && templates.length > 0) {
+            const sections = [];
+            const titles = {};
+
             templates.forEach(function (t) {
                 if (!t || !t.table_no) return;
                 const canonicalNo = normalizeTableNo(t.table_no);
-                const secName = t.section || "General";
 
-                // Check if table already exists in ANY section (case-insensitive)
-                let existingSec = null;
-                let existingTbl = null;
-                for (const s of sections) {
-                    const match = s.tables.find(tbl => normalizeTableNo(tbl) === canonicalNo);
-                    if (match) {
-                        existingSec = s;
-                        existingTbl = match;
-                        break;
+                // Find section name from template or from default SECTIONS
+                let secName = t.section;
+                if (!secName) {
+                    for (const s of SECTIONS) {
+                        if (s.tables.some(tbl => normalizeTableNo(tbl) === canonicalNo)) {
+                            secName = s.label;
+                            break;
+                        }
                     }
                 }
+                if (!secName) secName = "General";
 
-                if (!existingTbl) {
-                    let secObj = sections.find(s => s.label.toLowerCase() === secName.toLowerCase());
-                    if (!secObj) {
-                        secObj = { label: secName, tables: [] };
-                        sections.push(secObj);
-                    }
+                let secObj = sections.find(s => s.label.toLowerCase() === secName.toLowerCase());
+                if (!secObj) {
+                    secObj = { label: secName, tables: [] };
+                    sections.push(secObj);
+                }
+                if (!secObj.tables.includes(canonicalNo)) {
                     secObj.tables.push(canonicalNo);
                 }
 
-                // For custom tables (not in default TABLE_TITLES), extract short title
-                if (!TABLE_TITLES[canonicalNo]) {
-                    let shortTitle = t.title || canonicalNo;
-                    if (shortTitle.match(/^Table\s+[A-Za-z0-9.]+\s*[–-]?\s*/i)) {
-                        shortTitle = shortTitle.replace(/^Table\s+[A-Za-z0-9.]+\s*[–-]?\s*/i, "").trim();
-                    }
-                    titles[canonicalNo] = shortTitle || t.title || canonicalNo;
-                } else {
-                    titles[canonicalNo] = TABLE_TITLES[canonicalNo];
+                // Title resolution
+                let shortTitle = t.title || canonicalNo;
+                if (shortTitle.match(/^Table\s+[A-Za-z0-9.]+\s*[–-]?\s*/i)) {
+                    shortTitle = shortTitle.replace(/^Table\s+[A-Za-z0-9.]+\s*[–-]?\s*/i, "").trim();
                 }
+                titles[canonicalNo] = shortTitle || TABLE_TITLES[canonicalNo] || t.title || canonicalNo;
 
                 _templateDefs[canonicalNo] = t;
                 _templateDefs[canonicalNo.toUpperCase()] = t;
                 _templateDefs[canonicalNo.toLowerCase()] = t;
                 _templateDefs[t.table_no] = t;
             });
+
+            _activeSections = sections;
+            _activeTitles = titles;
+            renderFillNav();
+            return;
         }
 
+        // Fallback when no templates configured for this year: use default 24 tables
+        const sections = SECTIONS.map(s => ({
+            label: s.label,
+            tables: [...s.tables]
+        }));
         _activeSections = sections;
-        _activeTitles = titles;
+        _activeTitles = Object.assign({}, TABLE_TITLES);
         renderFillNav();
     };
 
@@ -742,12 +744,19 @@
                     body.querySelectorAll("button").forEach((el) => {
                         const text = (el.textContent || '').toLowerCase();
                         const title = (el.getAttribute("title") || '').toLowerCase();
-                        const isDocs = el.classList.contains("t-docs-btn") || (el.getAttribute("onclick") || '').includes("openDocs");
+                        const isDocs = el.classList.contains("t-docs-btn") || (el.getAttribute("onclick") || '').includes("openDocs") || el.id?.includes('doc') || el.classList.contains('btn-docs');
+                        if (isDocs) {
+                            el.disabled = true;
+                            el.style.pointerEvents = "none";
+                            el.style.opacity = "0.5";
+                            el.style.cursor = "not-allowed";
+                            return;
+                        }
                         const isActionBtn = text.includes('save') || text.includes('add') || text.includes('remove') || text.includes('delete') ||
                                             title.includes('remove') || title.includes('delete') ||
                                             el.classList.contains("row-remove-btn") || el.classList.contains("row-del-btn") || el.classList.contains("btn-del") ||
                                             el.dataset.action === 'save';
-                        if (!isDocs && isActionBtn) {
+                        if (isActionBtn) {
                             el.style.display = "none";
                         }
                     });
@@ -767,15 +776,30 @@
                     const onclickAttr = el.getAttribute("onclick") || "";
                     const text = (el.textContent || '').toLowerCase();
                     const title = (el.getAttribute("title") || '').toLowerCase();
-                    const isDocs = el.classList.contains("t-docs-btn") || onclickAttr.includes("openDocs");
+                    const isDocs = el.classList.contains("t-docs-btn") || onclickAttr.includes("openDocs") || el.id?.includes('doc') || el.classList.contains('btn-docs');
+                    if (isDocs) {
+                        el.disabled = true;
+                        el.style.pointerEvents = "none";
+                        el.style.opacity = "0.5";
+                        el.style.cursor = "not-allowed";
+                        return;
+                    }
                     const isActionBtn = text.includes('save') || text.includes('add') || text.includes('remove') || text.includes('delete') ||
                                         title.includes('remove') || title.includes('delete') ||
                                         el.classList.contains("row-remove-btn") || el.classList.contains("row-del-btn") || el.classList.contains("btn-del") ||
                                         el.dataset.action === 'save';
-                    if (!isDocs && (onclickAttr || isActionBtn)) {
+                    if (onclickAttr || isActionBtn) {
                         el.style.display = "none";
                     }
                 });
+
+                const topDraftBtn = document.getElementById("btn-save-draft");
+                if (topDraftBtn) {
+                    topDraftBtn.disabled = true;
+                    topDraftBtn.style.opacity = "0.5";
+                    topDraftBtn.style.cursor = "not-allowed";
+                    topDraftBtn.style.pointerEvents = "none";
+                }
 
                 if (!body.querySelector("#cmi-submitted-banner")) {
                     const date = _submittedAt
@@ -810,16 +834,32 @@
                 el.style.cursor = "";
             });
             body.querySelectorAll("button").forEach((el) => {
+                el.disabled = false;
+                el.style.pointerEvents = "";
+                el.style.opacity = "";
+                el.style.cursor = "";
                 if (el.style.display === "none") {
                     el.style.display = "";
                 }
             });
+            const topDraftBtn = document.getElementById("btn-save-draft");
+            if (topDraftBtn) {
+                topDraftBtn.disabled = false;
+                topDraftBtn.style.opacity = "";
+                topDraftBtn.style.cursor = "";
+                topDraftBtn.style.pointerEvents = "";
+            }
         } finally {
             _isApplyingLock = false;
         }
     }
 
     CMI.applyLock = applyLock;
+
+    CMI.isLocked = function (no) {
+        if (!no) no = window._cmiActiveTable;
+        return _isSubmitted || _submittedTables.includes(no) || (_statuses[no] === 'submitted' || _statuses[no] === 'accepted');
+    };
 
     CMI.lockReport = function () {
         _isSubmitted = true;
@@ -949,6 +989,7 @@
         });
     }
     CMI.submitReport = async function () {
+        window._cmiIsSubmitting = true;
         // If user is currently editing a table, trigger save first so latest inputs are saved and counted
         const active = window._cmiActiveTable || 'T1';
         const winModule = window[active] || window[active.toUpperCase()] || window[active.toLowerCase()];
@@ -1000,6 +1041,9 @@
             onOk() {
                 window.openSubmitModal();
             },
+            onCancel() {
+                window._cmiIsSubmitting = false;
+            }
         });
     };
 
@@ -1011,11 +1055,13 @@
     };
 
     window.closeSubmitModal = function () {
+        window._cmiIsSubmitting = false;
         const modal = document.getElementById("modalConfirmSubmit");
         if (modal) modal.style.display = "none";
     };
 
     window.confirmAndExecuteSubmit = async function () {
+        window._cmiIsSubmitting = true;
         const btn = document.querySelector('#modalConfirmSubmit .btn-submit-report');
         if (btn) {
             btn.disabled = true;
@@ -1083,6 +1129,7 @@
             if (wrap) wrap.innerHTML = "";
             toast("Network error — please try again.");
         } finally {
+            window._cmiIsSubmitting = false;
             if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = 'Yes, Submit Report';

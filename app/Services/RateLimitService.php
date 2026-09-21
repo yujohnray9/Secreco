@@ -16,8 +16,8 @@ class RateLimitService
         ]);
 
         $now = time();
-        $maxAttempts = config('secreco.rate_limit_max', 5);
-        $window = config('secreco.rate_limit_window', 900);
+        $maxAttempts = config('secreco.rate_limit_max', 3);
+        $window = config('secreco.rate_limit_window', 1800);
 
         if (($now - $data['first_attempt']) >= $window) {
             $data = ['attempts' => 0, 'first_attempt' => $now, 'locked_until' => 0];
@@ -35,8 +35,8 @@ class RateLimitService
     {
         $key = 'login_rl_' . md5($ip);
         $now = time();
-        $maxAttempts = config('secreco.rate_limit_max', 5);
-        $window = config('secreco.rate_limit_window', 900);
+        $maxAttempts = config('secreco.rate_limit_max', 3);
+        $window = config('secreco.rate_limit_window', 1800);
 
         $data = Cache::get($key, [
             'attempts'      => 0,

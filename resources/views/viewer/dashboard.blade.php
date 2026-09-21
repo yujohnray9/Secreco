@@ -43,10 +43,9 @@
         </div>
         <span class="sc-fc-sub">Member institutions</span>
         <div class="sc-fc-foot">
-          <a href="/dashboard/viewer/reports" class="sc-fc-link">
-            <span>View details</span>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
+          <span class="sc-fc-link">
+            <span>Consortium members</span>
+          </span>
         </div>
       </div>
 
@@ -68,10 +67,7 @@
         </div>
         <span class="sc-fc-sub">Fully submitted reports</span>
         <div class="sc-fc-foot">
-          <a href="/dashboard/viewer/reports" class="sc-fc-link">
-            <span>View details</span>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
+          <span class="sc-fc-link"><span>Submitted reports</span></span>
         </div>
       </div>
 
@@ -99,10 +95,7 @@
         </div>
         <span class="sc-fc-sub">Encoding or drafting</span>
         <div class="sc-fc-foot">
-          <a href="/dashboard/viewer/reports" class="sc-fc-link">
-            <span>View details</span>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
+          <span class="sc-fc-link"><span>Active submissions</span></span>
         </div>
       </div>
 
@@ -123,10 +116,7 @@
         </div>
         <span class="sc-fc-sub">No reports submitted yet</span>
         <div class="sc-fc-foot">
-          <a href="/dashboard/viewer/reports" class="sc-fc-link">
-            <span>View details</span>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
+          <span class="sc-fc-link"><span>Pending institutions</span></span>
         </div>
       </div>
     </div>
@@ -169,24 +159,8 @@
       </div>
     </div>
 
-    <!-- ── BOTTOM ROW: DONUT CHART & INSTITUTION PROGRESS ── -->
-    <div class="bottom-widgets-grid">
-      <!-- Recent Activity Feed -->
-      <div class="card-fc">
-        <div class="card-fc-header">
-          <div>
-            <h2 class="card-fc-title">Recent Activity</h2>
-            <p class="card-fc-sub">Latest submissions, reviews &amp; system updates</p>
-          </div>
-          <div class="section-badge-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-        </div>
-        <div class="activity-feed-list" id="viewerRecentActivityList" style="max-height:330px;overflow-y:auto;padding:8px 4px;display:flex;flex-direction:column;gap:10px;">
-          <div style="text-align:center; color:#74807c; font-size:12px; padding:30px;">Loading recent activities...</div>
-        </div>
-      </div>
-
+    <!-- ── BOTTOM ROW: INSTITUTION PROGRESS ── -->
+    <div class="bottom-widgets-grid" style="grid-template-columns: 1fr;">
       <!-- Institution Accomplishments (Horizontal Progress Bars) -->
       <div class="card-fc">
         <div class="card-fc-header">

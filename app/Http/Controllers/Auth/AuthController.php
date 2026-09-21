@@ -163,7 +163,7 @@ class AuthController extends Controller
         if (empty($lastName)) $errors[] = 'Last name is required.';
         if (empty($email)) $errors[] = 'Email is required.';
         elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Invalid email format.';
-        if (!in_array($role, ['pta', 'cmi', 'viewer'])) $errors[] = 'Please select a valid role.';
+        if (!in_array($role, ['pta', 'cmi', 'viewer', 'executive'])) $errors[] = 'Please select a valid role.';
 
         if ($role === 'pta') {
             $ptaExists = User::where('role', 'pta')->exists();
@@ -183,7 +183,7 @@ class AuthController extends Controller
                 }
             }
         }
-        if ($role !== 'pta' && empty($designation)) $errors[] = 'Designation / Position is required.';
+        if (!in_array($role, ['pta', 'executive']) && empty($designation)) $errors[] = 'Designation / Position is required.';
         if (strlen($password) < 8) $errors[] = 'Password must be at least 8 characters.';
         if ($password !== $pwConfirm) $errors[] = 'Passwords do not match.';
 
@@ -199,23 +199,31 @@ class AuthController extends Controller
         $expiresAt = now()->addMinutes(10);
         $hashed    = Hash::make($password);
         $instValue = ($role === 'cmi') ? $institution : null;
-        $desgValue = !empty($designation) ? $designation : null;
+        $desgValue = !empty($designation) ? $designation : ($role === 'executive' ? 'Executive Director' : ($role === 'pta' ? 'Project Technical Assistant II' : null));
 
-        PendingRegistration::updateOrCreate(
-            ['email' => $email],
-            [
-                'first_name'     => $firstName,
-                'last_name'      => $lastName,
-                'password'       => $hashed,
-                'role'           => $role,
-                'institution'    => $instValue,
-                'designation'    => $desgValue,
-                'otp'            => $otp,
-                'otp_expires_at' => $expiresAt,
-                'created_at'     => now(),
-                'verified'       => false,
-            ]
-        );
+        try {
+            PendingRegistration::updateOrCreate(
+                ['email' => $email],
+                [
+                    'first_name'     => $firstName,
+                    'last_name'      => $lastName,
+                    'password'       => $hashed,
+                    'role'           => $role,
+                    'institution'    => $instValue,
+                    'designation'    => $desgValue,
+                    'otp'            => $otp,
+                    'otp_expires_at' => $expiresAt,
+                    'created_at'     => now(),
+                    'verified'       => false,
+                ]
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Registration DB error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to save registration details. Please verify database migrations have been run.'
+            ]);
+        }
 
         $fullName = $firstName . ' ' . $lastName;
         if (!$this->mailService->sendOtpEmail($email, $fullName, $otp)) {
@@ -303,7 +311,7 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Missing required fields.']);
         }
 
-        if ($role !== 'pta' && empty($designation)) {
+        if (!in_array($role, ['pta', 'executive']) && empty($designation)) {
             return response()->json(['success' => false, 'message' => 'Designation / Position is required.']);
         }
 
@@ -330,7 +338,7 @@ class AuthController extends Controller
 
         $hashed    = Hash::make($password);
         $instValue = !empty($pending->institution) ? $pending->institution : null;
-        $desgValue = !empty($pending->designation) ? $pending->designation : null;
+        $desgValue = !empty($pending->designation) ? $pending->designation : ($role === 'executive' ? 'Executive Director' : ($role === 'pta' ? 'Project Technical Assistant II' : null));
         $status    = ($role === 'pta') ? 'active' : 'pending';
 
         if ($role === 'cmi') {

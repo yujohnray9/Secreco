@@ -108,7 +108,7 @@
         <table class="fc-table">
           <thead>
             <tr>
-              <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Designation</th><th>Action</th>
+              <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Action</th>
             </tr>
           </thead>
           <tbody id="pendingTbody">
@@ -182,6 +182,7 @@
         <label class="form-label">Role <span style="color:#ef4444">*</span></label>
         <select class="form-select" id="addUserRole" onchange="onRoleChange()">
           <option value="cmi">CMI Representative</option>
+          <option value="executive">Executive</option>
           <option value="viewer">Guest</option>
         </select>
       </div>
@@ -215,7 +216,7 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Designation / Position</label>
+      <label class="form-label">Position</label>
       <input class="form-input" id="addUserPosition" placeholder="e.g. Research Specialist"/>
     </div>
 
@@ -249,6 +250,7 @@ function formatRoleLabel(role) {
   const r = (role || '').toLowerCase();
   if (r === 'cmi') return 'CMI Representative';
   if (r === 'viewer' || r === 'guest') return 'Guest';
+  if (r === 'executive') return 'Executive';
   if (r === 'pta') return 'Project Technical Assistant II';
   return role || '—';
 }
@@ -414,8 +416,8 @@ async function loadUsers() {
           </div></td>
           <td style="color:#6b7280">${u.email}</td>
           <td><span class="badge badge-purple">${formatRoleLabel(u.role)}</span></td>
-          <td>${u.institution || '—'}</td>
-          <td>${u.designation || '—'}</td>
+          <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
+          <td>${u.designation || u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
           <td style="display:flex;gap:6px">
             <button class="btn-sm-fc btn-sm-view" onclick="approveUser(${u.id}, '${u.first_name} ${u.last_name}', 'approve')">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Approve
@@ -446,8 +448,8 @@ async function loadUsers() {
           </div></td>
           <td style="color:#6b7280">${u.email}</td>
           <td><span class="badge badge-blue">${formatRoleLabel(u.role)}</span></td>
-          <td>${u.institution || '—'}</td>
-          <td>${u.position || '—'}</td>
+          <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
+          <td>${u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
           <td><span class="badge ${u.status==='Active' ? 'badge-green' : 'badge-red'}">${u.status}</span></td>
           <td>
             <button class="btn-sm-fc ${u.status==='Active' ? 'btn-sm-danger' : 'btn-sm-toggle'}"

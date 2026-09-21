@@ -22,20 +22,22 @@ class UserController extends Controller
             ->get();
 
         $roleLabel = [
-            'cmi'    => 'CMI Representative',
-            'viewer' => 'Guest',
-            'guest'  => 'Guest',
-            'pta'    => 'Project Technical Assistant II',
+            'cmi'       => 'CMI Representative',
+            'viewer'    => 'Guest',
+            'guest'     => 'Guest',
+            'executive' => 'Executive',
+            'pta'       => 'Project Technical Assistant II',
         ];
 
         $users = $rows->map(function ($r) use ($roleLabel) {
+            $isExecutive = ($r->role === 'executive');
             return [
                 'id'          => (int) $r->id,
                 'name'        => $r->name,
                 'email'       => $r->email,
                 'role'        => $roleLabel[$r->role] ?? $r->role,
-                'position'    => $r->designation ?? '—',
-                'institution' => $r->institution ?? '—',
+                'position'    => $r->designation ?: ($isExecutive ? 'Executive Director' : '—'),
+                'institution' => $isExecutive ? '—' : ($r->institution ?? '—'),
                 'status'      => ucfirst($r->status),
                 'lastLogin'   => '',
             ];
@@ -47,9 +49,18 @@ class UserController extends Controller
     public function getPending(): JsonResponse
     {
         $pending = User::where('status', 'pending')
-            ->whereIn('role', ['cmi', 'viewer'])
+            ->whereIn('role', ['cmi', 'viewer', 'executive'])
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+            ->map(function ($u) {
+                if ($u->role === 'executive') {
+                    $u->institution = '—';
+                    if (empty($u->designation)) {
+                        $u->designation = 'Executive Director';
+                    }
+                }
+                return $u;
+            });
 
         return response()->json(['ok' => true, 'pending' => $pending]);
     }
@@ -72,6 +83,8 @@ class UserController extends Controller
             'guest'              => 'viewer',
             'cmi'                => 'cmi',
             'viewer'             => 'viewer',
+            'executive'          => 'executive',
+            'Executive'          => 'executive',
         ];
         $dbRole  = $roleMap[$role] ?? null;
 
@@ -96,6 +109,11 @@ class UserController extends Controller
                 ->exists();
             if ($cmiExists) {
                 return response()->json(['error' => 'This institution already has a CMI Representative account (active or pending approval). Only 1 CMI account is allowed per institution.'], 422);
+            }
+        } elseif ($dbRole === 'executive') {
+            $institution = null;
+            if (empty($designation)) {
+                $designation = 'Executive Director';
             }
         }
 
@@ -152,11 +170,19 @@ class UserController extends Controller
                     }
                 }
 
-                $pending->update([
+                $updateData = [
                     'status'      => 'active',
                     'approved_by' => $adminId,
                     'approved_at' => now(),
-                ]);
+                ];
+                if ($pending->role === 'executive') {
+                    $updateData['institution'] = null;
+                    if (empty($pending->designation)) {
+                        $updateData['designation'] = 'Executive';
+                    }
+                }
+
+                $pending->update($updateData);
 
                 ActivityLogService::log($adminId, "Approved: {$pending->first_name} {$pending->last_name} ({$pending->email})");
 

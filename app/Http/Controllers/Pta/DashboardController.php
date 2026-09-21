@@ -119,15 +119,20 @@ class DashboardController extends Controller
             $tablesDone = count($distinctTables);
             $isAllCompleted = ($tablesDone >= $TOTAL_TABLES);
 
-            if ($subStatus === 'accepted') {
+            // "Submitted" = CMI has filled ALL tables AND officially submitted
+            // "Accepted"  = PTA accepted the submission (all tables done + submitted + accepted)
+            if ($subStatus === 'accepted' && $isAllCompleted) {
                 $instAccepted++;
                 $instSubmitted++;
-            } elseif ($subStatus === 'submitted' || $isAllCompleted) {
+            } elseif (in_array($subStatus, ['submitted', 'pending'], true) && $isAllCompleted) {
+                // pending = submitted but awaiting PTA review
                 $instSubmitted++;
             } elseif ($subStatus === 'returned') {
+                // Returned for correction — still in progress
                 $instReturned++;
                 $instInProgress++;
-            } elseif ($tablesDone > 0 || $hasAnyDraft || $subStatus === 'in-progress') {
+            } elseif ($tablesDone > 0 || $hasAnyDraft || in_array($subStatus, ['submitted', 'pending', 'in-progress'], true)) {
+                // Has some progress (or submitted without all tables done) — In Progress
                 $instInProgress++;
             } else {
                 $instNotStarted++;
@@ -243,7 +248,7 @@ class DashboardController extends Controller
 
             if ($subStatus === 'accepted') {
                 $status = 'Accepted';
-            } elseif ($subStatus === 'submitted' || $tablesDone >= $TOTAL_TABLES) {
+            } elseif ($subStatus === 'submitted') {
                 $status = 'Submitted';
             } elseif ($subStatus === 'returned') {
                 $status = 'Returned';
@@ -294,14 +299,20 @@ class DashboardController extends Controller
             $sectionProgress[] = ['label' => $sectionLabel, 'pct' => $pct];
         }
 
-        $recentActivity = ActivityLog::with('user')->orderByDesc('created_at')->take(10)->get()
+        $recentActivity = ActivityLog::with('user')
+            ->where('description', 'not like', '%Submitted CY%')
+            ->where('description', 'not like', '%submitted%table%')
+            ->where('description', 'not like', '%Submitted table%')
+            ->orderByDesc('created_at')
+            ->take(10)
+            ->get()
             ->map(fn($al) => [
                 'description' => $al->description,
                 'created_at'  => $al->created_at ? $al->created_at->format('Y-m-d\TH:i:s+08:00') : null,
                 'actor'       => $al->user ? $al->user->name : 'System',
             ]);
 
-        $pendingApprovals = User::where('status', 'pending')->whereIn('role', ['cmi', 'viewer'])->count();
+        $pendingApprovals = User::where('status', 'pending')->whereIn('role', ['cmi', 'viewer', 'executive'])->count();
 
         // ── 1. WEEKLY TREND (Last 7 Days) ──
         $weeklyTrend = [];
@@ -360,7 +371,7 @@ class DashboardController extends Controller
 
         if ($subCountTotal === 0) {
             $tableMonthlyQuery = ReportTable::where('reporting_year', $year)
-                ->whereIn('status', ['submitted', 'done', 'accepted', 'returned'])
+                ->whereIn('status', ['submitted', 'accepted', 'returned'])
                 ->selectRaw('MONTH(updated_at) as month, status, COUNT(DISTINCT user_id) as cnt')
                 ->groupBy('month', 'status')
                 ->get();
@@ -372,7 +383,7 @@ class DashboardController extends Controller
                     $monthlyAccepted[$m] += $c;
                 } elseif ($st === 'returned') {
                     $monthlyReturned[$m] += $c;
-                } else {
+                } elseif ($st === 'submitted') {
                     $monthlySubmitted[$m] += $c;
                 }
             }
@@ -443,7 +454,7 @@ class DashboardController extends Controller
         }
 
         if ($annualTotal === 0) {
-            $tableAnnual = ReportTable::whereIn('status', ['submitted', 'done', 'accepted', 'returned'])
+            $tableAnnual = ReportTable::whereIn('status', ['submitted', 'accepted', 'returned'])
                 ->whereBetween('reporting_year', [$currentYear - 4, $currentYear])
                 ->selectRaw('reporting_year, status, COUNT(DISTINCT user_id) as cnt')
                 ->groupBy('reporting_year', 'status')
@@ -457,7 +468,7 @@ class DashboardController extends Controller
                         $annualAccepted[$ry] += $c;
                     } elseif ($st === 'returned') {
                         $annualReturned[$ry] += $c;
-                    } else {
+                    } elseif ($st === 'submitted') {
                         $annualSubmitted[$ry] += $c;
                     }
                 }

@@ -34,7 +34,7 @@ class NotificationController extends Controller
 
         // 1. Pending accounts waiting for PTA approval (incoming action needed)
         $pendingUsers = User::where('status', 'pending')
-            ->whereIn('role', ['cmi', 'viewer'])
+            ->whereIn('role', ['cmi', 'viewer', 'executive'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -57,8 +57,8 @@ class NotificationController extends Controller
                     'type'         => 'yellow',
                     'icon'         => '👥',
                     'msg'          => $count === 1 ? "1 account pending approval — {$label}." : "{$count} accounts pending approval — {$label}.",
-                    'action'       => '/dashboard/pta/users',
-                    'action_label' => 'Review',
+                    'action'       => null,
+                    'action_label' => null,
                     'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
                     'unread'       => $unread,
                     'notif_type'   => 'user_approval',
@@ -71,8 +71,9 @@ class NotificationController extends Controller
             ->whereIn('status', ['pending', 'submitted', 'in-progress'])
             ->with('user')
             ->orderByDesc('submitted_at')
-            ->take(15)
-            ->get();
+            ->get()
+            ->unique('user_id')
+            ->take(15);
 
         foreach ($recentSubs as $sub) {
             $key = 'derived_sub_' . $sub->id;
@@ -128,19 +129,36 @@ class NotificationController extends Controller
                 $unread = false;
             }
 
+            $isApprovalOrActivation = in_array($n->type, ['year_activation', 'approval', 'user_approval', 'accepted'], true)
+                || str_contains(strtolower($n->message), 'accepted')
+                || str_contains(strtolower($n->message), 'is now active')
+                || str_contains(strtolower($n->message), 'approved');
+
             $notifications[] = [
                 'id'           => (int) $n->id,
                 'key'          => $key,
                 'type'         => $n->color ?: 'blue',
                 'icon'         => $n->icon ?: '📋',
                 'msg'          => $n->message,
-                'action'       => $n->action_url,
-                'action_label' => $n->action_label ?: 'View',
+                'action'       => $isApprovalOrActivation ? null : $n->action_url,
+                'action_label' => $isApprovalOrActivation ? null : ($n->action_label ?: 'View'),
                 'time'         => $n->created_at ? $n->created_at->format('Y-m-d\TH:i:s+08:00') : null,
                 'unread'       => $unread,
                 'notif_type'   => $n->type,
             ];
         }
+
+        // Deduplicate notifications
+        $uniqueNotifs = [];
+        $seenKeys = [];
+        foreach ($notifications as $n) {
+            $dedupKey = trim($n['msg']) . '_' . ($n['notif_type'] ?? '') . '_' . substr($n['time'] ?? '', 0, 16);
+            if (!isset($seenKeys[$dedupKey])) {
+                $seenKeys[$dedupKey] = true;
+                $uniqueNotifs[] = $n;
+            }
+        }
+        $notifications = $uniqueNotifs;
 
         usort($notifications, fn($a, $b) => strcmp($b['time'] ?? '', $a['time'] ?? ''));
 

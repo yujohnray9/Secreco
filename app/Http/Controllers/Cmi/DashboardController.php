@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cmi;
 
 use App\Http\Controllers\Controller;
+use App\Models\CorrectionRequest;
 use App\Models\ReportTable;
 use App\Models\Submission;
 use App\Models\User;
@@ -111,12 +112,26 @@ class DashboardController extends Controller
             }
         }
 
-        $correction = Submission::where('user_id', $userId)->where('status', 'returned')->count();
+        $openCorrections = CorrectionRequest::whereIn('cmi_user_id', $allUserIds)
+            ->where('reporting_year', $reportingYear)
+            ->where('status', 'open')
+            ->count();
+        $returnedTables = ReportTable::whereIn('user_id', $allUserIds)
+            ->where('reporting_year', $reportingYear)
+            ->where('status', 'returned')
+            ->count();
+        $correction = max($openCorrections, $returnedTables);
         $corrMeta = 'Check remarks';
         if ($correction > 0) {
-            $latestCorr = Submission::where('user_id', $userId)->where('status', 'returned')->orderByDesc('submitted_at')->value('id');
+            $latestCorr = CorrectionRequest::whereIn('cmi_user_id', $allUserIds)
+                ->where('reporting_year', $reportingYear)
+                ->where('status', 'open')
+                ->orderByDesc('id')
+                ->first();
             if ($latestCorr) {
-                $corrMeta = 'Submission #' . $latestCorr . ' flagged';
+                $cKey   = strtoupper($latestCorr->table_no);
+                $cLabel = $tableLabels[$cKey] ?? ('Table ' . $latestCorr->table_no);
+                $corrMeta = $cLabel . ' flagged';
             }
         }
 
@@ -145,7 +160,11 @@ class DashboardController extends Controller
         }
 
         $recentActivity = [];
-        $actRows = ReportTable::where('user_id', $userId)->orderByDesc('updated_at')->take(10)->get();
+        $actRows = ReportTable::whereIn('user_id', $allUserIds)
+            ->where('reporting_year', $reportingYear)
+            ->orderByDesc('updated_at')
+            ->take(10)
+            ->get();
 
         foreach ($actRows as $act) {
             $key   = strtoupper($act->table_no);
@@ -153,20 +172,29 @@ class DashboardController extends Controller
             $ts    = $act->updated_at ? $act->updated_at->toDateTimeString() : null;
 
             switch ($act->status) {
-                case 'done':
+                case 'submitted':
                     $desc = 'You submitted <strong>' . $label . '</strong>';
                     $icon = 'submitted';
+                    break;
+                case 'accepted':
+                    $desc = '<strong>' . $label . '</strong> was accepted by PTA';
+                    $icon = 'submitted';
+                    break;
+                case 'returned':
+                case 'error':
+                    $desc = '<strong>' . $label . '</strong> was returned for revision — review remarks';
+                    $icon = 'flagged';
                     break;
                 case 'draft':
                     $desc = 'You saved <strong>' . $label . '</strong> as draft';
                     $icon = 'draft';
                     break;
-                case 'error':
-                    $desc = '<strong>' . $label . '</strong> was returned for revision — review remarks';
-                    $icon = 'flagged';
+                case 'done':
+                    $desc = 'You saved <strong>' . $label . '</strong>';
+                    $icon = 'draft';
                     break;
                 default:
-                    $desc = 'You started filling up <strong>' . $label . '</strong>';
+                    $desc = 'You updated <strong>' . $label . '</strong>';
                     $icon = 'started';
             }
 
@@ -177,12 +205,18 @@ class DashboardController extends Controller
             ];
         }
 
-        $retSubs = Submission::where('user_id', $userId)->where('status', 'returned')->orderByDesc('submitted_at')->take(3)->get();
-        foreach ($retSubs as $ret) {
+        $corrList = CorrectionRequest::whereIn('cmi_user_id', $allUserIds)
+            ->where('reporting_year', $reportingYear)
+            ->orderByDesc('created_at')
+            ->take(5)
+            ->get();
+        foreach ($corrList as $cr) {
+            $cKey   = strtoupper($cr->table_no);
+            $cLabel = $tableLabels[$cKey] ?? ('Table ' . $cr->table_no);
             $recentActivity[] = [
                 'icon'      => 'flagged',
-                'desc'      => 'PTA returned <strong>Submission #' . $ret->id . '</strong> for correction — review remarks',
-                'timestamp' => $ret->submitted_at ? $ret->submitted_at->toDateTimeString() : null,
+                'desc'      => 'PTA returned <strong>' . $cLabel . '</strong> for correction' . ($cr->reason ? ': "' . e($cr->reason) . '"' : ''),
+                'timestamp' => $cr->created_at ? $cr->created_at->toDateTimeString() : null,
             ];
         }
 

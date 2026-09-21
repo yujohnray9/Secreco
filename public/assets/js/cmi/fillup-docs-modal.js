@@ -319,6 +319,12 @@
      * open(tableNo, images, notes, onSave)  ← notes arg ignored (removed feature)
      */
     open(tableNo, images, notesOrOnSave, maybeOnSave) {
+      if (typeof CMI !== 'undefined' && typeof CMI.isLocked === 'function' && CMI.isLocked(tableNo)) {
+        if (typeof window.showToast === 'function') {
+          window.showToast('Attachments are locked because this table is submitted / read-only.');
+        }
+        return;
+      }
       ensureModal();
       _tableNo = tableNo;
       _images  = JSON.parse(JSON.stringify(images || []));

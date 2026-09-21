@@ -90,15 +90,24 @@
   // ── Helpers ──────────────────────────────────────────────────────────────────
   function formatTimestamp(ts) {
     if (!ts) return '';
-    const date    = new Date(ts.replace(' ', 'T'));
-    const now     = new Date();
-    const today   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const d       = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    const diff    = (today - d) / 86400000;
-    if (diff === 0) return 'Today ' + timeStr;
-    if (diff === 1) return 'Yesterday ' + timeStr;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    let str = String(ts).trim();
+    if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(str)) {
+      str = str.replace(' ', 'T') + '+08:00';
+    }
+    const date = new Date(str);
+    if (isNaN(date.getTime())) return ts;
+    const now = new Date();
+    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Manila' });
+
+    const nowStr  = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    const dateStr = date.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    if (nowStr === dateStr) return 'Today ' + timeStr;
+
+    const yest = new Date(now.getTime() - 86400000);
+    const yestStr = yest.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    if (dateStr === yestStr) return 'Yesterday ' + timeStr;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Manila' }) + ' ' + timeStr;
   }
 
   function activityIcon(type) {

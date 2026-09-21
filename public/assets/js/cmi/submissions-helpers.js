@@ -15,16 +15,17 @@
   ───────────────────────────────────────── */
   function formatDate(dt) {
     if (!dt) return '—';
-    // MySQL returns naive datetime strings (no Z, no +xx:xx) which JS parses
-    // as UTC — causing an 8-hour offset for Philippine users.
-    // If there's no timezone indicator, treat it as Asia/Manila (GMT+0800).
     let str = String(dt).trim();
-    const hasTimezone = /Z$|[+-]\d{2}:?\d{2}$/.test(str);
-    if (!hasTimezone) str = str.replace('T', ' ') + ' GMT+0800';
+    if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(str)) {
+      str = str.replace(' ', 'T') + '+08:00';
+    } else {
+      const hasTimezone = /Z$|[+-]\d{2}:?\d{2}$/.test(str);
+      if (!hasTimezone) str = str.replace('T', ' ') + ' GMT+0800';
+    }
     const d = new Date(str);
-    if (isNaN(d)) return dt;
-    return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })
-         + ' ' + d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Manila' });
+    if (isNaN(d.getTime())) return dt;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })
+         + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Manila' });
   }
 
   function escapeHtml(str) {

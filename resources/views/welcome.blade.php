@@ -422,7 +422,7 @@
         <div class="orbit-ring" id="orbitRing"></div>
 
         <div class="badge-emblem">
-          <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD" onerror="this.src='/assets/img/cvaarrd.png'"/>
+          <img src="/assets/logo/cvaard2.jpeg" alt="CVAARRD" onerror="this.src='/assets/img/cvaarrd.png'"/>
         </div>
       </div>
     </section>

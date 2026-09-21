@@ -14,7 +14,8 @@ class InstitutionController extends Controller
     public function index(Request $request): JsonResponse
     {
         $year        = (int) ($request->input('year') ?? date('Y'));
-        $totalTables = count(config('secreco.all_tables', [])) ?: 24;
+        $fmtCount    = \App\Models\FormatTemplate::where('year', $year)->count();
+        $totalTables = $fmtCount > 0 ? $fmtCount : (count(config('secreco.all_tables', [])) ?: 24);
 
         $masterList = config('secreco.institutions');
 
@@ -194,11 +195,16 @@ class InstitutionController extends Controller
                 ->first();
         }
 
-        $allTableKeys = config('secreco.all_tables', [
-            'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
-            'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
-            'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b'
-        ]);
+        $fmtTables = \App\Models\FormatTemplate::where('year', $year)->orderBy('sort_order', 'asc')->pluck('table_no')->toArray();
+        if (!empty($fmtTables)) {
+            $allTableKeys = $fmtTables;
+        } else {
+            $allTableKeys = config('secreco.all_tables', [
+                'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
+                'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
+                'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b'
+            ]);
+        }
 
         $shortTitles = [
             'T1'   => 'AIHRs',

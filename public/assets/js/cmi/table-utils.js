@@ -61,9 +61,9 @@ window.CMIUtils = {
   guardEmptySave(rows, fields, meta, message) {
     if (this.hasContent(rows, fields, meta)) return true;
 
-    const msg = message || '⚠️ Wala kang nilagay. Hindi maisasave kung walang data.';
+    const msg = message || 'No Data has been entered. Please provide the required information before saving.';
     if (typeof toast === 'function') {
-      toast(msg);
+      toast(msg, 4000, 'error');
     } else {
       alert(msg);
     }
@@ -71,6 +71,44 @@ window.CMIUtils = {
   },
 
 };
+
+/* ─────────────────────────────────────────
+   PHILIPPINE TIME HELPERS (GMT+8)
+───────────────────────────────────────── */
+window.formatPhTime = function(dateOrStr) {
+  let str = dateOrStr ? String(dateOrStr).trim() : '';
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(str)) {
+    str = str.replace(' ', 'T') + '+08:00';
+  }
+  const d = str ? new Date(str) : new Date();
+  if (isNaN(d.getTime())) return dateOrStr;
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Manila' });
+};
+
+window.formatPhDateTime = function(dateOrStr) {
+  let str = dateOrStr ? String(dateOrStr).trim() : '';
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(str)) {
+    str = str.replace(' ', 'T') + '+08:00';
+  }
+  const d = str ? new Date(str) : new Date();
+  if (isNaN(d.getTime())) return dateOrStr;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' })
+       + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Manila' });
+};
+
+(function() {
+  const origToLocaleTimeString = Date.prototype.toLocaleTimeString;
+  Date.prototype.toLocaleTimeString = function(locales, options) {
+    if (!options || typeof options !== 'object') {
+      options = { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Manila' };
+      return origToLocaleTimeString.call(this, locales || 'en-US', options);
+    }
+    if (!options.timeZone) {
+      options = { ...options, timeZone: 'Asia/Manila' };
+    }
+    return origToLocaleTimeString.call(this, locales, options);
+  };
+})();
 
 /* ─────────────────────────────────────────
    FETCH INTERCEPTOR FOR YEAR ISOLATION

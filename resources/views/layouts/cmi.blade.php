@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/assets/css/pta/base.css?v=20260903"/>
 <link rel="stylesheet" href="/assets/css/pta/header.css?v=20260903"/>
-<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=20260903"/>
+<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=20260914c"/>
 <link rel="stylesheet" href="/assets/css/pta/modals.css?v=20260903"/>
 <link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=20260903"/>
 @yield('styles')

@@ -68,7 +68,7 @@
         </div>
         <span class="sc-fc-sub">Fully submitted reports</span>
         <div class="sc-fc-foot">
-          <a href="#" onclick="goToPtaYearPage('/dashboard/pta/submissions'); return false;" class="sc-fc-link">
+          <a href="#" onclick="goToPtaYearPage('/dashboard/pta/submissions', 'submitted'); return false;" class="sc-fc-link">
             <span>View details</span>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
@@ -99,7 +99,7 @@
         </div>
         <span class="sc-fc-sub">Encoding or drafting</span>
         <div class="sc-fc-foot">
-          <a href="#" onclick="goToPtaYearPage('/dashboard/pta/submissions'); return false;" class="sc-fc-link">
+          <a href="#" onclick="goToPtaYearPage('/dashboard/pta/submissions', 'in-progress'); return false;" class="sc-fc-link">
             <span>View details</span>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
@@ -123,7 +123,7 @@
         </div>
         <span class="sc-fc-sub">No reports submitted yet</span>
         <div class="sc-fc-foot">
-          <a href="#" onclick="goToPtaYearPage('/dashboard/pta/institutions'); return false;" class="sc-fc-link">
+          <a href="#" onclick="goToPtaYearPage('/dashboard/pta/submissions', 'not-started'); return false;" class="sc-fc-link">
             <span>View details</span>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
@@ -223,9 +223,11 @@ function getProgressColorSpec(pct) {
   return { fill: '#034a36', text: '#022c20' };
 }
 
-function goToPtaYearPage(base) {
+function goToPtaYearPage(base, status) {
   const yr = document.getElementById('ptaDashYearFilter')?.value || currentPtaDashYear;
-  window.location.href = `${base}?year=${yr}`;
+  let url = `${base}?year=${yr}`;
+  if (status) url += `&autoStatus=${encodeURIComponent(status)}`;
+  window.location.href = url;
 }
 
 async function loadPtaDashboard(year) {

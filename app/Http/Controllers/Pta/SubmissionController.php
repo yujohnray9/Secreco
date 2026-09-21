@@ -74,22 +74,49 @@ class SubmissionController extends Controller
             'T16','T17','T18','T19','T20a','T20b'
         ]);
 
-        $formatTables = array_values(array_unique(array_merge(
-            $defaultTables,
-            $formatTemplateRows->pluck('table_no')->toArray(),
-            $tableRecords->pluck('table_no')->toArray()
-        )));
+        if ($formatTemplateRows->isNotEmpty()) {
+            $formatTables = array_values(array_unique(array_merge(
+                $formatTemplateRows->pluck('table_no')->toArray(),
+                $tableRecords->pluck('table_no')->toArray()
+            )));
+        } else {
+            $formatTables = array_values(array_unique(array_merge(
+                $defaultTables,
+                $tableRecords->pluck('table_no')->toArray()
+            )));
+        }
 
         $userIds = $cmiUsers->pluck('id')->toArray();
 
         $submissionMap = [];
         $submissionDates = [];
+        $tableSubmissionDates = [];
         if ($userIds) {
             $subs = ReportSubmission::where('reporting_year', $year)
                 ->whereIn('user_id', $userIds)
-                ->orderBy('id', 'desc')
+                ->orderBy('id', 'asc')
                 ->get();
+
             foreach ($subs as $sub) {
+                $sDate = $sub->submitted_at ? (is_string($sub->submitted_at) ? $sub->submitted_at : $sub->submitted_at->toDateTimeString()) : null;
+                $snap = is_array($sub->snapshot_json) ? $sub->snapshot_json : [];
+                foreach ($snap as $tKey => $tData) {
+                    if (is_array($tData) && in_array($tData['status'] ?? '', ['submitted', 'accepted'], true)) {
+                        $hasContent = (!empty($tData['rows']) && count($tData['rows']) > 0) || !empty($tData['meta']);
+                        if ($hasContent) {
+                            $tDate = (!empty($tData['meta']['submitted_at'])) ? $tData['meta']['submitted_at'] : $sDate;
+                            $cKey = $sub->user_id . '_' . $tKey;
+                            if (!isset($tableSubmissionDates[$cKey]) && $tDate) {
+                                $tableSubmissionDates[$cKey] = $tDate;
+                                $tableSubmissionDates[$sub->user_id . '_' . strtoupper($tKey)] = $tDate;
+                                $tableSubmissionDates[$sub->user_id . '_' . strtolower($tKey)] = $tDate;
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach ($subs->reverse() as $sub) {
                 if (!isset($submissionMap[$sub->user_id])) {
                     $submissionMap[$sub->user_id] = $sub;
                     $submissionDates[$sub->user_id] = $sub->submitted_at ? (is_string($sub->submitted_at) ? $sub->submitted_at : $sub->submitted_at->toDateTimeString()) : null;
@@ -118,25 +145,37 @@ class SubmissionController extends Controller
                     'file_path' => $path,
                     'caption'   => $doc->caption ?? '',
                 ];
-                // Index under all variations to prevent any case or format mismatch
-                $docsByUserTable[$doc->user_id . '_' . $rawNo][] = $item;
-                $docsByUserTable[$doc->user_id . '_' . strtoupper($rawNo)][] = $item;
-                $docsByUserTable[$doc->user_id . '_' . strtolower($rawNo)][] = $item;
-                $docsByUserTable[$doc->user_id . '_' . $cleanTable][] = $item;
-                $docsByUserTable[$doc->user_id . '_' . strtolower($cleanTable)][] = $item;
+                // Index under unique variations to prevent any duplicate insertion
+                $docKeys = array_unique([
+                    $doc->user_id . '_' . $rawNo,
+                    $doc->user_id . '_' . strtoupper($rawNo),
+                    $doc->user_id . '_' . strtolower($rawNo),
+                    $doc->user_id . '_' . $cleanTable,
+                    $doc->user_id . '_' . strtolower($cleanTable),
+                ]);
+                foreach ($docKeys as $dk) {
+                    $docsByUserTable[$dk][] = $item;
+                }
             }
         }
 
         $corrByUserTable = [];
+        $returnedDates   = [];
         if ($userIds) {
             $corrections = CorrectionRequest::where('reporting_year', $year)
-                ->where('status', 'open')
                 ->whereIn('cmi_user_id', $userIds)
+                ->orderBy('created_at')
                 ->get();
 
             foreach ($corrections as $cr) {
                 $key = $cr->cmi_user_id . '_' . $cr->table_no;
-                $corrByUserTable[$key] = true;
+                if ($cr->status === 'open') {
+                    $corrByUserTable[$key] = true;
+                }
+                $rDate = $cr->created_at ? $cr->created_at->toDateTimeString() : null;
+                $returnedDates[$key] = $rDate;
+                $returnedDates[$cr->cmi_user_id . '_' . strtoupper($cr->table_no)] = $rDate;
+                $returnedDates[$cr->cmi_user_id . '_' . strtolower($cr->table_no)] = $rDate;
             }
         }
 
@@ -221,8 +260,8 @@ class SubmissionController extends Controller
                 }
             }
 
-            // For draft filter or not-started filter, do not require an active submission
-            if (!$activeSub && (!$status || $status === 'submitted' || $status === 'accepted' || $status === 'returned')) {
+            // Require an active submission for all filters except not-started
+            if (!$activeSub && $status !== 'not-started') {
                 continue;
             }
 
@@ -259,25 +298,40 @@ class SubmissionController extends Controller
                 }
 
                 $st = $foundTr ? $foundTr->status : 'not-started';
-                if ($st === 'done') {
-                    $st = 'submitted';
-                }
-
                 if ($st === 'draft' && (!$foundTr || (!$foundTr->meta_json && empty($foundTr->rows_json)))) {
                     $st = 'not-started';
                 }
 
-                if ($status && $status !== '' && $status !== 'all' && $st !== $status) {
-                    continue;
-                }
-
-                // Exclude not-started tables by default unless explicitly filtered
-                if ($st === 'not-started' && $status !== 'not-started' && $status !== 'all') {
-                    continue;
+                if ($status === 'all' || empty($status)) {
+                    if (!in_array($st, ['submitted', 'accepted', 'returned'], true)) {
+                        continue;
+                    }
+                } elseif ($status === 'not-started') {
+                    if (in_array($st, ['submitted', 'accepted', 'returned'], true)) {
+                        continue;
+                    }
+                } else {
+                    if ($st !== $status) {
+                        continue;
+                    }
                 }
 
                 $key = $foundUser->id . '_' . $tNo;
-                $submittedAt = ($submissionDates[$foundUser->id] ?? null) ?? ($foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null);
+                $tableSubmittedAt = $foundTr?->meta_json['submitted_at'] ?? null;
+                if (!$tableSubmittedAt) {
+                    $tableSubmittedAt = $tableSubmissionDates[$foundUser->id . '_' . $tNo]
+                        ?? ($tableSubmissionDates[$foundUser->id . '_' . strtoupper($tNo)]
+                        ?? ($tableSubmissionDates[$foundUser->id . '_' . strtolower($tNo)] ?? null));
+                }
+                $submittedAt = $tableSubmittedAt ?? ($submissionDates[$foundUser->id] ?? null) ?? ($foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null);
+
+                $dateReturned = null;
+                if ($st === 'returned') {
+                    $dateReturned = $returnedDates[$foundUser->id . '_' . $tNo]
+                        ?? ($returnedDates[$foundUser->id . '_' . strtoupper($tNo)]
+                        ?? ($returnedDates[$foundUser->id . '_' . strtolower($tNo)]
+                        ?? ($foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null)));
+                }
 
                 // Robust docs resolution across all institutional users and table casing variations
                 $resolvedDocs = [];
@@ -321,6 +375,8 @@ class SubmissionController extends Controller
                     'title'               => $tableTitleMap[$tNo] ?? ($tableTitleMap[strtoupper($tNo)] ?? ''),
                     'table_status'        => $st,
                     'submitted_at'        => $submittedAt,
+                    'date_submitted'      => $submittedAt,
+                    'date_returned'       => $dateReturned,
                     'updated_at'          => $foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null,
                     'meta'                => $foundTr?->meta_json ?? [],
                     'rows'                => $foundTr?->rows_json ?? [],
@@ -386,7 +442,17 @@ class SubmissionController extends Controller
                 $candidates = array_unique([$tableNo, strtoupper($tableNo), strtolower($tableNo)]);
                 $q->whereIn('table_no', $candidates);
             }
-            $q->update(['status' => 'accepted', 'updated_at' => now()]);
+            $tablesToAccept = $q->get();
+            foreach ($tablesToAccept as $tItem) {
+                $meta = is_array($tItem->meta_json) ? $tItem->meta_json : [];
+                if (empty($meta['submitted_at'])) {
+                    $meta['submitted_at'] = $sub?->submitted_at 
+                        ? (is_string($sub->submitted_at) ? $sub->submitted_at : $sub->submitted_at->toDateTimeString()) 
+                        : ($tItem->updated_at ? $tItem->updated_at->toDateTimeString() : now()->toDateTimeString());
+                }
+                $tItem->timestamps = false;
+                $tItem->update(['status' => 'accepted', 'meta_json' => $meta]);
+            }
         }
 
         if ($sub) {
@@ -429,12 +495,12 @@ class SubmissionController extends Controller
             Notification::create([
                 'user_id'      => $cmiUser->id,
                 'role'         => 'cmi',
-                'type'         => 'submitted',
+                'type'         => 'accepted',
                 'icon'         => '✅',
                 'color'        => 'green',
                 'message'      => "Your CY {$year} Table {$tableNo} submission has been accepted by the PTA Admin.",
-                'action_url'   => '/dashboard/cmi/submissions',
-                'action_label' => 'View',
+                'action_url'   => null,
+                'action_label' => null,
                 'is_read'      => false,
                 'created_at'   => now(),
             ]);

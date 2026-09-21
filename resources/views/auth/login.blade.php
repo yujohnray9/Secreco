@@ -166,7 +166,7 @@
 
             <div class="avatar-wrap">
               <div class="avatar">
-                <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo"
+                <img src="/assets/logo/cvaard2.jpeg" alt="CVAARRD Logo"
                      onerror="this.src='/assets/img/cvaarrd.png'"/>
               </div>
             </div>
@@ -524,7 +524,8 @@
                   <option value="">— Select your role —</option>
                   <option value="pta" id="optRolePta" {{ $ptaExists ? 'disabled style=color:#9ca3af;' : '' }}>Project Technical Assistant II{{ $ptaExists ? ' (Already Registered)' : '' }}</option>
                   <option value="cmi">CMI Representative</option>
-                  <option value="viewer">Guest</option>
+                  <option value="executive">Executive</option>
+
                 </select>
               </div>
 
@@ -560,7 +561,7 @@
                 </div>
 
                 <div class="field" style="margin-top:10px;">
-                  <label>DESIGNATION / POSITION <span style="color:#ef4444">*</span></label>
+                  <label>POSITION <span style="color:#ef4444">*</span></label>
                   <div class="inp-wrap">
                     <input type="text" id="regDesignation" placeholder="e.g. Researcher, Project Leader, Faculty"/>
                   </div>
@@ -732,7 +733,7 @@
                   <span class="review-value" id="rv-role">—</span>
                 </div>
                 <div class="review-row">
-                  <span class="review-label">Designation</span>
+                  <span class="review-label">Position</span>
                   <span class="review-value" id="rv-desg">—</span>
                 </div>
                 <div class="review-row" id="rv-inst-row" style="display:none">

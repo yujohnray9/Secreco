@@ -48,14 +48,21 @@ document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('cli
 }));
 
 // ── TOAST ──
-function toast(msg) {
+function toast(msg, duration = 3000, type = '') {
   const c = document.getElementById('toastWrap');
   if (!c) return;
+  const str = String(msg || '');
+  const isError = type === 'error' || type === 'danger' || 
+    str.includes('No Data has been entered') || 
+    str.includes('❌') || 
+    str.toLowerCase().includes('failed') || 
+    str.toLowerCase().includes('error');
+
   const t = document.createElement('div');
-  t.className = 'toast';
+  t.className = 'toast' + (isError ? ' toast-error' : (type ? ' toast-' + type : ''));
   t.textContent = msg;
   c.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
+  setTimeout(() => t.remove(), duration);
 }
 window.toast = toast;
 window.showToast = toast;

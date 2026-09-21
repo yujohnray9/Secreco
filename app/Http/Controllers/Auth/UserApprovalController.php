@@ -23,7 +23,7 @@ class UserApprovalController extends Controller
             return response()->json(['success' => false, 'message' => 'Invalid request parameters.']);
         }
 
-        $user = User::where('id', $userId)->whereIn('role', ['cmi', 'viewer'])->first();
+        $user = User::where('id', $userId)->whereIn('role', ['cmi', 'viewer', 'executive'])->first();
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'User not found.']);
         }
@@ -145,7 +145,7 @@ class UserApprovalController extends Controller
             return response()->json(['success' => false, 'message' => 'User not found.']);
         }
 
-        if (!in_array($target->role, ['cmi', 'viewer'], true)) {
+        if (!in_array($target->role, ['cmi', 'viewer', 'executive'], true)) {
             return response()->json(['success' => false, 'message' => 'You cannot manage this account.']);
         }
 

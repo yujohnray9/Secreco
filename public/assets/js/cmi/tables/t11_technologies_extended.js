@@ -190,7 +190,7 @@
     const hasTextContent = CMIUtils.filterEmptyRows(rows, textFields).length > 0;
     const hasCheckedMod  = rows.some(r => r.modalities && Object.values(r.modalities).some(Boolean));
     if (!hasTextContent && !hasCheckedMod) {
-      toast('⚠️ Wala kang nilagay. Hindi maisasave kung walang data.');
+      toast('No Data has been entered. Please provide the required information before saving.', 4000, 'error');
       return;
     }
 

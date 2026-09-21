@@ -43,13 +43,13 @@
 .sb-brand-logo {
   width: 48px;
   height: 48px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(220, 182, 91, 0.58);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1.5px solid rgba(220, 182, 91, 0.65);
+  border-radius: 50% !important;
   display: grid;
   place-items: center;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 6px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 6px 16px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
   padding: 4px;
   box-sizing: border-box;
@@ -61,7 +61,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 50% !important;
 }
 
 .sidebar-brand strong,

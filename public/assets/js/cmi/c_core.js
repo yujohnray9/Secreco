@@ -34,12 +34,22 @@ function showConfirm(title, message, onConfirm){
 }
 
 // ── TOAST ──
-function toast(message, duration = 3000){
+function toast(message, duration = 3000, type = ''){
   const wrap = document.getElementById('toastWrap');
   if(!wrap) return;
 
+  const msg = String(message || '');
+  if (window._cmiIsSubmitting && msg.toLowerCase().includes('saved')) {
+    return;
+  }
+  const isError = type === 'error' || type === 'danger' || 
+    msg.includes('No Data has been entered') || 
+    msg.includes('❌') || 
+    msg.toLowerCase().includes('failed') || 
+    msg.toLowerCase().includes('error');
+
   const el = document.createElement('div');
-  el.className = 'toast';
+  el.className = 'toast' + (isError ? ' toast-error' : (type ? ' toast-' + type : ''));
   el.textContent = message;
   wrap.appendChild(el);
 

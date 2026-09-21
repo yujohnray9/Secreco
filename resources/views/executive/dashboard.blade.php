@@ -43,9 +43,10 @@
         </div>
         <span class="sc-fc-sub">Member institutions</span>
         <div class="sc-fc-foot">
-          <span class="sc-fc-link">
+          <a href="/dashboard/executive/institutions" class="sc-fc-link">
             <span>Consortium members</span>
-          </span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
         </div>
       </div>
 
@@ -158,40 +159,7 @@
       </div>
     </div>
 
-    <!-- ── BOTTOM ROW: DONUT CHART & INSTITUTION PROGRESS ── -->
-    <div class="bottom-widgets-grid">
-      <!-- Recent Activity Feed -->
-      <div class="card-fc">
-        <div class="card-fc-header">
-          <div>
-            <h2 class="card-fc-title">Recent Activity</h2>
-            <p class="card-fc-sub">Latest submissions, reviews &amp; system updates</p>
-          </div>
-          <div class="section-badge-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-        </div>
-        <div class="activity-feed-list" id="executiveRecentActivityList" style="max-height:330px;overflow-y:auto;padding:8px 4px;display:flex;flex-direction:column;gap:10px;">
-          <div style="text-align:center; color:#74807c; font-size:12px; padding:30px;">Loading recent activities...</div>
-        </div>
-      </div>
 
-      <!-- Institution Progress Overview -->
-      <div class="card-fc">
-        <div class="card-fc-header">
-          <div>
-            <h2 class="card-fc-title">Institution Progress Overview</h2>
-            <p class="card-fc-sub">Submission progress by institution</p>
-          </div>
-          <div class="section-badge-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-        </div>
-        <div class="institution-progress-list" id="institutionProgressList">
-          <div style="text-align:center; color:#74807c; font-size:12px; padding:30px;">Loading institution progress...</div>
-        </div>
-      </div>
-    </div>
 
   </div>
 </div>
@@ -204,13 +172,6 @@ let currentPtaDashYear = 2026;
 let trendChartInst = null;
 let barChartInst = null;
 
-function getProgressColorSpec(pct) {
-  if (pct === 0) return { fill: '#d1d5db', text: '#6b7280' };
-  if (pct < 30) return { fill: '#10b981', text: '#059669' };
-  if (pct < 60) return { fill: '#059669', text: '#047857' };
-  if (pct < 90) return { fill: '#047857', text: '#064e3b' };
-  return { fill: '#034a36', text: '#022c20' };
-}
 
 async function loadPtaDashboard(year) {
   currentPtaDashYear = year || document.getElementById('ptaDashYearFilter')?.value || 2026;
@@ -344,60 +305,7 @@ async function loadPtaDashboard(year) {
       });
     }
 
-    // 3. Recent Consortium Activity Feed
-    const actWrap = document.getElementById('executiveRecentActivityList');
-    if (actWrap) {
-      const activities = json.recent_activity || [];
-      if (activities.length > 0) {
-        actWrap.innerHTML = activities.map(act => {
-          const timeAgo = act.created_at ? new Date(act.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently';
-          return `
-            <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;background:#fbfcfb;border:1px solid #edf0ee;border-radius:10px;transition:background 0.15s ease;">
-              <div style="width:30px;height:30px;border-radius:50%;background:#ecfdf5;color:#059669;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:12px;color:#1f2937;line-height:1.45;word-break:break-word;">${act.description || 'System event recorded'}</div>
-                <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-                  <span style="font-size:10.5px;color:#9ca3af;">${timeAgo}</span>
-                  <span style="font-size:10.5px;color:#d1d5db;">•</span>
-                  <span style="font-size:10.5px;color:#059669;font-weight:600;">${act.actor || 'System'}</span>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } else {
-        actWrap.innerHTML = '<div style="text-align:center; color:#74807c; font-size:12px; padding:30px;">No recent activities for CY ' + currentPtaDashYear + '.</div>';
-      }
-    }
 
-    // 4. Institution Accomplishments Progress Bars
-    const listWrap = document.getElementById('institutionProgressList');
-    if (listWrap) {
-      const cmiList = json.cmi_status_list || json.cmi_list || json.institution_progress || [];
-      if (!cmiList.length) {
-        listWrap.innerHTML = '<div style="color:#74807c;font-size:12.5px;text-align:center;padding:24px">No institution records found for this year.</div>';
-      } else {
-        listWrap.innerHTML = cmiList.map(inst => {
-          const done  = inst.tables_done || 0;
-          const total = inst.total_tables || 24;
-          const pct   = total > 0 ? Math.round((done / total) * 100) : (inst.pct || 0);
-          const spec  = getProgressColorSpec(pct);
-          return `
-            <div class="progress-item" style="margin-bottom:12px;">
-              <div class="progress-info" style="display:flex;justify-content:space-between;align-items:center;">
-                <span class="progress-label" title="${inst.institution}" style="font-weight:600;font-size:12px;color:#374151;">${inst.institution}</span>
-                <span class="progress-pct" style="color:${spec.text};font-weight:700;font-size:11.5px;">${done}/${total} (${pct}%)</span>
-              </div>
-              <div class="progress-track" style="height:9px;background:#e5e7eb !important;border-radius:20px;overflow:hidden;position:relative;margin-top:5px;box-shadow:inset 0 1px 2px rgba(0,0,0,0.06);">
-                <div class="progress-fill" style="height:100%;border-radius:20px;width:${pct}%;background:${spec.fill};transition:width 0.8s cubic-bezier(0.4,0,0.2,1);"></div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-    }
 
   } catch(e) {
     console.error('Error loading executive dashboard stats:', e);

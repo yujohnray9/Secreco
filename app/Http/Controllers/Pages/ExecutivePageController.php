@@ -9,7 +9,10 @@ class ExecutivePageController extends Controller
 {
     public function show(Request $request, string $page = 'dashboard')
     {
-        $allowed = ['dashboard', 'profile'];
+        if ($page === 'institution') {
+            $page = 'institutions';
+        }
+        $allowed = ['dashboard', 'institutions', 'profile'];
         if (!in_array($page, $allowed, true)) {
             $page = 'dashboard';
         }

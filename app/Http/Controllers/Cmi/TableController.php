@@ -116,11 +116,12 @@ class TableController extends Controller
         }
 
         return response()->json([
-            'status'     => $resStatus,
-            'meta'       => $meta,
-            'rows'       => $row->rows_json ?? [],
-            'updated_at' => $row->updated_at ? $row->updated_at->toDateTimeString() : null,
-            'docs'       => $images,
+            'status'       => $resStatus,
+            'meta'         => $meta,
+            'submitted_at' => $row->meta_json['submitted_at'] ?? null,
+            'rows'         => $row->rows_json ?? [],
+            'updated_at'   => $row->updated_at ? $row->updated_at->toDateTimeString() : null,
+            'docs'         => $images,
         ]);
     }
 
@@ -162,6 +163,19 @@ class TableController extends Controller
             $status = 'not-started';
         }
 
+        // Preserve any previously stored submitted_at in meta_json so saving doesn't wipe out the original submission date
+        $existingTable = ReportTable::where('user_id', $userId)
+            ->where('reporting_year', $reportingYear)
+            ->where('table_no', $tableNo)
+            ->first();
+        if ($existingTable && is_array($existingTable->meta_json) && !empty($existingTable->meta_json['submitted_at'])) {
+            if (is_array($meta)) {
+                $meta['submitted_at'] = $existingTable->meta_json['submitted_at'];
+            } elseif (is_object($meta)) {
+                $meta->submitted_at = $existingTable->meta_json['submitted_at'];
+            }
+        }
+
         $updatedAt = now();
 
         ReportTable::updateOrCreate(
@@ -176,7 +190,7 @@ class TableController extends Controller
 
         $updatedAtStr = $updatedAt->toDateTimeString();
 
-        // Sync into latest submitted snapshot if exists
+        // Sync into latest submitted snapshot ONLY if this table was already an officially submitted or accepted table in that snapshot
         $latestSub = ReportSubmission::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
             ->orderByDesc('id')
@@ -192,16 +206,12 @@ class TableController extends Controller
                         break;
                     }
                 }
-                $key = $existingKey ?? $tableNo;
-
-                $snap[$key] = [
-                    'status'     => $status,
-                    'meta'       => $meta,
-                    'rows'       => $rows,
-                    'updated_at' => $updatedAtStr,
-                ];
-
-                $latestSub->update(['snapshot_json' => $snap]);
+                if ($existingKey && in_array($snap[$existingKey]['status'] ?? '', ['submitted', 'accepted'], true)) {
+                    $snap[$existingKey]['meta'] = $meta;
+                    $snap[$existingKey]['rows'] = $rows;
+                    $snap[$existingKey]['updated_at'] = $updatedAtStr;
+                    $latestSub->update(['snapshot_json' => $snap]);
+                }
             }
         }
 

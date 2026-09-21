@@ -888,6 +888,7 @@ function openNotificationDetail(id) {
       commentEl.textContent = 'Kindly review the highlighted fields and provide the corrected values.';
     }
 
+    ctaBtn.style.display = 'inline-flex';
     ctaBtn.textContent = 'Review and correct →';
     ctaBtn.className = 'btn-detail-cta';
     ctaBtn.href = item.action || '/dashboard/cmi/fillup';
@@ -899,9 +900,7 @@ function openNotificationDetail(id) {
     reasonEl.textContent = item.reason || 'Report verified and complies with consortium guidelines.';
     statusEl.innerHTML = '<i class="status-dot green"></i>Accepted';
     commentWrap.style.display = 'none';
-    ctaBtn.textContent = 'View submission →';
-    ctaBtn.className = 'btn-detail-cta';
-    ctaBtn.href = item.action || '/dashboard/cmi/submissions';
+    ctaBtn.style.display = 'none';
   } else {
     badgeEl.className = 'cmi-badge reminder';
     badgeEl.textContent = 'REMINDER';
@@ -910,9 +909,16 @@ function openNotificationDetail(id) {
     reasonEl.textContent = item.reason || 'Scheduled reporting period deadline reminder.';
     statusEl.innerHTML = '<i class="status-dot blue"></i>Pending Submission';
     commentWrap.style.display = 'none';
-    ctaBtn.textContent = 'Continue submission →';
-    ctaBtn.className = 'btn-detail-cta';
-    ctaBtn.href = item.action || '/dashboard/cmi/fillup';
+
+    const isAct = (item.notif_type === 'year_activation' || item.type === 'year_activation' || (item.msg && (item.msg.toLowerCase().includes('is now active') || item.msg.toLowerCase().includes('format'))));
+    if (isAct) {
+      ctaBtn.style.display = 'none';
+    } else {
+      ctaBtn.style.display = 'inline-flex';
+      ctaBtn.textContent = 'Continue submission →';
+      ctaBtn.className = 'btn-detail-cta';
+      ctaBtn.href = item.action || '/dashboard/cmi/fillup';
+    }
   }
 
   // Smooth scroll into view on smaller displays
@@ -982,6 +988,7 @@ function renderCmiList() {
     const notifId = n.id || n.key;
     const isSelected = (_selectedNotifId == notifId);
     const isUnread = !!n.unread;
+    const isApprovalOrActivation = (cat === 'accepted' || n.notif_type === 'year_activation' || n.type === 'year_activation' || (n.msg && (n.msg.toLowerCase().includes('is now active') || n.msg.toLowerCase().includes('accepted') || n.msg.toLowerCase().includes('approved'))));
 
     let badgeHtml = '';
     let btnText = '';
@@ -996,12 +1003,12 @@ function renderCmiList() {
     } else if (cat === 'accepted') {
       badgeHtml = '<span class="cmi-badge accepted">ACCEPTED</span>';
       subHtml = 'Your ' + report + ' submission was accepted by the PTA.';
-      btnText = 'View submission →';
+      btnText = '';
       btnClass = 'btn-outline-green';
     } else {
       badgeHtml = '<span class="cmi-badge reminder">REMINDER</span>';
-      subHtml = 'Please complete the remaining reports before September 15, 2026.';
-      btnText = 'Continue submission →';
+      subHtml = 'Please complete the remaining reports before the deadline.';
+      btnText = isApprovalOrActivation ? '' : 'Continue submission →';
       btnClass = 'btn-outline-green';
     }
 
@@ -1044,9 +1051,11 @@ function renderCmiList() {
             Mark read
           </button>
         ` : ''}
+        ${btnText ? `
         <button type="button" class="cmi-card-btn-action ${btnClass}" onclick="event.stopPropagation(); openNotificationDetail('${notifId}')">
           ${btnText}
         </button>
+        ` : ''}
       </div>
     </article>`;
   }).join('');
