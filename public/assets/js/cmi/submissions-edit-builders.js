@@ -17,8 +17,23 @@
      COLUMN RESOLVER
   ───────────────────────────────────────── */
   function resolveColumns(tableDef, rows) {
-    if (tableDef?.columns)
+    if (tableDef?.columns?.length)
       return tableDef.columns.filter(c => c.type !== 'computed');
+
+    const state   = window.SubEditState;
+    const tableNo = state?.tableNo || '';
+    const canon   = tableNo.charAt(0).toUpperCase() + tableNo.slice(1).toLowerCase();
+    const tmpl    = (window.SubState?.templates || []).find(t =>
+      t.table_no.toUpperCase() === tableNo.toUpperCase() ||
+      t.table_no.toUpperCase() === canon.toUpperCase()
+    );
+    if (tmpl && tmpl.columns_json && Array.isArray(tmpl.columns_json) && tmpl.columns_json.length > 0) {
+      return tmpl.columns_json.map(c => ({
+        key: c.key || c.name || c.id,
+        label: c.label || c.title || c.key || 'Column',
+        type: 'text'
+      }));
+    }
 
     if (rows?.length)
       return Object.keys(rows[0])
@@ -37,7 +52,8 @@
   ───────────────────────────────────────── */
   function buildEditContent(tableNo) {
     const state    = window.SubEditState;
-    const tableDef = window.CMI_TABLES?.getTable(tableNo.toUpperCase()) ?? null;
+    const canon    = tableNo.charAt(0).toUpperCase() + tableNo.slice(1).toLowerCase();
+    const tableDef = window.CMI_TABLES?.getTable(tableNo) || window.CMI_TABLES?.getTable(tableNo.toUpperCase()) || window.CMI_TABLES?.getTable(canon) || null;
     const columns  = resolveColumns(tableDef, state.rows);
 
     if (!state.rows.length && columns.length) {
@@ -46,7 +62,20 @@
       state.rows.push(blank);
     }
 
-    let html = buildAttachmentsSection(state.meta.images || []);
+    let html = '';
+
+    // PTA Remarks alert banner if present
+    if (state.remarks) {
+      html += `
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #ef4444;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+          <div style="font-weight:700;color:#991b1b;font-size:13px;display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <span>⚠️</span> Returned for Revision by PTA Admin
+          </div>
+          <div style="font-size:13px;color:#7f1d1d;line-height:1.5"><strong>Remarks:</strong> ${escapeHtml(state.remarks)}</div>
+        </div>`;
+    }
+
+    html += buildAttachmentsSection(state.meta.images || []);
 
     if (tableDef?.meta?.length) {
       html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">';

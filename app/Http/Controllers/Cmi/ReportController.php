@@ -181,6 +181,12 @@ class ReportController extends Controller
             'snapshot_json'  => $snapshot,
         ]);
 
+        // Auto-resolve any open correction requests since the revised report has been submitted
+        \App\Models\CorrectionRequest::where('cmi_user_id', $userId)
+            ->where('reporting_year', $reportingYear)
+            ->where('status', 'open')
+            ->update(['status' => 'resolved', 'resolved_at' => now()]);
+
         $userInst = Auth::user()?->institution ?? 'CMI';
         \App\Services\ActivityLogService::log($userId, "Submitted CY {$reportingYear} Annual Report tables from {$userInst}");
 

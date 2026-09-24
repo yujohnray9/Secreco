@@ -42,11 +42,17 @@ class NotificationController extends Controller
         });
 
         if ($userRole === 'pta') {
-            $storedQuery->where('message', 'not like', '%updated by PTA%')
+            $storedQuery->where('type', '!=', 'submission_updated')
+                        ->where('message', 'not like', '%updated Table%')
+                        ->where('message', 'not like', '%updated by PTA%')
                         ->where('message', 'not like', '%PTA updated%')
                         ->where('message', 'not like', '%accepted by PTA%')
                         ->where('message', 'not like', '%deleted by PTA%')
                         ->where('message', 'not like', '%Approved:%');
+        } elseif ($userRole === 'cmi') {
+            // Do not show misleading draft update or PTA self-actions in CMI inbox
+            $storedQuery->where('type', '!=', 'submission_updated')
+                        ->where('message', 'not like', '%revised and fixed Table%');
         }
 
         $stored = $storedQuery->orderByDesc('created_at')->take(50)->get();
@@ -62,6 +68,15 @@ class NotificationController extends Controller
                 $unread = false;
             }
 
+            $isYearAct = ($n->type === 'year_activation') || str_contains(strtolower($n->message), 'is now active');
+            $msg = $n->message;
+            if ($isYearAct) {
+                $msg = preg_replace('/(CY\s*\d{4}\s*is\s*now\s*active)!?\s*(?:You\s*may\s*now|—\s*you\s*may)?/i', '$1 — you may', $msg);
+                if (!str_contains($msg, 'start filling up and submitting')) {
+                    $msg = preg_replace('/(CY\s*\d{4}\s*is\s*now\s*active\s*—\s*you\s*may).*/i', '$1 start filling up and submitting your annual accomplishment report.', $msg);
+                }
+            }
+
             $isApprovalOrActivation = in_array($n->type, ['year_activation', 'approval', 'user_approval', 'accepted'], true)
                 || str_contains(strtolower($n->message), 'accepted')
                 || str_contains(strtolower($n->message), 'is now active')
@@ -70,9 +85,9 @@ class NotificationController extends Controller
             $notifications[] = [
                 'id'           => (int) $n->id,
                 'key'          => $key,
-                'type'         => $n->color ?: 'blue',
-                'icon'         => $n->icon ?: '📋',
-                'msg'          => $n->message,
+                'type'         => $isYearAct ? 'blue' : ($n->color ?: 'blue'),
+                'icon'         => $isYearAct ? '🎉' : ($n->icon ?: '📋'),
+                'msg'          => $msg,
                 'action'       => $isApprovalOrActivation ? null : $n->action_url,
                 'action_label' => $isApprovalOrActivation ? null : ($n->action_label ?: 'View'),
                 'time'         => $n->created_at ? $n->created_at->format('Y-m-d\TH:i:s+08:00') : null,

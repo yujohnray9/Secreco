@@ -54,7 +54,8 @@
 
       const sectionRows = [];
       section.tables.forEach(t => {
-        const st = window.SubState.statuses[t.no] || window.SubState.statuses[t.no.toUpperCase()] || window.SubState.statuses[t.no.toLowerCase()];
+        const canon = t.no.charAt(0).toUpperCase() + t.no.slice(1).toLowerCase();
+        const st = window.SubState.statuses[t.no] || window.SubState.statuses[t.no.toUpperCase()] || window.SubState.statuses[t.no.toLowerCase()] || window.SubState.statuses[canon];
         if (!targetStatuses.includes(st)) return;
         if (searchTerm && !(
           t.no.toLowerCase().includes(searchTerm) ||
@@ -110,8 +111,9 @@
 
   /* ── Single data row ── */
   function renderRow(t, st) {
-    const meta = window.SubState.meta[t.no] || {};
-    const upd  = (meta.submitted_at || meta.updated_at) ? formatDate(meta.submitted_at || meta.updated_at) : '—';
+    const canon = t.no.charAt(0).toUpperCase() + t.no.slice(1).toLowerCase();
+    const meta  = window.SubState.meta[t.no] || window.SubState.meta[t.no.toUpperCase()] || window.SubState.meta[t.no.toLowerCase()] || window.SubState.meta[canon] || {};
+    const upd   = (meta.submitted_at || meta.updated_at) ? formatDate(meta.submitted_at || meta.updated_at) : '—';
     const statusBadgeMap = {
       accepted: '<span class="badge" style="background:#ecfdf5;color:#0d9488;font-weight:600;font-size:11.5px">Accepted</span>',
       returned: '<span class="badge" style="background:#fef2f2;color:#dc2626;font-weight:600;font-size:11.5px">Returned for Revision</span>',
@@ -119,10 +121,18 @@
       done: '<span class="badge badge-green" style="font-size:11.5px">Submitted</span>',
     };
     const badgeHtml = statusBadgeMap[st] || '<span class="badge badge-green" style="font-size:11.5px">Submitted</span>';
+    const remark = meta.remarks || window.SubState.remarks?.[t.no] || window.SubState.remarks?.[t.no.toUpperCase()] || window.SubState.remarks?.[canon] || '';
+
     return `
       <tr id="sub-row-${t.no}">
         <td style="font-weight:600;white-space:nowrap">${t.no}</td>
-        <td style="font-size:13px">${t.title}</td>
+        <td style="font-size:13px">
+          <div>${escapeHtml(t.title)}</div>
+          ${(st === 'returned' && remark) ? `
+            <div style="margin-top:6px;padding:6px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;font-size:12px;color:#991b1b;line-height:1.4">
+              <strong>PTA Remarks:</strong> ${escapeHtml(remark)}
+            </div>` : ''}
+        </td>
         <td>${badgeHtml}</td>
         <td style="font-size:12px;color:var(--text-muted);white-space:nowrap">${upd}</td>
         <td>
@@ -130,9 +140,10 @@
             <button class="btn btn-sm btn-outline" data-view-table="${t.no}">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:4px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
             </button>
-            ${st === 'returned' ? `<button class="btn btn-sm" data-edit-table="${t.no}" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;">
-              ✏️ Revise
-            </button>` : ''}
+            ${st === 'returned' ? `
+              <a href="/dashboard/cmi/fillup?table=${encodeURIComponent(t.no)}&year=${window.SubState.selectedYear || 2026}" class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:3px">
+                ✏️ Revise
+              </a>` : ''}
           </div>
         </td>
       </tr>`;

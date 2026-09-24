@@ -21,15 +21,19 @@
     showSkeleton();
 
     // Reset state on each load so stale data from a previous year is cleared
-    window.SubState.statuses = {};
-    window.SubState.meta     = {};
+    window.SubState.statuses  = {};
+    window.SubState.meta      = {};
+    window.SubState.remarks   = {};
+    window.SubState.templates = [];
 
     const year = window.SubState.selectedYear;
 
     fetch(`${API_STATUSES}?year=${year}`)
       .then(r => r.json())
       .then(data => {
-        window.SubState.statuses = data?.statuses ?? {};
+        window.SubState.statuses  = data?.statuses ?? {};
+        window.SubState.remarks   = data?.remarks ?? {};
+        window.SubState.templates = data?.templates ?? [];
 
         // Fetch data for both accepted and returned tables
         const relevant = [...new Set(Object.keys(window.SubState.statuses)
@@ -39,24 +43,41 @@
         if (!relevant.length) { window.SubRender.renderTable(); return; }
 
         const fetches = relevant.map(no =>
-          fetch(`${API_LOAD}?table_no=${no}&year=${year}`)
+          fetch(`${API_LOAD}?table_no=${encodeURIComponent(no)}&year=${year}`)
             .then(r => r.json())
             .then(d => {
+              let fetchedRows = d?.rows;
+              if (fetchedRows && typeof fetchedRows === 'object' && !Array.isArray(fetchedRows)) {
+                fetchedRows = Object.values(fetchedRows);
+              }
+              const canon = no.charAt(0).toUpperCase() + no.slice(1).toLowerCase();
               const metaObj = {
-                updated_at : d?.updated_at ?? null,
-                rows       : Array.isArray(d?.rows) ? d.rows : [],
-                metaData   : (d?.meta && typeof d.meta === 'object') ? d.meta : {},
-                docs       : Array.isArray(d?.docs) ? d.docs : [],
+                updated_at   : d?.updated_at ?? null,
+                submitted_at : d?.submitted_at ?? null,
+                rows         : Array.isArray(fetchedRows) ? fetchedRows : [],
+                metaData     : (d?.meta && typeof d.meta === 'object') ? d.meta : {},
+                docs         : Array.isArray(d?.docs) ? d.docs : [],
+                remarks      : d?.remarks || window.SubState.remarks?.[no] || window.SubState.remarks?.[canon] || window.SubState.remarks?.[no.toLowerCase()] || null,
               };
               window.SubState.meta[no] = metaObj;
               window.SubState.meta[no.toUpperCase()] = metaObj;
               window.SubState.meta[no.toLowerCase()] = metaObj;
+              window.SubState.meta[canon] = metaObj;
             })
             .catch(() => {
-              const emptyObj = { updated_at: null, rows: [], metaData: {}, docs: [] };
+              const canon = no.charAt(0).toUpperCase() + no.slice(1).toLowerCase();
+              const emptyObj = {
+                updated_at   : null,
+                submitted_at : null,
+                rows         : [],
+                metaData     : {},
+                docs         : [],
+                remarks      : window.SubState.remarks?.[no] || window.SubState.remarks?.[canon] || null,
+              };
               window.SubState.meta[no] = emptyObj;
               window.SubState.meta[no.toUpperCase()] = emptyObj;
               window.SubState.meta[no.toLowerCase()] = emptyObj;
+              window.SubState.meta[canon] = emptyObj;
             })
         );
 

@@ -30,7 +30,13 @@
     state.tableNo           = tableNo;
     state.listenersAttached = false;   // reset — fresh listeners each open
 
-    const meta = window.SubState.meta[tableNo] || {};
+    const canon = tableNo.charAt(0).toUpperCase() + tableNo.slice(1).toLowerCase();
+    const meta  = window.SubState.meta[tableNo]
+      || window.SubState.meta[tableNo.toUpperCase()]
+      || window.SubState.meta[tableNo.toLowerCase()]
+      || window.SubState.meta[canon]
+      || {};
+    state.remarks = meta.remarks || window.SubState.remarks?.[tableNo] || window.SubState.remarks?.[tableNo.toUpperCase()] || window.SubState.remarks?.[canon] || '';
 
     // Deep-copy so edits don't bleed into the cache until a successful save
     state.rows = JSON.parse(JSON.stringify(meta.rows     || []));

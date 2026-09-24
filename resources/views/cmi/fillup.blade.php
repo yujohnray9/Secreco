@@ -199,9 +199,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- Core engine first, then per-table scripts -->
-<script src="/assets/js/cmi/table-utils.js?v=8"></script>
-<script src="/assets/js/cmi/fillup-core.js?v=11"></script>
-<script src="/assets/js/cmi/fillup-docs-modal.js?v=7"></script>
+<script src="/assets/js/cmi/table-utils.js?v=9"></script>
+<script src="/assets/js/cmi/fillup-core.js?v=12"></script>
+<script src="/assets/js/cmi/fillup-docs-modal.js?v=8"></script>
 
 <!-- Section 1: R&D Mgt. & Coord. -->
 <script src="/assets/js/cmi/tables/t1_aihrs.js?v=3"></script>

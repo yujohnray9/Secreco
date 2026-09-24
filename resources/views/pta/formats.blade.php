@@ -496,7 +496,7 @@
               </td>
               <td>
                 <div style="display:flex;gap:6px">
-                  <button class="btn-sm-edit" onclick='openEditModal(${t.id}, ${JSON.stringify(t.table_no)}, ${JSON.stringify(t.title)}, ${JSON.stringify(t.section)}, ${t.is_required}, ${t.is_locked ? 1 : 0}, ${JSON.stringify(colsJson)})'>
+                  <button class="btn-sm-edit" onclick="openEditModalById(${t.id})">
                     <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
                   </button>
                   ${canDelete ? `<button class="btn-sm-del" onclick="deleteTable(${t.id},'${t.table_no}')">
@@ -523,6 +523,7 @@
     // ── Load Formats for a Year ───────────────────────────────────────
     async function loadFormats(year) {
       fmtCurrentYear = year;
+      try { localStorage.setItem('secreco_selected_year', String(year)); } catch(e){}
       const res  = await fetch(`/api/pta/formats?year=${year}`);
       const json = await res.json();
       const templates = json.templates || [];
@@ -695,27 +696,39 @@
         cols.forEach(c => {
           const name = typeof c === 'string' ? c : (c.name || '');
           const type = typeof c === 'string' ? 'text' : (c.type || 'text');
-          appendColRow(colList, name, type);
+          const options = typeof c === 'object' ? (c.options || '') : '';
+          appendColRow(colList, name, type, options);
         });
       } else {
-        appendColRow(colList, '', 'text');
+        appendColRow(colList, '', 'text', '');
       }
 
       return block;
     }
 
-    function appendColRow(colList, colName = '', colType = 'text') {
+    function appendColRow(colList, colName = '', colType = 'text', colOptions = '') {
       const row = document.createElement('div');
       row.className = 'col-row';
-      row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:2px';
+      row.style.cssText = 'display:flex;flex-direction:column;margin-bottom:6px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:6px 8px;';
+      const isDropdown = colType === 'dropdown';
+      const optStr = Array.isArray(colOptions) ? colOptions.join(', ') : (colOptions || '');
+
       row.innerHTML = `
-        <input class="form-input title-col-name" value="${colName}" placeholder="Column name (e.g. Agency, Project Title, Date)" style="flex:1;padding:6px 10px;font-size:12.5px"/>
-        <select class="form-select title-col-type" style="width:100px;padding:6px 8px;font-size:12px">
-          <option value="text" ${colType === 'text' ? 'selected' : ''}>Text</option>
-          <option value="number" ${colType === 'number' ? 'selected' : ''}>Number</option>
-          <option value="date" ${colType === 'date' ? 'selected' : ''}>Date</option>
-        </select>
-        <button type="button" onclick="this.closest('.col-row').remove()" style="background:none;border:none;color:#ef4444;font-size:20px;cursor:pointer;padding:0 4px;line-height:1">×</button>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input class="form-input title-col-name" value="${colName}" placeholder="Column name (e.g. Agency, Project Title, Date, Amount)" style="flex:1;padding:5px 8px;font-size:12px"/>
+          <select class="form-select title-col-type" onchange="toggleColOptions(this)" style="width:115px;padding:5px 6px;font-size:12px">
+            <option value="text" ${colType === 'text' ? 'selected' : ''}>Text</option>
+            <option value="number" ${colType === 'number' ? 'selected' : ''}>Number</option>
+            <option value="amount" ${colType === 'amount' ? 'selected' : ''}>Amount</option>
+            <option value="dropdown" ${colType === 'dropdown' ? 'selected' : ''}>Dropdown</option>
+            <option value="date" ${colType === 'date' ? 'selected' : ''}>Date</option>
+          </select>
+          <button type="button" onclick="this.closest('.col-row').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 4px;line-height:1" title="Remove column">×</button>
+        </div>
+        <div class="col-options-wrap" style="display:${isDropdown ? 'flex' : 'none'};align-items:center;gap:6px;margin-top:6px;padding-top:5px;border-top:1px dashed #e5e7eb;">
+          <span style="font-size:11px;color:#4b5563;white-space:nowrap;font-weight:600">Options:</span>
+          <input class="form-input title-col-options" value="${optStr}" placeholder="Comma-separated options (e.g. Option 1, Option 2, Option 3)" style="flex:1;padding:4px 8px;font-size:11.5px;background:#f9fafb;border-color:#d1d5db;"/>
+        </div>
       `;
       colList.appendChild(row);
       if (!colName) {
@@ -723,11 +736,21 @@
       }
     }
 
+    function toggleColOptions(sel) {
+      const wrap = sel.closest('.col-row')?.querySelector('.col-options-wrap');
+      if (wrap) {
+        wrap.style.display = sel.value === 'dropdown' ? 'flex' : 'none';
+        if (sel.value === 'dropdown') {
+          wrap.querySelector('.title-col-options')?.focus();
+        }
+      }
+    }
+
     function addColToTitleBlock(btn) {
       const block = btn.closest('.tbl-title-block');
       if (!block) return;
       const colList = block.querySelector('.title-col-list');
-      if (colList) appendColRow(colList, '', 'text');
+      if (colList) appendColRow(colList, '', 'text', '');
     }
 
     function removeTitleBlock(btn) {
@@ -821,10 +844,16 @@
         titleBlocks.forEach(b => {
           const tName = (b.querySelector('.tbl-title-val')?.value || '').trim();
           const colRows = b.querySelectorAll('.title-col-list .col-row');
-          const cols = [...colRows].map(r => ({
-            name: (r.querySelector('.title-col-name')?.value || '').trim(),
-            type: r.querySelector('.title-col-type')?.value || 'text'
-          })).filter(c => c.name);
+          const cols = [...colRows].map(r => {
+            const name = (r.querySelector('.title-col-name')?.value || '').trim();
+            const type = r.querySelector('.title-col-type')?.value || 'text';
+            const colObj = { name, type };
+            if (type === 'dropdown') {
+              const rawOpts = (r.querySelector('.title-col-options')?.value || '').trim();
+              colObj.options = rawOpts ? rawOpts.split(',').map(s => s.trim()).filter(Boolean) : [];
+            }
+            return colObj;
+          }).filter(c => c.name);
 
           if (tName) {
             titlesData.push({ title: tName, columns: cols });
@@ -842,7 +871,11 @@
 
         if (titlesData.length === 1) {
           mainTitle = titlesData[0].title;
-          colsData = titlesData[0].columns.length > 0 ? JSON.stringify(titlesData[0].columns) : null;
+          colsData = JSON.stringify({
+            titles: titlesData,
+            categories: [titlesData[0].title],
+            columns: titlesData[0].columns
+          });
         } else {
           mainTitle = titlesData.map(t => t.title).join(' / ');
           colsData = JSON.stringify({
@@ -886,6 +919,12 @@
     }
 
     // ── Edit Table ─────────────────────────────────────────────────────
+    function openEditModalById(id) {
+      const t = (cachedTemplates || []).find(x => x.id === id);
+      if (!t) return;
+      openEditModal(t.id, t.table_no, t.title, t.section, t.is_required, t.is_locked, t.columns_json);
+    }
+
     function openEditModal(id, tableNo, title, section, required, locked, colsJson) {
       document.getElementById('editTableId').value         = id;
       document.getElementById('editTableNo').value         = tableNo;
@@ -896,20 +935,34 @@
       const container = document.getElementById('editTitlesContainer');
       if (container) container.innerHTML = '';
 
-      let parsed = null;
-      try {
-        parsed = (typeof colsJson === 'string') ? JSON.parse(colsJson) : colsJson;
-        if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-      } catch(e){}
+      let parsed = colsJson;
+      if (typeof parsed === 'string') {
+        try { parsed = JSON.parse(parsed); } catch(e){}
+      }
+      if (typeof parsed === 'string') {
+        try { parsed = JSON.parse(parsed); } catch(e){}
+      }
 
       if (parsed && typeof parsed === 'object' && Array.isArray(parsed.titles) && parsed.titles.length > 0) {
         parsed.titles.forEach(t => addEditTitleBlock(t.title, t.columns));
       } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.categories) && parsed.categories.length > 0) {
         parsed.categories.forEach(cat => addEditTitleBlock(cat, parsed.columns || []));
-      } else if (Array.isArray(parsed)) {
-        addEditTitleBlock(title, parsed);
+      } else if (Array.isArray(parsed) && parsed.length > 0) {
+        if (parsed[0] && typeof parsed[0] === 'object' && parsed[0].title) {
+          parsed.forEach(t => addEditTitleBlock(t.title, t.columns));
+        } else if (title && title.includes(' / ')) {
+          const parts = title.split(' / ');
+          parts.forEach(p => addEditTitleBlock(p.trim(), parsed));
+        } else {
+          addEditTitleBlock(title, parsed);
+        }
       } else {
-        addEditTitleBlock(title, []);
+        if (title && title.includes(' / ')) {
+          const parts = title.split(' / ');
+          parts.forEach(p => addEditTitleBlock(p.trim(), []));
+        } else {
+          addEditTitleBlock(title, []);
+        }
       }
 
       openModal('modalEditTable');
@@ -933,10 +986,16 @@
       titleBlocks.forEach(b => {
         const tName = (b.querySelector('.tbl-title-val')?.value || '').trim();
         const colRows = b.querySelectorAll('.title-col-list .col-row');
-        const cols = [...colRows].map(r => ({
-          name: (r.querySelector('.title-col-name')?.value || '').trim(),
-          type: r.querySelector('.title-col-type')?.value || 'text'
-        })).filter(c => c.name);
+        const cols = [...colRows].map(r => {
+          const name = (r.querySelector('.title-col-name')?.value || '').trim();
+          const type = r.querySelector('.title-col-type')?.value || 'text';
+          const colObj = { name, type };
+          if (type === 'dropdown') {
+            const rawOpts = (r.querySelector('.title-col-options')?.value || '').trim();
+            colObj.options = rawOpts ? rawOpts.split(',').map(s => s.trim()).filter(Boolean) : [];
+          }
+          return colObj;
+        }).filter(c => c.name);
 
         if (tName) {
           titlesData.push({ title: tName, columns: cols });
@@ -953,7 +1012,11 @@
 
       if (titlesData.length === 1) {
         mainTitle = titlesData[0].title;
-        colsData = titlesData[0].columns.length > 0 ? JSON.stringify(titlesData[0].columns) : null;
+        colsData = JSON.stringify({
+          titles: titlesData,
+          categories: [titlesData[0].title],
+          columns: titlesData[0].columns
+        });
       } else {
         mainTitle = titlesData.map(t => t.title).join(' / ');
         colsData = JSON.stringify({
@@ -1078,6 +1141,11 @@
     const secFmt = document.getElementById('fmtSectionFilter');
     if (secFmt) secFmt.addEventListener('change', renderFormatsTable);
 
-    document.addEventListener('DOMContentLoaded', () => loadFormats({{ date('Y') }}));
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlYear = parseInt(new URLSearchParams(window.location.search).get('year'));
+      const storedYear = parseInt(localStorage.getItem('secreco_selected_year'));
+      const initialYear = urlYear || storedYear || {{ date('Y') }};
+      loadFormats(initialYear);
+    });
     </script>
     @endsection

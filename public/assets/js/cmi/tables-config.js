@@ -419,7 +419,13 @@ window.CMI_TABLES = (function () {
     SECTIONS,
     TABLES,
     buildNavData,
-    getTable: (no) => TABLES[no] || TABLES[no?.toUpperCase()] || TABLES[no?.toLowerCase()],
+    getTable: (no) => {
+      if (!no) return null;
+      const str = String(no);
+      const canon = str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      return TABLES[str] || TABLES[str.toUpperCase()] || TABLES[str.toLowerCase()] || TABLES[canon] ||
+        (Object.entries(TABLES).find(([k]) => k.toUpperCase() === str.toUpperCase())?.[1]) || null;
+    },
     allTableNos: () => Object.keys(TABLES),
   };
 

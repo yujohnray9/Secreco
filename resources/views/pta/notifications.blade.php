@@ -567,6 +567,11 @@ function renderPtaCards() {
     if (category === 'submissions') {
       desc = 'A new institutional submission has been received and is ready for validation.';
     }
+    if (n.notif_type === 'year_activation' || n.type === 'year_activation' || (n.msg && n.msg.toLowerCase().includes('is now active'))) {
+      const yrMatch = (n.msg || '').match(/CY\s*(\d{4})/i);
+      const yr = yrMatch ? yrMatch[1] : '';
+      desc = `The CY ${yr} reporting cycle is now open. CMIs may begin preparing and submitting their tables for this year.`;
+    }
 
     const isApprovalOrActivation = n.notif_type === 'user_approval' || n.notif_type === 'year_activation' || n.type === 'year_activation' || !n.action ||
       (n.msg && (n.msg.toLowerCase().includes('is now active') || n.msg.toLowerCase().includes('approved') || n.msg.toLowerCase().includes('accepted')));

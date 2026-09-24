@@ -442,6 +442,15 @@
                     : ' style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:6px"';
                 if (colType === "number") {
                     return `<td><input type="number" class="dyn-col-val" data-key="${escHtml(colKey)}" step="any" placeholder="0" value="${val}"${disAttr}/></td>`;
+                } else if (colType === "amount") {
+                    return `<td><input type="number" class="dyn-col-val" data-key="${escHtml(colKey)}" step="0.01" min="0" placeholder="0.00" value="${val}"${disAttr}/></td>`;
+                } else if (colType === "dropdown") {
+                    const rawOptions = c.options || [];
+                    const optsArr = Array.isArray(rawOptions) ? rawOptions : String(rawOptions).split(",").map(s => s.trim()).filter(Boolean);
+                    const optHtml = ['<option value="">-- Select --</option>'].concat(
+                        optsArr.map(o => `<option value="${escHtml(o)}" ${String(val) === String(o) ? 'selected' : ''}>${escHtml(o)}</option>`)
+                    ).join("");
+                    return `<td><select class="dyn-col-val" data-key="${escHtml(colKey)}"${disAttr}>${optHtml}</select></td>`;
                 } else if (colType === "date") {
                     return `<td><input type="date" class="dyn-col-val" data-key="${escHtml(colKey)}" value="${val}"${disAttr}/></td>`;
                 } else {
@@ -858,7 +867,9 @@
 
     CMI.isLocked = function (no) {
         if (!no) no = window._cmiActiveTable;
-        return _isSubmitted || _submittedTables.includes(no) || (_statuses[no] === 'submitted' || _statuses[no] === 'accepted');
+        const canon = normalizeTableNo(no);
+        const st = _status[no] || _status[canon] || _status[String(no).toUpperCase()] || _status[String(no).toLowerCase()];
+        return _isSubmitted || _submittedTables.includes(no) || _submittedTables.includes(canon) || (st === 'submitted' || st === 'accepted');
     };
 
     CMI.lockReport = function () {

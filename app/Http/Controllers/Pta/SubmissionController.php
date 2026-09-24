@@ -488,17 +488,46 @@ class SubmissionController extends Controller
             $sub->update(['status' => $overallStatus, 'remarks' => null, 'snapshot_json' => $snap]);
         }
 
+        $candidates = array_unique([$tableNo, strtoupper($tableNo), strtolower($tableNo), preg_replace('/[^A-Za-z0-9]/', '', $tableNo)]);
+
+        // Check if this table/submission had a correction request (was returned and then fixed)
+        $hadCorrection = CorrectionRequest::where('cmi_user_id', $cmiUserId)
+            ->where('reporting_year', $year)
+            ->when($tableNo !== '', function ($q) use ($candidates) {
+                $q->whereIn('table_no', $candidates);
+            })
+            ->exists();
+
+        // Mark any open correction requests for this table/submission as resolved
+        CorrectionRequest::where('cmi_user_id', $cmiUserId)
+            ->where('reporting_year', $year)
+            ->when($tableNo !== '', function ($q) use ($candidates) {
+                $q->whereIn('table_no', $candidates);
+            })
+            ->where('status', 'open')
+            ->update(['status' => 'resolved', 'resolved_at' => now()]);
+
         $cmiUser = User::find($cmiUserId);
         $inst = $cmiUser?->institution ?: ($cmiUser?->name ?? 'CMI User');
 
         if ($cmiUser) {
+            if ($hadCorrection) {
+                $notifMsg = ($tableNo !== '')
+                    ? "Your revised Table {$tableNo} (CY {$year}) has been approved and accepted by the PTA Admin."
+                    : "Your revised CY {$year} Annual Report submission has been approved and accepted by the PTA Admin.";
+            } else {
+                $notifMsg = ($tableNo !== '')
+                    ? "Your CY {$year} Table {$tableNo} submission has been accepted by the PTA Admin."
+                    : "Your CY {$year} Annual Report submission has been accepted by the PTA Admin.";
+            }
+
             Notification::create([
                 'user_id'      => $cmiUser->id,
                 'role'         => 'cmi',
                 'type'         => 'accepted',
                 'icon'         => '✅',
                 'color'        => 'green',
-                'message'      => "Your CY {$year} Table {$tableNo} submission has been accepted by the PTA Admin.",
+                'message'      => $notifMsg,
                 'action_url'   => null,
                 'action_label' => null,
                 'is_read'      => false,
@@ -507,9 +536,14 @@ class SubmissionController extends Controller
         }
 
         $ptaId = Auth::id() ?? session('user_id');
-        ActivityLogService::log($ptaId, "Accepted submission Table {$tableNo} from {$inst} (CY {$year})");
+        $logAction = $hadCorrection ? "Accepted revised submission" : "Accepted submission";
+        ActivityLogService::log($ptaId, "{$logAction} Table {$tableNo} from {$inst} (CY {$year})");
 
-        return response()->json(['ok' => true, 'message' => "Table {$tableNo} submission from {$inst} accepted successfully."]);
+        $returnMsg = $hadCorrection
+            ? "Revised Table {$tableNo} submission from {$inst} accepted successfully."
+            : "Table {$tableNo} submission from {$inst} accepted successfully.";
+
+        return response()->json(['ok' => true, 'message' => $returnMsg]);
     }
 
     public function requestCorrection(Request $request): JsonResponse

@@ -32,13 +32,33 @@
       .then(r => r.json())
       .then(res => {
         if (res.success) {
-          // Sync local cache so the view modal reflects changes without a reload
-          window.SubState.meta[state.tableNo] = {
+          const tNo   = state.tableNo;
+          const canon = tNo.charAt(0).toUpperCase() + tNo.slice(1).toLowerCase();
+          const metaObj = {
             updated_at: res.updated_at || new Date().toISOString(),
             rows      : JSON.parse(JSON.stringify(state.rows)),
             metaData  : Object.assign({}, metaToSave, { images: JSON.parse(JSON.stringify(state.meta.images || [])) }),
             docs      : JSON.parse(JSON.stringify(state.meta.images || [])),
+            remarks   : null,
           };
+          window.SubState.meta[tNo] = metaObj;
+          window.SubState.meta[tNo.toUpperCase()] = metaObj;
+          window.SubState.meta[tNo.toLowerCase()] = metaObj;
+          window.SubState.meta[canon] = metaObj;
+
+          // Update status in local cache
+          window.SubState.statuses[tNo] = 'done';
+          window.SubState.statuses[tNo.toUpperCase()] = 'done';
+          window.SubState.statuses[tNo.toLowerCase()] = 'done';
+          window.SubState.statuses[canon] = 'done';
+
+          if (window.SubState.remarks) {
+            delete window.SubState.remarks[tNo];
+            delete window.SubState.remarks[tNo.toUpperCase()];
+            delete window.SubState.remarks[tNo.toLowerCase()];
+            delete window.SubState.remarks[canon];
+          }
+
           toast('Table saved successfully!');
           window.closeEditModal();
           window.SubRender.renderTable();

@@ -262,7 +262,10 @@ class FormatController extends Controller
                 foreach ($cmiUsers as $cmiId) {
                     Notification::where('user_id', $cmiId)
                         ->where('type', 'year_activation')
-                        ->where('message', 'like', "%CY {$year}%")
+                        ->where(function ($q) use ($year) {
+                            $q->where('message', 'like', "%CY {$year}%")
+                              ->orWhere('message', 'like', "%CY{$year}%");
+                        })
                         ->delete();
 
                     Notification::create([
@@ -270,10 +273,10 @@ class FormatController extends Controller
                         'role'         => 'cmi',
                         'type'         => 'year_activation',
                         'icon'         => '🎉',
-                        'color'        => 'green',
-                        'message'      => "CY {$year} is now active! You may now start filling up and submitting your annual accomplishment report.",
-                        'action_url'   => null,
-                        'action_label' => null,
+                        'color'        => 'blue',
+                        'message'      => "CY {$year} is now active — you may start filling up and submitting your annual accomplishment report.",
+                        'action_url'   => "/dashboard/cmi/fillup?year={$year}",
+                        'action_label' => "Start Filling Up",
                         'is_read'      => false,
                         'created_at'   => now(),
                     ]);

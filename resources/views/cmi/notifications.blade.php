@@ -672,18 +672,18 @@
         <span class="cmi-detail-val" id="detailRef">—</span>
       </div>
       <div class="cmi-detail-row">
-        <span class="cmi-detail-label">Report</span>
+        <span class="cmi-detail-label" id="detailReportLabel">Report</span>
         <span class="cmi-detail-val" id="detailReport">—</span>
       </div>
       <div class="cmi-detail-row">
         <span class="cmi-detail-label">Date &amp; time</span>
         <span class="cmi-detail-val" id="detailDateTime">—</span>
       </div>
-      <div class="cmi-detail-row">
+      <div class="cmi-detail-row" id="detailReviewerRow">
         <span class="cmi-detail-label">Reviewer</span>
         <span class="cmi-detail-val" id="detailReviewer">PTA Admin</span>
       </div>
-      <div class="cmi-detail-row">
+      <div class="cmi-detail-row" id="detailReasonRow">
         <span class="cmi-detail-label">Reason</span>
         <span class="cmi-detail-val" id="detailReason">—</span>
       </div>
@@ -712,6 +712,9 @@ let _selectedNotifId = null;
 
 function getCmiCategory(n) {
   const t = ((n.notif_type || '') + ' ' + (n.type || '') + ' ' + (n.msg || '')).toLowerCase();
+  if (n.notif_type === 'year_activation' || n.type === 'year_activation' || t.includes('year_activation') || t.includes('is now active') || t.includes('reporting cycle')) {
+    return 'reminder';
+  }
   if (t.includes('corr') || t.includes('return') || t.includes('action') || t.includes('red') || t.includes('flag')) {
     return 'action';
   }
@@ -742,6 +745,12 @@ function getCmiCardSvg(cat) {
 }
 
 function getCmiReportName(n) {
+  const isAct = (n.notif_type === 'year_activation' || n.type === 'year_activation' || ((n.msg || '').toLowerCase().includes('is now active')) || ((n.msg || '').toLowerCase().includes('reporting cycle')));
+  if (isAct) {
+    const yrMatch = (n.msg || '').match(/CY\s*(\d{4})/i);
+    const yr = yrMatch ? yrMatch[1] : '{{ $currentYear }}';
+    return `(CY ${yr})`;
+  }
   if (n.table_name) return n.table_name;
   if (n.table_id) return 'CY 2026 Table ' + String(n.table_id).toUpperCase();
   const match = (n.msg || '').match(/Table\s+[A-Za-z0-9]+/i);
@@ -863,16 +872,50 @@ function openNotificationDetail(id) {
   const commentEl = document.getElementById('detailComment');
   const ctaBtn = document.getElementById('detailCtaBtn');
 
-  const refNum = 'NOTIF-2026-' + String(item.id || Math.abs(hashCode(item.msg || '')) % 900000 + 100000).padStart(6, '0');
+  const isYearActivation = (
+    item.notif_type === 'year_activation' ||
+    item.type === 'year_activation' ||
+    ((item.msg || '').toLowerCase().includes('is now active')) ||
+    ((item.msg || '').toLowerCase().includes('reporting cycle'))
+  );
+
+  const yrMatch = (item.msg || '').match(/CY\s*(\d{4})/i);
+  const yr = yrMatch ? yrMatch[1] : '{{ $currentYear }}';
+  const refNum = 'NOTIF-' + yr + '-' + String(item.id || Math.abs(hashCode(item.msg || '')) % 900000 + 100000).padStart(6, '0');
   const report = getCmiReportName(item);
   const dt = item.time ? formatNiceDateTime(item.time) : 'Sep 1, 2026 10:18 AM';
+
+  const reportLabelEl = document.getElementById('detailReportLabel');
+  const reviewerRowEl = document.getElementById('detailReviewerRow');
+  const reasonRowEl = document.getElementById('detailReasonRow');
 
   refEl.textContent = refNum;
   reportEl.textContent = report;
   dtEl.textContent = dt;
   reviewerEl.textContent = item.reviewer || 'PTA Admin';
 
-  if (cat === 'action') {
+  if (isYearActivation) {
+    badgeEl.className = 'cmi-badge reminder';
+    badgeEl.textContent = 'REMINDER';
+    titleEl.textContent = `CY ${yr} is now active — you may start filling up and submitting your annual accomplishment report.`;
+    introEl.textContent = `The CY ${yr} reporting cycle is now open. You may begin preparing and submitting your tables for this year.`;
+
+    if (reportLabelEl) reportLabelEl.textContent = 'Report cycle:';
+    reportEl.textContent = `(CY ${yr})`;
+    statusEl.innerHTML = '<i class="status-dot green"></i>Active / Open';
+
+    if (reviewerRowEl) reviewerRowEl.style.display = 'none';
+    if (reasonRowEl) reasonRowEl.style.display = 'none';
+    commentWrap.style.display = 'none';
+
+    ctaBtn.style.display = 'inline-flex';
+    ctaBtn.textContent = 'Start filling up tables →';
+    ctaBtn.className = 'btn-detail-cta';
+    ctaBtn.href = `/dashboard/cmi/fillup?year=${yr}`;
+  } else if (cat === 'action') {
+    if (reportLabelEl) reportLabelEl.textContent = 'Report';
+    if (reviewerRowEl) reviewerRowEl.style.display = 'flex';
+    if (reasonRowEl) reasonRowEl.style.display = 'flex';
     badgeEl.className = 'cmi-badge action';
     badgeEl.textContent = 'ACTION REQUIRED';
     titleEl.textContent = item.msg || 'Action required on report';
@@ -893,6 +936,9 @@ function openNotificationDetail(id) {
     ctaBtn.className = 'btn-detail-cta';
     ctaBtn.href = item.action || '/dashboard/cmi/fillup';
   } else if (cat === 'accepted') {
+    if (reportLabelEl) reportLabelEl.textContent = 'Report';
+    if (reviewerRowEl) reviewerRowEl.style.display = 'flex';
+    if (reasonRowEl) reasonRowEl.style.display = 'flex';
     badgeEl.className = 'cmi-badge accepted';
     badgeEl.textContent = 'ACCEPTED';
     titleEl.textContent = item.msg || 'Report was accepted';
@@ -902,6 +948,9 @@ function openNotificationDetail(id) {
     commentWrap.style.display = 'none';
     ctaBtn.style.display = 'none';
   } else {
+    if (reportLabelEl) reportLabelEl.textContent = 'Report';
+    if (reviewerRowEl) reviewerRowEl.style.display = 'flex';
+    if (reasonRowEl) reasonRowEl.style.display = 'flex';
     badgeEl.className = 'cmi-badge reminder';
     badgeEl.textContent = 'REMINDER';
     titleEl.textContent = item.msg || 'Submission deadline approaching';
@@ -910,15 +959,10 @@ function openNotificationDetail(id) {
     statusEl.innerHTML = '<i class="status-dot blue"></i>Pending Submission';
     commentWrap.style.display = 'none';
 
-    const isAct = (item.notif_type === 'year_activation' || item.type === 'year_activation' || (item.msg && (item.msg.toLowerCase().includes('is now active') || item.msg.toLowerCase().includes('format'))));
-    if (isAct) {
-      ctaBtn.style.display = 'none';
-    } else {
-      ctaBtn.style.display = 'inline-flex';
-      ctaBtn.textContent = 'Continue submission →';
-      ctaBtn.className = 'btn-detail-cta';
-      ctaBtn.href = item.action || '/dashboard/cmi/fillup';
-    }
+    ctaBtn.style.display = 'inline-flex';
+    ctaBtn.textContent = 'Continue submission →';
+    ctaBtn.className = 'btn-detail-cta';
+    ctaBtn.href = item.action || '/dashboard/cmi/fillup';
   }
 
   // Smooth scroll into view on smaller displays
@@ -988,14 +1032,28 @@ function renderCmiList() {
     const notifId = n.id || n.key;
     const isSelected = (_selectedNotifId == notifId);
     const isUnread = !!n.unread;
-    const isApprovalOrActivation = (cat === 'accepted' || n.notif_type === 'year_activation' || n.type === 'year_activation' || (n.msg && (n.msg.toLowerCase().includes('is now active') || n.msg.toLowerCase().includes('accepted') || n.msg.toLowerCase().includes('approved'))));
+    const isYearActivation = (
+      n.notif_type === 'year_activation' ||
+      n.type === 'year_activation' ||
+      ((n.msg || '').toLowerCase().includes('is now active')) ||
+      ((n.msg || '').toLowerCase().includes('reporting cycle'))
+    );
+    const yrMatch = (n.msg || '').match(/CY\s*(\d{4})/i);
+    const yr = yrMatch ? yrMatch[1] : '{{ $currentYear }}';
 
+    let cardTitle = n.msg || 'Report Update';
     let badgeHtml = '';
     let btnText = '';
     let btnClass = 'btn-outline-green';
     let subHtml = '';
 
-    if (cat === 'action') {
+    if (isYearActivation) {
+      badgeHtml = '<span class="cmi-badge reminder">REMINDER</span>';
+      cardTitle = `CY ${yr} is now active — you may start filling up and submitting your annual accomplishment report.`;
+      subHtml = `The CY ${yr} reporting cycle is now open. You may begin preparing and submitting your tables for this year.`;
+      btnText = 'Start filling up →';
+      btnClass = 'btn-outline-green';
+    } else if (cat === 'action') {
       badgeHtml = '<span class="cmi-badge action">ACTION REQUIRED</span>';
       subHtml = 'PTA Admin requested an update. Please review the comments and resubmit the form.';
       btnText = 'Review and correct →';
@@ -1027,7 +1085,7 @@ function renderCmiList() {
       </div>
       <div class="cmi-card-body">
         ${badgeHtml}
-        <h3 class="cmi-card-title">${n.msg || 'Report Update'}</h3>
+        <h3 class="cmi-card-title">${cardTitle}</h3>
         <p class="cmi-card-sub">${subHtml}</p>
         <div class="cmi-card-meta">
           <span class="cmi-meta-item">

@@ -68,7 +68,7 @@ class NotificationController extends Controller
 
         // 2. Incoming CMI Submissions waiting for PTA review (ONLY pending/submitted from CMI; no accepted/returned self-actions)
         $recentSubs = ReportSubmission::where('reporting_year', $year)
-            ->whereIn('status', ['pending', 'submitted', 'in-progress'])
+            ->whereIn('status', ['pending', 'submitted'])
             ->with('user')
             ->orderByDesc('submitted_at')
             ->get()
@@ -109,6 +109,10 @@ class NotificationController extends Controller
                   $q2->whereNull('user_id')->where('role', 'pta');
               });
         })
+        ->where('type', '!=', 'submission_updated')
+        ->where('type', '!=', 'correction_fixed')
+        ->where('message', 'not like', '%revised and fixed Table%')
+        ->where('message', 'not like', '%updated Table%')
         ->where('message', 'not like', '%updated by PTA%')
         ->where('message', 'not like', '%PTA updated%')
         ->where('message', 'not like', '%accepted by PTA%')
@@ -129,6 +133,15 @@ class NotificationController extends Controller
                 $unread = false;
             }
 
+            $isYearAct = ($n->type === 'year_activation') || str_contains(strtolower($n->message), 'is now active');
+            $msg = $n->message;
+            if ($isYearAct) {
+                $msg = preg_replace('/(CY\s*\d{4}\s*is\s*now\s*active)!?\s*(?:You\s*may\s*now|—\s*you\s*may)?/i', '$1 — you may', $msg);
+                if (!str_contains($msg, 'start filling up and submitting')) {
+                    $msg = preg_replace('/(CY\s*\d{4}\s*is\s*now\s*active\s*—\s*you\s*may).*/i', '$1 start filling up and submitting your annual accomplishment report.', $msg);
+                }
+            }
+
             $isApprovalOrActivation = in_array($n->type, ['year_activation', 'approval', 'user_approval', 'accepted'], true)
                 || str_contains(strtolower($n->message), 'accepted')
                 || str_contains(strtolower($n->message), 'is now active')
@@ -137,9 +150,9 @@ class NotificationController extends Controller
             $notifications[] = [
                 'id'           => (int) $n->id,
                 'key'          => $key,
-                'type'         => $n->color ?: 'blue',
-                'icon'         => $n->icon ?: '📋',
-                'msg'          => $n->message,
+                'type'         => $isYearAct ? 'blue' : ($n->color ?: 'blue'),
+                'icon'         => $isYearAct ? '🎉' : ($n->icon ?: '📋'),
+                'msg'          => $msg,
                 'action'       => $isApprovalOrActivation ? null : $n->action_url,
                 'action_label' => $isApprovalOrActivation ? null : ($n->action_label ?: 'View'),
                 'time'         => $n->created_at ? $n->created_at->format('Y-m-d\TH:i:s+08:00') : null,

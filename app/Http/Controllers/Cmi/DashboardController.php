@@ -112,26 +112,88 @@ class DashboardController extends Controller
             }
         }
 
-        $openCorrections = CorrectionRequest::whereIn('cmi_user_id', $allUserIds)
-            ->where('reporting_year', $reportingYear)
-            ->where('status', 'open')
-            ->count();
-        $returnedTables = ReportTable::whereIn('user_id', $allUserIds)
-            ->where('reporting_year', $reportingYear)
-            ->where('status', 'returned')
-            ->count();
-        $correction = max($openCorrections, $returnedTables);
+        // Auto-resolve any open CorrectionRequest records for tables that have already been fixed/completed
+        foreach ($allTableKeys as $tKey) {
+            $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tKey));
+            $curStatus = $tableMap[$cleanKey]['status'] ?? 'not-started';
+            if (in_array($curStatus, ['done', 'submitted', 'accepted'], true)) {
+                $candidates = array_unique([$tKey, strtoupper($tKey), strtolower($tKey), $cleanKey]);
+                CorrectionRequest::whereIn('cmi_user_id', $allUserIds)
+                    ->where('reporting_year', $reportingYear)
+                    ->whereIn('table_no', $candidates)
+                    ->where('status', 'open')
+                    ->update(['status' => 'resolved', 'resolved_at' => now()]);
+            }
+        }
+
+        // A table is for correction ONLY if its actual current status is 'returned'
+        $returnedTableCount = 0;
+        $unfixedTables = [];
+        foreach ($allTableKeys as $tKey) {
+            $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tKey));
+            $curStatus = $tableMap[$cleanKey]['status'] ?? 'not-started';
+            if ($curStatus === 'returned') {
+                $returnedTableCount++;
+                $unfixedTables[$cleanKey] = $tKey;
+            }
+        }
+
+        $correction = $returnedTableCount;
         $corrMeta = 'Check remarks';
         if ($correction > 0) {
             $latestCorr = CorrectionRequest::whereIn('cmi_user_id', $allUserIds)
                 ->where('reporting_year', $reportingYear)
                 ->where('status', 'open')
+                ->whereIn('table_no', array_values($unfixedTables))
                 ->orderByDesc('id')
                 ->first();
             if ($latestCorr) {
                 $cKey   = strtoupper($latestCorr->table_no);
                 $cLabel = $tableLabels[$cKey] ?? ('Table ' . $latestCorr->table_no);
                 $corrMeta = $cLabel . ' flagged';
+            }
+        }
+
+        // Build detailed list of corrections with remarks for modal (only unfixed tables)
+        $correctionsList = [];
+        if ($correction > 0) {
+            $rawCorrRequests = CorrectionRequest::whereIn('cmi_user_id', $allUserIds)
+                ->where('reporting_year', $reportingYear)
+                ->where('status', 'open')
+                ->orderByDesc('id')
+                ->get();
+
+            $processedTables = [];
+            foreach ($rawCorrRequests as $cr) {
+                $cKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $cr->table_no));
+                if (!isset($unfixedTables[$cKey])) {
+                    continue; // Skip if already fixed!
+                }
+                $processedTables[$cKey] = true;
+                $correctionsList[] = [
+                    'id'         => $cr->id,
+                    'table_no'   => $cr->table_no,
+                    'title'      => $tableLabels[$cKey] ?? ('Table ' . $cr->table_no),
+                    'reason'     => $cr->reason,
+                    'created_at' => $cr->created_at ? $cr->created_at->format('M d, Y h:i A') : null,
+                ];
+            }
+
+            // Include any returned ReportTable without an explicit CorrectionRequest
+            foreach ($allRows as $r) {
+                if ($r->status === 'returned') {
+                    $cKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $r->table_no));
+                    if (isset($unfixedTables[$cKey]) && !isset($processedTables[$cKey])) {
+                        $processedTables[$cKey] = true;
+                        $correctionsList[] = [
+                            'id'         => $r->id,
+                            'table_no'   => $r->table_no,
+                            'title'      => $tableLabels[$cKey] ?? ('Table ' . $r->table_no),
+                            'reason'     => 'Table flagged for revision by PTA administrator.',
+                            'created_at' => $r->updated_at ? $r->updated_at->format('M d, Y h:i A') : null,
+                        ];
+                    }
+                }
             }
         }
 
@@ -244,6 +306,7 @@ class DashboardController extends Controller
             ],
             'sectionProgress' => $sectionProgress,
             'recentActivity'  => $recentActivity,
+            'corrections'     => $correctionsList,
         ]);
     }
 }
