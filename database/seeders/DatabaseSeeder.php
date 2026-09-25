@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
                 'role'        => 'pta',
                 'designation' => 'Project Technical Assistant II',
                 'status'      => 'active',
+                'approved_at' => Carbon::now(),
             ]
         );
         $cmiUser = User::updateOrCreate(
@@ -41,6 +42,7 @@ class DatabaseSeeder extends Seeder
                 'institution' => 'Isabela State University - Echague',
                 'designation' => 'CMI Representative',
                 'status'      => 'active',
+                'approved_at' => Carbon::now(),
             ]
         );
         $execUser = User::updateOrCreate(
@@ -52,6 +54,7 @@ class DatabaseSeeder extends Seeder
                 'role'        => 'executive',
                 'designation' => 'Executive Director',
                 'status'      => 'active',
+                'approved_at' => Carbon::now(),
             ]
         );
         $viewerUser = User::updateOrCreate(
@@ -63,6 +66,7 @@ class DatabaseSeeder extends Seeder
                 'role'        => 'viewer',
                 'designation' => 'Consortium Viewer',
                 'status'      => 'active',
+                'approved_at' => Carbon::now(),
             ]
         );
 

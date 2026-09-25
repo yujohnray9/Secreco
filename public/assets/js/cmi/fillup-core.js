@@ -513,9 +513,25 @@
             }
         }
 
+        let _dynImages = [];
+
+        function updateDynDocsBadge() {
+            const badge = document.getElementById(`dyn_${tableNo}_docs_count`);
+            if (!badge) return;
+            if (_dynImages.length > 0) {
+                badge.textContent = _dynImages.length;
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
         docsBtn.addEventListener("click", function () {
-            if (typeof openDocsModal === "function") {
-                openDocsModal(tableNo, displayTitle);
+            if (typeof DocsModal !== "undefined" && typeof DocsModal.open === "function") {
+                DocsModal.open(tableNo, _dynImages, function (saved) {
+                    _dynImages = saved;
+                    updateDynDocsBadge();
+                });
             }
         });
 
@@ -546,6 +562,7 @@
                 year: window.CMI_REPORTING_YEAR || new Date().getFullYear(),
                 cmi_user_id: window.CMI_TARGET_USER_ID || 0,
                 status: computedStatus,
+                meta: { images: _dynImages },
                 rows: rows
             };
 
@@ -616,9 +633,8 @@
                 if (res && res.status) {
                     CMI.updateStatus(tableNo, res.status);
                 }
-                if (res && res.docs && typeof updateDocsBadge === "function") {
-                    updateDocsBadge(tableNo, res.docs.length);
-                }
+                _dynImages = (res && Array.isArray(res.docs)) ? res.docs : ((res && res.meta && res.meta.images) ? res.meta.images : []);
+                updateDynDocsBadge();
                 applyLock(tableNo);
             })
             .catch(() => {
@@ -632,6 +648,8 @@
                 } else {
                     tbody.innerHTML = makeRowHTML({}, 0, null);
                 }
+                _dynImages = [];
+                updateDynDocsBadge();
                 applyLock(tableNo);
             });
     }
@@ -685,9 +703,13 @@
             const body = document.getElementById("fillBody");
             if (!body) return;
 
-            const tDef = _templateDefs[tableNo] || _templateDefs[normalizeTableNo(tableNo)] || _templateDefs[String(tableNo).toUpperCase()] || _templateDefs[String(tableNo).toLowerCase()];
+            const canonNo = normalizeTableNo(tableNo);
+            const tDef = _templateDefs[tableNo] || _templateDefs[canonNo] || _templateDefs[String(tableNo).toUpperCase()] || _templateDefs[String(tableNo).toLowerCase()];
             const isPtaLocked = tDef && !!tDef.is_locked;
-            const isTableSubmitted = _isSubmitted && (_submittedTables.includes(tableNo) || _submittedTables.includes(normalizeTableNo(tableNo)));
+            const isTableSubmitted = (_isSubmitted && Array.isArray(_submittedTables) && _submittedTables.some(t => {
+                const tu = String(t).toUpperCase();
+                return tu === String(tableNo).toUpperCase() || tu === String(canonNo).toUpperCase() || normalizeTableNo(t) === canonNo;
+            })) || (_status[tableNo] === 'submitted' || _status[tableNo] === 'accepted' || _status[canonNo] === 'submitted' || _status[canonNo] === 'accepted');
 
             // Clean up mismatching banners cleanly without thrashing DOM
             if (!isPtaLocked || window.IS_PTA_USER) {
@@ -867,15 +889,41 @@
 
     CMI.isLocked = function (no) {
         if (!no) no = window._cmiActiveTable;
+        if (!no) return false;
         const canon = normalizeTableNo(no);
-        const st = _status[no] || _status[canon] || _status[String(no).toUpperCase()] || _status[String(no).toLowerCase()];
-        return _isSubmitted || _submittedTables.includes(no) || _submittedTables.includes(canon) || (st === 'submitted' || st === 'accepted');
+        const canonUpper = String(canon).toUpperCase();
+        const canonLower = String(canon).toLowerCase();
+        const rawUpper = String(no).toUpperCase();
+        const rawLower = String(no).toLowerCase();
+
+        // 1. Check if table is designated as PTA-only and locked for CMI users
+        const tDef = _templateDefs[no] || _templateDefs[canon] || _templateDefs[rawUpper] || _templateDefs[rawLower] || _templateDefs[canonUpper] || _templateDefs[canonLower];
+        if (tDef && !!tDef.is_locked && !window.IS_PTA_USER) {
+            return true;
+        }
+
+        // 2. Check if this specific table is officially submitted or accepted
+        const st = _status[no] || _status[canon] || _status[rawUpper] || _status[rawLower] || _status[canonUpper] || _status[canonLower];
+        if (st === 'submitted' || st === 'accepted') {
+            return true;
+        }
+
+        // 3. If the report was submitted, check if this specific table was included in the submitted tables list
+        if (_isSubmitted && Array.isArray(_submittedTables)) {
+            const inList = _submittedTables.some(t => {
+                const tu = String(t).toUpperCase();
+                return tu === rawUpper || tu === canonUpper || normalizeTableNo(t) === canon;
+            });
+            if (inList) return true;
+        }
+
+        return false;
     };
 
     CMI.lockReport = function () {
         _isSubmitted = true;
         const no = window._cmiActiveTable;
-        if (no && _submittedTables.includes(no)) applyLock(no);
+        if (no && CMI.isLocked(no)) applyLock(no);
     };
 
     CMI.saveDraft = function () {

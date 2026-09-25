@@ -94,25 +94,35 @@
 
   <!-- Pending Approvals Card -->
   <div class="fc-card">
-    <div class="fc-card-head">
+    <div class="fc-card-head" style="gap:12px;flex-wrap:wrap">
       <div class="fc-card-title">
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
         Pending Account Approvals
+        <span class="badge badge-orange" id="pendingCount" style="margin-left:6px">—</span>
       </div>
-      <span class="badge badge-orange" id="pendingCount">—</span>
+      <div style="position:relative;width:240px;" id="pendingSearchWrap">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="pendingSearchInput" placeholder="Filter pending by ID, name..."
+          style="width:100%;box-sizing:border-box;padding:7px 10px 7px 32px;border:1px solid #d1d5db;border-radius:9px;font-size:12.5px;outline:none;background:#f9fafb;transition:all .15s;"
+          onfocus="this.style.borderColor='#d97706';this.style.background='#fff';"
+          onblur="this.style.borderColor='#d1d5db';this.style.background='#f9fafb';"
+          oninput="filterPendingTable()" />
+      </div>
     </div>
     <div class="fc-card-body">
       <div class="fc-table-wrap">
         <table class="fc-table">
           <thead>
             <tr>
-              <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Action</th>
+              <th style="width:70px">ID</th><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Date Created</th><th style="text-align:center">Action</th>
             </tr>
           </thead>
           <tbody id="pendingTbody">
-            <tr><td colspan="6" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading pending users...</td></tr>
+            <tr><td colspan="8" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading pending users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -121,26 +131,45 @@
 
   <!-- Active Users Card -->
   <div class="fc-card">
-    <div class="fc-card-head">
+    <div class="fc-card-head" style="gap:12px;flex-wrap:wrap">
       <div class="fc-card-title">
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
         Active Users
+        <span class="badge badge-green" id="activeCount" style="margin-left:6px">—</span>
       </div>
-      <span class="badge badge-green" id="activeCount">—</span>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="position:relative;width:260px;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="userSearchInput" placeholder="Filter by ID, name, email..."
+            style="width:100%;box-sizing:border-box;padding:7px 10px 7px 32px;border:1px solid #d1d5db;border-radius:9px;font-size:12.5px;outline:none;background:#f9fafb;transition:all .15s;"
+            onfocus="this.style.borderColor='#10b981';this.style.background='#fff';"
+            onblur="this.style.borderColor='#d1d5db';this.style.background='#f9fafb';"
+            oninput="filterUsersTable()" />
+        </div>
+        <select id="userRoleFilter" onchange="filterUsersTable()"
+          style="border:1px solid #d1d5db;border-radius:9px;padding:7px 10px;font-size:12.5px;background:#f9fafb;outline:none;color:#374151;cursor:pointer;">
+          <option value="">All Roles</option>
+          <option value="cmi">CMI Representative</option>
+          <option value="executive">Executive</option>
+          <option value="viewer">Guest</option>
+        </select>
+      </div>
     </div>
     <div class="fc-card-body">
       <div class="fc-table-wrap">
         <table class="fc-table">
           <thead>
             <tr>
-              <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Status</th><th>Action</th>
+              <th style="width:70px">ID</th><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Date Created</th><th>Approve Date</th><th>Status</th><th style="text-align:center">Action</th>
             </tr>
           </thead>
           <tbody id="activeTbody">
-            <tr><td colspan="7" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading active users...</td></tr>
+            <tr><td colspan="10" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading active users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -326,6 +355,147 @@ function openAddUserModal() {
   onRoleChange();
 }
 
+let cachedActiveUsers = [];
+let cachedPendingUsers = [];
+
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch(e) {
+    return dateStr;
+  }
+}
+
+function matchesUserSearch(u, query) {
+  if (!query) return true;
+  const q = query.trim().toLowerCase();
+  const cleanNum = q.replace(/^(id\s*[:#-]?\s*|#)/i, '').trim();
+
+  const idStr = String(u.id || '');
+  const idMatch = (cleanNum !== '' && (idStr === cleanNum || idStr.includes(cleanNum))) || idStr.includes(q) || ('#' + idStr).includes(q);
+
+  const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).toLowerCase();
+  const email = (u.email || '').toLowerCase();
+  const inst = (u.institution || '').toLowerCase();
+  const pos = (u.position || u.designation || '').toLowerCase();
+  const role = (u.role || '').toLowerCase();
+
+  return idMatch || fullName.includes(q) || email.includes(q) || inst.includes(q) || pos.includes(q) || role.includes(q);
+}
+
+function renderPendingUsers(pending) {
+  const pTbody = document.getElementById('pendingTbody');
+  if (!pTbody) return;
+  document.getElementById('pendingCount').textContent = pending.length + ' pending';
+
+  if (pending.length === 0) {
+    pTbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:36px 24px;color:#9ca3af">
+      <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 10px">
+        <circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/>
+      </svg>No pending accounts matching filter.
+    </td></tr>`;
+    return;
+  }
+
+  pTbody.innerHTML = pending.map(u => {
+    const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).trim();
+    return `
+      <tr>
+        <td style="font-weight:600;font-family:monospace;color:#4b5563">
+          <span style="font-size:11.5px;padding:2px 7px;border-radius:6px;background:#f3f4f6;border:1px solid #e5e7eb">#${u.id}</span>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="user-avatar">${initials(fullName)}</div>
+            <strong>${fullName}</strong>
+          </div>
+        </td>
+        <td style="color:#6b7280">${u.email}</td>
+        <td><span class="badge badge-purple">${formatRoleLabel(u.role)}</span></td>
+        <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
+        <td>${u.designation || u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
+        <td style="color:#4b5563;font-size:12.5px;white-space:nowrap">${formatDisplayDate(u.created_at)}</td>
+        <td style="display:flex;gap:6px;justify-content:center">
+          <button class="btn-sm-fc btn-sm-view" onclick="approveUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', 'approve')">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Approve
+          </button>
+          <button class="btn-sm-fc btn-sm-danger" onclick="approveUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', 'reject')">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterPendingTable() {
+  const query = (document.getElementById('pendingSearchInput')?.value || '').trim();
+  const filtered = cachedPendingUsers.filter(u => matchesUserSearch(u, query));
+  renderPendingUsers(filtered);
+}
+
+function renderActiveUsers(users) {
+  const aTbody = document.getElementById('activeTbody');
+  if (!aTbody) return;
+  document.getElementById('activeCount').textContent = users.length + ' users';
+
+  if (users.length === 0) {
+    aTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:36px 24px;color:#9ca3af">No registered users matching filter.</td></tr>';
+    return;
+  }
+
+  aTbody.innerHTML = users.map(u => {
+    const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).trim();
+    return `
+      <tr>
+        <td style="font-weight:600;font-family:monospace;color:#4b5563">
+          <span style="font-size:11.5px;padding:2px 7px;border-radius:6px;background:#f3f4f6;border:1px solid #e5e7eb">#${u.id}</span>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="user-avatar">${initials(fullName)}</div>
+            <strong>${fullName}</strong>
+          </div>
+        </td>
+        <td style="color:#6b7280">${u.email}</td>
+        <td><span class="badge badge-blue">${formatRoleLabel(u.role)}</span></td>
+        <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
+        <td>${u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
+        <td style="color:#4b5563;font-size:12.5px;white-space:nowrap">${formatDisplayDate(u.created_at)}</td>
+        <td style="color:#4b5563;font-size:12.5px;white-space:nowrap">${formatDisplayDate(u.approved_at)}</td>
+        <td><span class="badge ${u.status==='Active' ? 'badge-green' : 'badge-red'}">${u.status}</span></td>
+        <td style="text-align:center">
+          <button class="btn-sm-fc ${u.status==='Active' ? 'btn-sm-danger' : 'btn-sm-toggle'}"
+            onclick="toggleUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', '${u.status==='Active' ? 'inactive' : 'active'}')">
+            ${u.status==='Active' ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterUsersTable() {
+  const query = (document.getElementById('userSearchInput')?.value || '').trim();
+  const selectedRole = (document.getElementById('userRoleFilter')?.value || '').toLowerCase();
+
+  const filtered = cachedActiveUsers.filter(u => {
+    if (selectedRole) {
+      const uRole = (u.role || '').toLowerCase();
+      const mappedRole = uRole === 'guest' ? 'viewer' : uRole;
+      if (mappedRole !== selectedRole && !formatRoleLabel(u.role).toLowerCase().includes(selectedRole)) {
+        return false;
+      }
+    }
+    return matchesUserSearch(u, query);
+  });
+
+  renderActiveUsers(filtered);
+}
+
 async function submitAddUser() {
   const firstName = document.getElementById('addUserFirstName').value.trim();
   const lastName  = document.getElementById('addUserLastName').value.trim();
@@ -354,6 +524,8 @@ async function submitAddUser() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        first_name  : firstName,
+        last_name   : lastName,
         name        : firstName + ' ' + lastName,
         email,
         role,
@@ -397,69 +569,15 @@ async function loadUsers() {
     // --- Pending ---
     const pRes   = await fetch('/api/pta/users/pending');
     const pJson  = await pRes.json();
-    const pTbody = document.getElementById('pendingTbody');
-    const pending = pJson.pending || [];
-    document.getElementById('pendingCount').textContent = pending.length + ' pending';
-
-    if (pending.length === 0) {
-      pTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px 24px;color:#9ca3af">
-        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 10px">
-          <circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/>
-        </svg>No accounts pending approval.
-      </td></tr>`;
-    } else {
-      pTbody.innerHTML = pending.map(u => `
-        <tr>
-          <td><div style="display:flex;align-items:center;gap:10px">
-            <div class="user-avatar">${initials(u.first_name+' '+u.last_name)}</div>
-            <strong>${u.first_name} ${u.last_name}</strong>
-          </div></td>
-          <td style="color:#6b7280">${u.email}</td>
-          <td><span class="badge badge-purple">${formatRoleLabel(u.role)}</span></td>
-          <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
-          <td>${u.designation || u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
-          <td style="display:flex;gap:6px">
-            <button class="btn-sm-fc btn-sm-view" onclick="approveUser(${u.id}, '${u.first_name} ${u.last_name}', 'approve')">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Approve
-            </button>
-            <button class="btn-sm-fc btn-sm-danger" onclick="approveUser(${u.id}, '${u.first_name} ${u.last_name}', 'reject')">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
+    cachedPendingUsers = pJson.pending || [];
+    filterPendingTable();
 
     // --- Active ---
     const uRes   = await fetch('/api/pta/users');
     const uJson  = await uRes.json();
-    const aTbody = document.getElementById('activeTbody');
-    const users  = Array.isArray(uJson) ? uJson : [];
-    document.getElementById('activeCount').textContent = users.length + ' users';
+    cachedActiveUsers = Array.isArray(uJson) ? uJson : [];
+    filterUsersTable();
 
-    if (users.length === 0) {
-      aTbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px 24px;color:#9ca3af">No registered users found.</td></tr>';
-    } else {
-      aTbody.innerHTML = users.map(u => `
-        <tr>
-          <td><div style="display:flex;align-items:center;gap:10px">
-            <div class="user-avatar">${initials(u.name)}</div>
-            <strong>${u.name}</strong>
-          </div></td>
-          <td style="color:#6b7280">${u.email}</td>
-          <td><span class="badge badge-blue">${formatRoleLabel(u.role)}</span></td>
-          <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
-          <td>${u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
-          <td><span class="badge ${u.status==='Active' ? 'badge-green' : 'badge-red'}">${u.status}</span></td>
-          <td>
-            <button class="btn-sm-fc ${u.status==='Active' ? 'btn-sm-danger' : 'btn-sm-toggle'}"
-              onclick="toggleUser(${u.id}, '${u.name}', '${u.status==='Active' ? 'inactive' : 'active'}')">
-              ${u.status==='Active' ? 'Deactivate' : 'Activate'}
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
     loadPtaOccupiedInstitutions();
   } catch(e) { console.error('Users load error:', e); }
 }

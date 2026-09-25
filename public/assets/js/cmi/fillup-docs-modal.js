@@ -25,9 +25,10 @@
   const API_IMG_DEL        = '/api/cmi/tables/delete-doc';
   const API_UPDATE_CAPTION = '/api/cmi/tables/upload-doc';
 
-  let _tableNo = '';
-  let _images  = [];   // [{ id, file_path, caption }]
-  let _onSave  = null;
+  let _tableNo    = '';
+  let _images     = [];   // [{ id, file_path, caption }]
+  let _onSave     = null;
+  let _isReadOnly = false;
 
   /* ─────────────────────────────────────────
      INJECT STYLES (once)
@@ -96,7 +97,7 @@
             <input type="file" id="dm-file-input" accept="image/*,.pdf,application/pdf" multiple style="display:none"
               onchange="DocsModal._upload(this)"/>
           </label>
-          <p class="dm-hint">Supported: JPG, PNG, GIF, WEBP, PDF · Max 5MB each</p>
+          <p class="dm-hint" id="dm-upload-hint">Supported: JPG, PNG, GIF, WEBP, PDF · Max 5MB each</p>
 
           <!-- Thumbnail gallery — no per-image caption inputs -->
           <div id="dm-gallery" class="dm-gallery"></div>
@@ -116,8 +117,8 @@
         <div class="dm-footer">
           <span id="dm-status" class="dm-status"></span>
           <div style="display:flex;gap:8px">
-            <button class="btn" onclick="DocsModal.close()">Cancel</button>
-            <button class="btn btn-primary" onclick="DocsModal._save()">Done</button>
+            <button class="btn" id="dm-cancel-btn" onclick="DocsModal.close()">Cancel</button>
+            <button class="btn btn-primary" id="dm-done-btn" onclick="DocsModal._save()">Done</button>
           </div>
         </div>
       </div>
@@ -163,6 +164,9 @@
 
     gallery.innerHTML = _images.map((img, idx) => {
       const isPdf = /\.pdf$/i.test(img.file_path || '');
+      const delBtn = _isReadOnly ? '' : `<button class="dm-del" onclick="event.stopPropagation();DocsModal._delete(${idx})" title="Remove file" style="position:absolute;top:4px;right:4px">✕</button>`;
+      const imgDelBtn = _isReadOnly ? '' : `<button class="dm-del" onclick="DocsModal._delete(${idx})" title="Remove image">✕</button>`;
+
       if (isPdf) {
         return `
           <div class="dm-item" data-idx="${idx}">
@@ -171,7 +175,7 @@
               <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#dc2626" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
               <span style="font-size:10px;font-weight:700;color:#b91c1c;margin-top:4px">PDF FILE</span>
               <span style="font-size:9.5px;color:#6b7280;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(img.caption || 'Document')}</span>
-              <button class="dm-del" onclick="event.stopPropagation();DocsModal._delete(${idx})" title="Remove file" style="position:absolute;top:4px;right:4px">✕</button>
+              ${delBtn}
             </div>
           </div>`;
       }
@@ -181,7 +185,7 @@
             <img src="${esc(img.file_path)}" class="dm-thumb"
               onclick="window.open('${esc(img.file_path)}','_blank')"
               title="Click to view full size"/>
-            <button class="dm-del" onclick="DocsModal._delete(${idx})" title="Remove image">✕</button>
+            ${imgDelBtn}
           </div>
         </div>
       `;
@@ -195,12 +199,24 @@
     // Use the first image's caption as the representative value —
     // all images in a group share the same caption.
     el.value = _images[0]?.caption || '';
+    el.disabled = _isReadOnly;
+    el.readOnly = _isReadOnly;
+    if (_isReadOnly) {
+      el.style.background = '#f9fafb';
+      el.style.color = '#6b7280';
+      el.style.cursor = 'not-allowed';
+    } else {
+      el.style.background = '';
+      el.style.color = '';
+      el.style.cursor = '';
+    }
   }
 
   /* ─────────────────────────────────────────
      UPLOAD
   ───────────────────────────────────────── */
   function upload(input) {
+    if (_isReadOnly) return;
     const files = [...input.files];
     if (!files.length) return;
 
@@ -281,6 +297,7 @@
      DELETE
   ───────────────────────────────────────── */
   function deleteImg(idx) {
+    if (_isReadOnly) return;
     const img = _images[idx];
     if (!img) return;
 
@@ -319,21 +336,30 @@
      * open(tableNo, images, notes, onSave)  ← notes arg ignored (removed feature)
      */
     open(tableNo, images, notesOrOnSave, maybeOnSave) {
-      if (typeof CMI !== 'undefined' && typeof CMI.isLocked === 'function' && CMI.isLocked(tableNo)) {
-        if (typeof window.showToast === 'function') {
-          window.showToast('Attachments are locked because this table is submitted / read-only.');
-        }
-        return;
-      }
-      ensureModal();
       _tableNo = tableNo;
       _images  = JSON.parse(JSON.stringify(images || []));
 
       _onSave = typeof notesOrOnSave === 'function' ? notesOrOnSave
               : (maybeOnSave || null);
 
+      _isReadOnly = Boolean(typeof CMI !== 'undefined' && typeof CMI.isLocked === 'function' && CMI.isLocked(tableNo));
+
+      ensureModal();
+
       const title = document.getElementById('dm-title');
-      if (title) title.textContent = `Documentation — ${tableNo}`;
+      if (title) {
+        title.innerHTML = `Documentation — ${esc(tableNo)}` + (_isReadOnly ? ' <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#92400e;margin-left:6px;vertical-align:middle">Read-Only</span>' : '');
+      }
+
+      const uploadLabel = document.getElementById('dm-upload-label');
+      const hint = document.getElementById('dm-upload-hint') || document.querySelector('.dm-hint');
+      if (uploadLabel) uploadLabel.style.display = _isReadOnly ? 'none' : '';
+      if (hint) hint.style.display = _isReadOnly ? 'none' : '';
+
+      const doneBtn = document.getElementById('dm-done-btn');
+      if (doneBtn) doneBtn.style.display = _isReadOnly ? 'none' : '';
+      const cancelBtn = document.getElementById('dm-cancel-btn');
+      if (cancelBtn) cancelBtn.textContent = _isReadOnly ? 'Close' : 'Cancel';
 
       setStatus('');
       renderGallery();
@@ -351,6 +377,11 @@
     },
 
     _save() {
+      if (_isReadOnly) {
+        DocsModal.close();
+        return;
+      }
+
       // Capture the latest caption value (handles paste-then-click-Done
       // without a preceding input event in some browsers).
       const caption = getGroupCaption();

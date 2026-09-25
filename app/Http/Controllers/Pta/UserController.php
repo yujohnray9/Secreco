@@ -18,7 +18,7 @@ class UserController extends Controller
     {
         $rows = User::where('role', '!=', 'pta')
             ->where('status', '!=', 'pending')
-            ->orderBy('first_name', 'asc')
+            ->orderBy('id', 'asc')
             ->get();
 
         $roleLabel = [
@@ -33,12 +33,16 @@ class UserController extends Controller
             $isExecutive = ($r->role === 'executive');
             return [
                 'id'          => (int) $r->id,
-                'name'        => $r->name,
+                'first_name'  => $r->first_name,
+                'last_name'   => $r->last_name,
+                'name'        => $r->name ?: trim("{$r->first_name} {$r->last_name}"),
                 'email'       => $r->email,
                 'role'        => $roleLabel[$r->role] ?? $r->role,
                 'position'    => $r->designation ?: ($isExecutive ? 'Executive Director' : '—'),
                 'institution' => $isExecutive ? '—' : ($r->institution ?? '—'),
                 'status'      => ucfirst($r->status),
+                'created_at'  => $r->created_at ? $r->created_at->toDateTimeString() : null,
+                'approved_at' => $r->approved_at ? $r->approved_at->toDateTimeString() : null,
                 'lastLogin'   => '',
             ];
         });
@@ -53,13 +57,21 @@ class UserController extends Controller
             ->orderByDesc('created_at')
             ->get()
             ->map(function ($u) {
-                if ($u->role === 'executive') {
-                    $u->institution = '—';
-                    if (empty($u->designation)) {
-                        $u->designation = 'Executive Director';
-                    }
-                }
-                return $u;
+                $isExecutive = ($u->role === 'executive');
+                return [
+                    'id'          => (int) $u->id,
+                    'first_name'  => $u->first_name,
+                    'last_name'   => $u->last_name,
+                    'name'        => $u->name ?: trim("{$u->first_name} {$u->last_name}"),
+                    'email'       => $u->email,
+                    'role'        => $u->role,
+                    'institution' => $isExecutive ? '—' : ($u->institution ?? '—'),
+                    'designation' => $u->designation ?: ($isExecutive ? 'Executive Director' : '—'),
+                    'position'    => $u->designation ?: ($isExecutive ? 'Executive Director' : '—'),
+                    'status'      => $u->status,
+                    'created_at'  => $u->created_at ? $u->created_at->toDateTimeString() : null,
+                    'approved_at' => $u->approved_at ? $u->approved_at->toDateTimeString() : null,
+                ];
             });
 
         return response()->json(['ok' => true, 'pending' => $pending]);
@@ -67,10 +79,15 @@ class UserController extends Controller
 
     public function create(Request $request): JsonResponse
     {
-        $fullName    = trim($request->input('name', ''));
-        $nameParts   = explode(' ', $fullName, 2);
-        $firstName   = $nameParts[0] ?? '';
-        $lastName    = $nameParts[1] ?? '';
+        $firstName   = trim($request->input('first_name', ''));
+        $lastName    = trim($request->input('last_name', ''));
+        if (!$firstName && $request->has('name')) {
+            $fullName    = trim($request->input('name', ''));
+            $nameParts   = explode(' ', $fullName, 2);
+            $firstName   = $nameParts[0] ?? '';
+            $lastName    = $nameParts[1] ?? '';
+        }
+        $fullName    = trim("{$firstName} {$lastName}");
         $email       = trim($request->input('email', ''));
         $role        = trim($request->input('role', ''));
         $institution = trim($request->input('institution', ''));
