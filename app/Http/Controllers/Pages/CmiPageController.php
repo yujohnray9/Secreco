@@ -20,6 +20,8 @@ class CmiPageController extends Controller
         $userInst = $targetUser?->institution ?: session('user_inst', '');
         $userName = $targetUser ? ($targetUser->first_name . ' ' . $targetUser->last_name) : session('user_name', 'CMI User');
 
+        $activeYear = (int) (\App\Models\SystemSetting::where('key', 'active_year')->value('value') ?? date('Y'));
+
         return view("cmi.{$page}", [
             'currentPage'  => $page,
             'userName'     => $userName,
@@ -28,6 +30,7 @@ class CmiPageController extends Controller
             'userDesig'    => $targetUser?->designation ?: session('user_desig', ''),
             'userPhoto'    => $targetUser?->profile_picture ?: session('user_photo', null),
             'targetUserId' => $targetUserId,
+            'currentYear'  => $activeYear,
         ]);
     }
 }

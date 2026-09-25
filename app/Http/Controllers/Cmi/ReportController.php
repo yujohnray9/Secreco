@@ -71,18 +71,24 @@ class ReportController extends Controller
             }
         }
 
-        // Update tables with content or draft status for this user and year to 'submitted' on submit (preserving each table's own updated_at and original submitted_at)
+        // ─────────────────────────────────────────────────────────────
+        // FIX: "draft" tables stay private and are NOT converted to
+        // "submitted" here. Only tables the CMI explicitly marked as
+        // "done" (or that are already submitted) get finalized when
+        // Submit Reports is clicked. A table stays as 'draft' until
+        // the CMI later saves it as 'done' and submits again.
+        // ─────────────────────────────────────────────────────────────
         ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
-            ->whereNotIn('status', ['accepted', 'deleted'])
+            ->whereNotIn('status', ['accepted', 'deleted', 'draft'])
             ->get()
             ->each(function ($tbl) use ($submittedAtStr, $historicalTableSubmittedAt) {
                 $hasRows = is_array($tbl->rows_json) && count($tbl->rows_json) > 0;
                 $hasMeta = is_array($tbl->meta_json) && count($tbl->meta_json) > 0;
-                if ($hasRows || $hasMeta || in_array($tbl->status, ['draft', 'done', 'submitted'], true)) {
+                if ($hasRows || $hasMeta || in_array($tbl->status, ['done', 'submitted'], true)) {
                     $tbl->timestamps = false;
                     $meta = is_array($tbl->meta_json) ? $tbl->meta_json : [];
-                    
+
                     // Check if this table was ALREADY officially submitted in an earlier batch
                     $wasAlreadySubmitted = ($tbl->status === 'submitted') && !empty($meta['submitted_at']);
                     $priorDate = $historicalTableSubmittedAt[$tbl->table_no]
@@ -197,4 +203,4 @@ class ReportController extends Controller
             'summary'       => $summary,
         ]);
     }
-}
+}   

@@ -748,7 +748,7 @@ function getCmiReportName(n) {
   const isAct = (n.notif_type === 'year_activation' || n.type === 'year_activation' || ((n.msg || '').toLowerCase().includes('is now active')) || ((n.msg || '').toLowerCase().includes('reporting cycle')));
   if (isAct) {
     const yrMatch = (n.msg || '').match(/CY\s*(\d{4})/i);
-    const yr = yrMatch ? yrMatch[1] : '{{ $currentYear }}';
+    const yr = yrMatch ? yrMatch[1] : '{{ $currentYear ?? date('Y') }}';
     return `(CY ${yr})`;
   }
   if (n.table_name) return n.table_name;
@@ -880,7 +880,7 @@ function openNotificationDetail(id) {
   );
 
   const yrMatch = (item.msg || '').match(/CY\s*(\d{4})/i);
-  const yr = yrMatch ? yrMatch[1] : '{{ $currentYear }}';
+  const yr = yrMatch ? yrMatch[1] : '{{ $currentYear ?? date('Y') }}';
   const refNum = 'NOTIF-' + yr + '-' + String(item.id || Math.abs(hashCode(item.msg || '')) % 900000 + 100000).padStart(6, '0');
   const report = getCmiReportName(item);
   const dt = item.time ? formatNiceDateTime(item.time) : 'Sep 1, 2026 10:18 AM';
@@ -1039,7 +1039,7 @@ function renderCmiList() {
       ((n.msg || '').toLowerCase().includes('reporting cycle'))
     );
     const yrMatch = (n.msg || '').match(/CY\s*(\d{4})/i);
-    const yr = yrMatch ? yrMatch[1] : '{{ $currentYear }}';
+    const yr = yrMatch ? yrMatch[1] : '{{ $currentYear ?? date('Y') }}';
 
     let cardTitle = n.msg || 'Report Update';
     let badgeHtml = '';
