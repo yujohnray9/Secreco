@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cmi;
 
 use App\Http\Controllers\Controller;
 use App\Models\CorrectionRequest;
+use App\Models\ReportSubmission;
 use App\Models\ReportTable;
 use App\Models\Submission;
 use App\Models\User;
@@ -23,49 +24,36 @@ class DashboardController extends Controller
             ->orderBy('table_no', 'asc')
             ->get();
 
-        $baseSections = config('secreco.sections', [
-            'R&D Mgt. & Coord.'       => ['T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b'],
-            'Strategic R&D'           => ['T8a', 'T8b', 'T9'],
-            'Results Utilization'     => ['T10', 'T11', 'T12', 'T13'],
-            'Capability & Governance' => ['T14', 'T15', 'T16', 'T17', 'T18', 'T19'],
-            'Policy Analysis'         => ['T20a', 'T20b'],
-        ]);
-
-        $sections = $baseSections;
-        $allTableKeys = config('secreco.all_tables', [
-            'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
-            'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
-            'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b',
-        ]);
-
-        foreach ($templates as $t) {
-            $tNo = $t->table_no;
-            if (!in_array($tNo, $allTableKeys, true)) {
+        if ($templates->isNotEmpty()) {
+            $sections = [];
+            $allTableKeys = [];
+            $tableLabels = [];
+            foreach ($templates as $t) {
+                $tNo = $t->table_no;
+                $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tNo));
                 $allTableKeys[] = $tNo;
+                $sec = trim($t->section) ?: 'General';
+                $sections[$sec][] = $tNo;
+                $tableLabels[$cleanKey] = $t->title ?: ('Table ' . $tNo);
             }
-            $sec = trim($t->section) ?: 'General';
-            $matchedSec = null;
-            foreach (array_keys($sections) as $sKey) {
-                if (strcasecmp($sKey, $sec) === 0) {
-                    $matchedSec = $sKey;
-                    break;
-                }
-            }
-            if ($matchedSec) {
-                if (!in_array($tNo, $sections[$matchedSec], true)) {
-                    $sections[$matchedSec][] = $tNo;
-                }
-            } else {
-                if (!isset($sections[$sec])) {
-                    $sections[$sec] = [];
-                }
-                if (!in_array($tNo, $sections[$sec], true)) {
-                    $sections[$sec][] = $tNo;
-                }
-            }
+            $totalRequired = count($allTableKeys);
+        } else {
+            $baseSections = config('secreco.sections', [
+                'R&D Mgt. & Coord.'       => ['T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b'],
+                'Strategic R&D'           => ['T8a', 'T8b', 'T9'],
+                'Results Utilization'     => ['T10', 'T11', 'T12', 'T13'],
+                'Capability & Governance' => ['T14', 'T15', 'T16', 'T17', 'T18', 'T19'],
+                'Policy Analysis'         => ['T20a', 'T20b'],
+            ]);
+            $sections = $baseSections;
+            $allTableKeys = config('secreco.all_tables', [
+                'T1', 'T2a', 'T2b', 'T3', 'T4', 'T5', 'T6', 'T7a', 'T7b',
+                'T8a', 'T8b', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14',
+                'T15', 'T16', 'T17', 'T18', 'T19', 'T20a', 'T20b',
+            ]);
+            $tableLabels = config('secreco.table_labels', []);
+            $totalRequired = count($allTableKeys);
         }
-        $tableLabels = config('secreco.table_labels');
-        $totalRequired = count($allTableKeys);
 
         $userId = Auth::id() ?? session('user_id');
 
@@ -291,6 +279,126 @@ class DashboardController extends Controller
         $daysLeft    = max(0, (int) ceil(($deadlineTs - $todayTs) / 86400));
         $deadlineFmt = date('M j, Y', $deadlineTs);
 
+        // ── Comprehensive Consortium Institution Progress (All Institutions) ──
+        $allCmiUsers = User::where('role', 'cmi')->where('status', 'active')->orderBy('institution')->get();
+        $groupedCMIs = $allCmiUsers->groupBy('institution');
+
+        $allInstTables = ReportTable::where('reporting_year', $reportingYear)
+            ->whereHas('user', function ($q) {
+                $q->where('role', 'cmi')->where('status', 'active');
+            })->get();
+
+        $allTablesByUser = [];
+        foreach ($allInstTables as $row) {
+            $allTablesByUser[$row->user_id][] = $row;
+        }
+
+        $allSubmissions = ReportSubmission::where('reporting_year', $reportingYear)
+            ->orderByDesc('submitted_at')
+            ->get();
+        $subsByUser = [];
+        foreach ($allSubmissions as $s) {
+            $subsByUser[$s->user_id][] = $s;
+        }
+
+        $masterList = config('secreco.institutions', []);
+
+        // Ensure any institution with active CMI users is in masterList
+        foreach ($groupedCMIs as $instName => $users) {
+            if (!empty(trim((string) $instName))) {
+                $matched = false;
+                foreach (array_keys($masterList) as $mKey) {
+                    if (strcasecmp(trim($mKey), trim($instName)) === 0) {
+                        $matched = true;
+                        break;
+                    }
+                }
+                if (!$matched) {
+                    $masterList[$instName] = ['short' => '', 'type' => 'Member Institution'];
+                }
+            }
+        }
+
+        $TOTAL_TABLES = $totalRequired > 0 ? $totalRequired : 24;
+        $institutionProgress = [];
+
+        foreach ($masterList as $instName => $meta) {
+            $users = $groupedCMIs->get($instName, collect());
+            if ($users->isEmpty()) {
+                foreach ($groupedCMIs as $gKey => $gUsers) {
+                    if (strcasecmp(trim((string) $gKey), trim((string) $instName)) === 0) {
+                        $users = $gUsers;
+                        break;
+                    }
+                }
+            }
+            $uIds = $users->pluck('id')->all();
+
+            $sub = null;
+            if ($uIds) {
+                foreach ($uIds as $uid) {
+                    if (!empty($subsByUser[$uid])) {
+                        $candidateSub = $subsByUser[$uid][0];
+                        if (!$sub || ($candidateSub->submitted_at && (!$sub->submitted_at || $candidateSub->submitted_at > $sub->submitted_at))) {
+                            $sub = $candidateSub;
+                        }
+                    }
+                }
+            }
+            $subStatus = $sub?->status;
+
+            $distinctTables = [];
+            $hasAnyDraft = false;
+            foreach ($uIds as $uid) {
+                $userTables = $allTablesByUser[$uid] ?? [];
+                foreach ($userTables as $tr) {
+                    $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tr->table_no));
+                    if (in_array($tr->status, ['done', 'submitted', 'accepted'], true)) {
+                        $distinctTables[$cleanKey] = true;
+                    }
+                    if ($tr->status === 'draft' || !empty($tr->rows_json) || !empty($tr->meta_json)) {
+                        $hasAnyDraft = true;
+                    }
+                }
+            }
+
+            $tablesDone = count($distinctTables);
+            $pct = $TOTAL_TABLES > 0 ? round(($tablesDone / $TOTAL_TABLES) * 100) : 0;
+
+            if ($subStatus === 'accepted') {
+                $status = 'Accepted';
+            } elseif ($subStatus === 'submitted') {
+                $status = 'Submitted';
+            } elseif ($subStatus === 'returned') {
+                $status = 'Returned';
+            } elseif ($tablesDone > 0 || $hasAnyDraft || $subStatus === 'in-progress') {
+                $status = 'In Progress';
+            } else {
+                $status = 'Not Started';
+            }
+
+            $encoderNames = $users->pluck('name')->filter()->join(', ');
+
+            $institutionProgress[] = [
+                'institution'  => $instName,
+                'short'        => $meta['short'] ?? '',
+                'encoder'      => $encoderNames ?: '—',
+                'tables_done'  => $tablesDone,
+                'total_tables' => $TOTAL_TABLES,
+                'pct'          => $pct,
+                'status'       => $status,
+                'submitted_at' => $sub?->submitted_at ? $sub->submitted_at->toDateTimeString() : null,
+            ];
+        }
+
+        // Sort by progress percentage descending, then alphabetically
+        usort($institutionProgress, function ($a, $b) {
+            if ($b['pct'] !== $a['pct']) {
+                return $b['pct'] <=> $a['pct'];
+            }
+            return strcmp($a['institution'], $b['institution']);
+        });
+
         return response()->json([
             'stats' => [
                 'complete'       => $complete,
@@ -304,9 +412,13 @@ class DashboardController extends Controller
                 'date'     => $deadlineFmt,
                 'daysLeft' => $daysLeft,
             ],
-            'sectionProgress' => $sectionProgress,
-            'recentActivity'  => $recentActivity,
-            'corrections'     => $correctionsList,
+            'my_institution'       => $me?->institution,
+            'institution_progress' => $institutionProgress,
+            'cmi_list'             => $institutionProgress,
+            'cmi_status_list'      => $institutionProgress,
+            'sectionProgress'      => $sectionProgress,
+            'recentActivity'       => $recentActivity,
+            'corrections'          => $correctionsList,
         ]);
     }
 }

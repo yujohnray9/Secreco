@@ -14,7 +14,7 @@ async function loadNotifications() {
     if (!card) return;
 
     try {
-        const res  = await fetch(`/api/notifications/get.php?year=${year}`);
+        const res  = await fetch(`/api/pta/notifications?year=${year}`);
         const json = await res.json();
         if (!json.ok) throw new Error(json.error ?? 'API error');
 
@@ -78,13 +78,21 @@ function renderItem(n) {
     const timeStr     = formatRelativeTime(n.time);
     const unreadClass = n.unread ? ' notif-unread' : '';
     const unreadDot   = n.unread ? '<div class="notif-dot-unread"></div>' : '';
-    const isApprovalOrActivation = n.notif_type === 'year_activation' || n.type === 'year_activation' ||
-        n.notif_type === 'user_approval' || n.notif_type === 'accepted' ||
-        (n.msg && (n.msg.toLowerCase().includes('is now active') || n.msg.toLowerCase().includes('accepted') || n.msg.toLowerCase().includes('approved')));
-    const actionBtn = (!isApprovalOrActivation && n.action)
-        ? `<div class="notif-action"><button class="btn-notif${n.unread ? '' : ' outline'}" onclick="navTo('${esc(n.action)}')">${esc(n.action_label ?? 'View')}</button></div>`
+    const isInfoOnly  = n.notif_type === 'year_activation' || n.type === 'year_activation' ||
+        (n.msg && n.msg.toLowerCase().includes('is now active'));
+    const actionUrl   = n.action || (n.notif_type === 'user_approval' ? '/dashboard/pta/users' : '');
+    const actionBtn   = (!isInfoOnly && actionUrl)
+        ? `<div class="notif-action"><button class="btn-notif${n.unread ? '' : ' outline'}" onclick="window.location.href='${esc(actionUrl)}'">${esc(n.action_label ?? 'View')}</button></div>`
         : '';
-    const badgeLabel  = typeBadgeLabel(n.type, n.status);
+    const badgeLabel  = typeBadgeLabel(n.type, n.status, n.notif_type);
+
+    let desc = 'Institutional report information was updated and is ready for review.';
+    if (n.notif_type === 'submission' || n.type === 'green' || (n.msg && n.msg.toLowerCase().includes('submitted'))) {
+        desc = 'A new institutional submission has been received and is ready for validation.';
+    }
+    if (n.notif_type === 'user_approval' || n.type === 'yellow' || (n.msg && (n.msg.toLowerCase().includes('pending approval') || n.msg.toLowerCase().includes('account approval')))) {
+        desc = 'A new user account registration is pending review and approval.';
+    }
 
     return `
     <div class="notif-item${unreadClass}" data-type="${esc(n.type)}">
@@ -94,6 +102,7 @@ function renderItem(n) {
                 <div class="notif-msg">${esc(n.msg)}</div>
                 ${actionBtn}
             </div>
+            <p style="font-size:12px;color:#6b7280;margin:3px 0 6px 0;">${esc(desc)}</p>
             <div class="notif-meta">
                 <span class="notif-time">${timeStr}</span>
                 <span class="notif-badge ${esc(n.type)}">${badgeLabel}</span>
@@ -121,7 +130,7 @@ function notifToggleUnread() {
 // ── MARK ALL READ ─────────────────────────────────────────────
 async function markAllRead() {
     try {
-        await fetch('/api/notifications/mark_read.php', {
+        await fetch('/api/pta/notifications/mark-read', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ all: true }),
@@ -147,19 +156,35 @@ function updateBellBadge(count) {
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
+function getManilaDateString(d) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(d);
+}
+
+function parseManilaDate(datetimeStr) {
+    if (!datetimeStr) return null;
+    let d;
+    if (typeof datetimeStr === 'string' && !datetimeStr.includes('T') && !datetimeStr.includes('Z') && !datetimeStr.includes('+')) {
+        d = new Date(datetimeStr.replace(' ', 'T') + '+08:00');
+    } else {
+        d = new Date(datetimeStr);
+    }
+    return isNaN(d.getTime()) ? null : d;
+}
+
 function groupByDate(items) {
     const groups = new Map();
-    const now    = new Date();
-    const today  = dateOnly(now);
-    const yest   = new Date(today); yest.setDate(yest.getDate() - 1);
+    const now = new Date();
+    const todayStr = getManilaDateString(now);
+    const yestDate = new Date(now.getTime() - 86400000);
+    const yestStr = getManilaDateString(yestDate);
 
     for (const n of items) {
-        const d    = new Date(n.time);
-        const day  = dateOnly(d);
+        const d = parseManilaDate(n.time) || new Date();
+        const itemDayStr = getManilaDateString(d);
         let label;
-        if (+day === +today) label = 'Today';
-        else if (+day === +yest) label = 'Yesterday';
-        else label = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        if (itemDayStr === todayStr) label = 'Today';
+        else if (itemDayStr === yestStr) label = 'Yesterday';
+        else label = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' });
 
         if (!groups.has(label)) groups.set(label, []);
         groups.get(label).push(n);
@@ -167,33 +192,53 @@ function groupByDate(items) {
     return groups;
 }
 
-function dateOnly(d) {
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
-function typeBadgeLabel(type, status) {
+function typeBadgeLabel(type, status, notifType) {
+    if (notifType === 'user_approval' || type === 'yellow') return 'Account Approval';
     const map = {
-        yellow : 'Pending Approval',
+        yellow : 'Account Approval',
         red    : 'Returned',
         green  : status === 'accepted' ? 'Accepted' : 'Submitted',
         blue   : 'Activity Log',
     };
-    return map[type] ?? type;
+    return map[type] ?? 'System Report';
 }
 
-function formatRelativeTime(datetimeStr) {
+function formatRelativeTime(datetimeStr, fallback) {
+    if (!datetimeStr && fallback) return fallback;
     if (!datetimeStr) return '—';
-    const date = new Date(datetimeStr);
-    const now  = new Date();
-    const diffMins = Math.floor((now - date) / 60000);
-    const timeStr  = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    const diffDays = Math.round((dateOnly(now) - dateOnly(date)) / 86400000);
+    const date = parseManilaDate(datetimeStr);
+    if (!date) return fallback || datetimeStr;
+    const now = new Date();
 
-    if (diffMins < 2)   return 'Just now';
-    if (diffMins < 60)  return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-    if (diffDays === 0) return `Today ${timeStr}`;
-    if (diffDays === 1) return `Yesterday ${timeStr}`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ` ${timeStr}`;
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    const timeStr = date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Manila'
+    });
+
+    if (diffMins >= 0 && diffMins < 2) return 'Just now';
+    if (diffMins >= 2 && diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+
+    const todayStr = getManilaDateString(now);
+    const itemDayStr = getManilaDateString(date);
+
+    if (itemDayStr === todayStr) return `Today ${timeStr}`;
+
+    const yestDate = new Date(now.getTime() - 86400000);
+    const yestStr = getManilaDateString(yestDate);
+    if (itemDayStr === yestStr) return `Yesterday ${timeStr}`;
+
+    const dateStr = date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'Asia/Manila'
+    });
+    return `${dateStr} ${timeStr}`;
 }
 
 function esc(s) {

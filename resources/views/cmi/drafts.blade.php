@@ -69,17 +69,28 @@ async function loadDrafts() {
     const json = await res.json();
 
     if (json.statuses) {
-      const canonTables = Object.keys(TABLE_TITLES);
-      const drafts = canonTables
-        .map(tNo => ({ tableNo: tNo, status: json.statuses[tNo] || json.statuses[tNo.toUpperCase()] || json.statuses[tNo.toLowerCase()] || '' }))
+      let tableKeys = Object.keys(TABLE_TITLES);
+      let titleMap = Object.assign({}, TABLE_TITLES);
+      if (json.templates && json.templates.length > 0) {
+        tableKeys = json.templates.map(t => t.table_no);
+        json.templates.forEach(t => {
+          titleMap[t.table_no] = t.title || ('Table ' + t.table_no);
+        });
+      }
+      const drafts = tableKeys
+        .map(tNo => ({
+          tableNo: tNo,
+          title: titleMap[tNo] || TABLE_TITLES[tNo] || '',
+          status: json.statuses[tNo] || json.statuses[tNo.toUpperCase()] || json.statuses[tNo.toLowerCase()] || ''
+        }))
         .filter(item => item.status === 'draft');
 
       if (drafts.length === 0) {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:32px;color:#6b7280">No draft tables found for CY ' + year + '.<br><span style="font-size:12px;color:#9ca3af">Saved draft tables will appear here.</span></td></tr>';
       } else {
-        tbody.innerHTML = drafts.map(({ tableNo }) => `
+        tbody.innerHTML = drafts.map(({ tableNo, title }) => `
           <tr>
-            <td><strong>Table ${tableNo}</strong> — ${TABLE_TITLES[tableNo] || ''}</td>
+            <td><strong>Table ${tableNo}</strong> — ${title}</td>
             <td><span class="badge badge-orange" style="background:#fff7ed;color:#d97706;padding:4px 10px;border-radius:12px;font-weight:600;font-size:11.5px">⏳ DRAFT</span></td>
             <td><a href="/dashboard/cmi/fillup?t=${tableNo}" class="btn btn-sm" style="background:#10b981;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;text-decoration:none">Edit Draft</a></td>
           </tr>

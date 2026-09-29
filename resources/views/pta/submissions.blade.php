@@ -509,6 +509,15 @@
       author: 'Author', description: 'Description', findings: 'Findings'
     };
 
+    function formatColumnHeader(k) {
+      if (!k) return 'Column';
+      if (COLUMN_LABELS[k]) return COLUMN_LABELS[k];
+      const cleaned = String(k).replace(/^col[_\s]*/i, '').replace(/_/g, ' ').trim();
+      if (!cleaned) return 'Column';
+      return cleaned.replace(/\b\w/g, l => l.toUpperCase());
+    }
+    window.formatColumnHeader = formatColumnHeader;
+
     function getFieldInputType(k) {
       const norm = (k || '').toLowerCase();
       if (norm === 'category') {
@@ -550,10 +559,27 @@
       return str;
     }
 
-    function renderCellInput(key, rawVal, isViewOnly = false) {
-      const type = getFieldInputType(key);
+    window._currentColOptionsMap = {};
+    window._currentColDefs = [];
+    window._currentEditKeys = [];
+
+    function renderCellInput(key, rawVal, isViewOnly = false, colDef = null) {
+      const type = colDef?.type || getFieldInputType(key);
+      const opts = colDef?.options || window._currentColOptionsMap[key] || null;
       let val = rawVal ?? '';
       const disAttr = isViewOnly ? 'disabled style="background:#f9fafb;cursor:not-allowed;' : 'style="';
+
+      if (type === 'dropdown' && Array.isArray(opts) && opts.length > 0) {
+        const optHtml = ['<option value="">-- Select --</option>'].concat(
+          opts.map(o => {
+            const sVal = String(o).trim();
+            const isSel = String(val).trim() === sVal ? 'selected' : '';
+            return `<option value="${sVal.replace(/"/g, '&quot;')}" ${isSel}>${sVal}</option>`;
+          })
+        ).join('');
+        return `<select class="pta-cell-inp" data-key="${key}" ${disAttr}width:100%;min-width:120px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;">${optHtml}</select>`;
+      }
+
       if (type === 'category') {
         const cat = String(val || 'go').toLowerCase().trim();
         return `<select class="pta-cell-inp" data-key="category" ${disAttr}width:100%;min-width:110px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;">
@@ -563,17 +589,100 @@
           <option value="lgu" ${cat==='lgu'?'selected':''}>LGU (Local Govt Unit)</option>
         </select>`;
       }
+
       if (type === 'date') {
         const dateVal = formatForDateInput(val);
         return `<input type="date" class="pta-cell-inp" data-key="${key}" value="${String(dateVal).replace(/"/g, '&quot;')}" ${disAttr}width:100%;min-width:130px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`;
       }
+
       if (type === 'number') {
         const numVal = (val === '' || val === null || val === undefined) ? '' : val;
         return `<input type="number" min="0" step="any" class="pta-cell-inp" data-key="${key}" value="${String(numVal).replace(/"/g, '&quot;')}" placeholder="0" ${disAttr}width:100%;min-width:65px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`;
       }
-      return `<input type="text" class="pta-cell-inp" data-key="${key}" value="${String(val).replace(/"/g, '&quot;')}" placeholder="${COLUMN_LABELS[key] || key}" ${disAttr}width:100%;min-width:90px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`;
+
+      const ph = colDef?.label || COLUMN_LABELS[key] || formatColumnHeader(key);
+      return `<input type="text" class="pta-cell-inp" data-key="${key}" value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph.replace(/"/g, '&quot;')}" ${disAttr}width:100%;min-width:90px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`;
     }
     window._renderCellInput = renderCellInput;
+
+  function resolveTableColumns(r) {
+    if (!r) return [];
+    const tNoUpper = (r.table_no || '').toUpperCase();
+
+    // 1. Check if format template columns were passed in r.columns
+    let rawCols = r.columns;
+    if (typeof rawCols === 'string') {
+      try { rawCols = JSON.parse(rawCols); } catch (e) { rawCols = null; }
+    }
+    let templateCols = [];
+    if (rawCols) {
+      if (Array.isArray(rawCols)) {
+        templateCols = rawCols;
+      } else if (typeof rawCols === 'object') {
+        if (Array.isArray(rawCols.titles) && rawCols.titles.length > 0 && Array.isArray(rawCols.titles[0]?.columns)) {
+          templateCols = rawCols.titles[0].columns;
+        } else if (Array.isArray(rawCols.columns)) {
+          templateCols = rawCols.columns;
+        }
+      }
+    }
+
+    if (templateCols && templateCols.length > 0) {
+      return templateCols.map(c => {
+        if (typeof c === 'string') {
+          return { key: c, label: c, type: getFieldInputType(c), options: [] };
+        }
+        const key = c.key || c.name || 'col';
+        const label = c.label || c.name || c.title || formatColumnHeader(key);
+        const type = c.type || getFieldInputType(key);
+        let options = c.options || [];
+        if (typeof options === 'string') {
+          options = options.split(',').map(s => s.trim()).filter(Boolean);
+        }
+        return { key, label, type, options };
+      });
+    }
+
+    // 2. Standard table keys
+    if (DEFAULT_TABLE_KEYS[tNoUpper] && DEFAULT_TABLE_KEYS[tNoUpper].length > 0) {
+      return DEFAULT_TABLE_KEYS[tNoUpper].map(k => ({
+        key: k,
+        label: COLUMN_LABELS[k] || formatColumnHeader(k),
+        type: getFieldInputType(k),
+        options: []
+      }));
+    }
+
+    // 3. Fallback: check actual keys in r.rows
+    if (r.rows && Array.isArray(r.rows) && r.rows.length > 0) {
+      const foundKeys = [];
+      r.rows.forEach(row => {
+        if (row && typeof row === 'object') {
+          Object.keys(row).forEach(k => {
+            if (k && !k.startsWith('_') && !k.startsWith('field') && !foundKeys.includes(k)) {
+              foundKeys.push(k);
+            }
+          });
+        }
+      });
+      if (foundKeys.length > 0) {
+        return foundKeys.map(k => ({
+          key: k,
+          label: COLUMN_LABELS[k] || formatColumnHeader(k),
+          type: getFieldInputType(k),
+          options: []
+        }));
+      }
+    }
+
+    // 4. Fallback business columns
+    return [
+      { key: 'description', label: 'Item Description', type: 'text', options: [] },
+      { key: 'agency', label: 'Agency / Institution', type: 'text', options: [] },
+      { key: 'amount', label: 'Amount / Budget', type: 'number', options: [] },
+      { key: 'remarks', label: 'Remarks', type: 'text', options: [] }
+    ];
+  }
 
   window.viewDataModal = function(idx, isViewOnly = false) {
     currentEditSubIdx = idx;
@@ -587,24 +696,46 @@
     let html = '';
 
     let rows = (r.rows && r.rows.length > 0) ? JSON.parse(JSON.stringify(r.rows)) : [{}];
-    const tNoUpper = (r.table_no || '').toUpperCase();
-    const stdKeys = DEFAULT_TABLE_KEYS[tNoUpper] || ['field1', 'field2', 'field3', 'field4'];
+    const colDefs = resolveTableColumns(r);
+    const colOptionsMap = {};
+    const colDefMap = {};
+    colDefs.forEach(cd => {
+      colDefMap[cd.key] = cd;
+      if (cd.options && cd.options.length > 0) {
+        colOptionsMap[cd.key] = cd.options;
+      }
+    });
+
     const keyAliases = {
       'new': 'new_',
       'new_projects': 'new_',
     };
-    const customKeys = [];
+
+    // If rows have extra keys not defined in colDefs, append them
+    const existingKeys = colDefs.map(c => c.key);
     rows.forEach(row => {
       if (row && typeof row === 'object') {
         Object.keys(row).forEach(k => {
           const canonical = keyAliases[k] || k;
-          if (k && !stdKeys.includes(canonical) && !stdKeys.includes(k) && !customKeys.includes(k) && !k.startsWith('_') && k !== 'field1') {
-            customKeys.push(k);
+          if (k && !existingKeys.includes(canonical) && !existingKeys.includes(k) && !k.startsWith('_') && !k.startsWith('field')) {
+            existingKeys.push(k);
+            const extraDef = {
+              key: k,
+              label: COLUMN_LABELS[k] || formatColumnHeader(k),
+              type: getFieldInputType(k),
+              options: []
+            };
+            colDefs.push(extraDef);
+            colDefMap[k] = extraDef;
           }
         });
       }
     });
-    let keys = [...stdKeys, ...customKeys];
+
+    const keys = colDefs.map(c => c.key);
+    window._currentColOptionsMap = colOptionsMap;
+    window._currentColDefs = colDefs;
+    window._currentEditKeys = keys;
 
     if (isViewOnly) {
       const isReturned = r.table_status === 'returned';
@@ -621,7 +752,7 @@
       <thead>
         <tr>
           <th style="width:36px">#</th>
-          ${keys.map(k=>`<th>${COLUMN_LABELS[k] || k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' ')}</th>`).join('')}
+          ${colDefs.map(cd => `<th>${cd.label}</th>`).join('')}
           ${!isViewOnly ? '<th style="width:40px">Del</th>' : ''}
         </tr>
       </thead>
@@ -630,14 +761,15 @@
     rows.forEach((row, rIdx) => {
       html += `<tr>
         <td style="text-align:center;font-weight:600;color:#6b7280">${rIdx + 1}</td>
-        ${keys.map(k=>{
+        ${colDefs.map(cd => {
+          const k = cd.key;
           let cellVal = row[k];
           if (cellVal === undefined || cellVal === null || cellVal === '') {
             if (k === 'new_' || k === 'new') {
               cellVal = row['new_'] ?? row['new'] ?? row['new_projects'] ?? '';
             }
           }
-          return `<td>${renderCellInput(k, cellVal, isViewOnly)}</td>`;
+          return `<td>${renderCellInput(k, cellVal, isViewOnly, cd)}</td>`;
         }).join('')}
         ${!isViewOnly ? `<td style="text-align:center"><button type="button" onclick="this.closest('tr').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:bold;">×</button></td>` : ''}
       </tr>`;
@@ -815,22 +947,30 @@
   window.addPtaEditRow = function() {
     const tbody = document.getElementById('ptaEditTbody');
     if (!tbody) return;
-    const firstRow = tbody.querySelector('tr');
-    let keys = [];
-    if (firstRow) {
-      keys = [...firstRow.querySelectorAll('.pta-cell-inp')].map(inp => inp.dataset.key);
-    }
-    if ((!keys || !keys.length) && currentEditSubIdx >= 0) {
+    let colDefs = (window._currentColDefs && window._currentColDefs.length > 0) ? window._currentColDefs : [];
+    if (!colDefs.length && currentEditSubIdx >= 0) {
       const r = cachedSubRows[currentEditSubIdx];
-      const tNo = (r?.table_no || '').toUpperCase();
-      const map = window._DEFAULT_TABLE_KEYS || {};
-      keys = map[tNo] || ['field1', 'field2', 'field3', 'field4'];
+      colDefs = resolveTableColumns(r);
+    }
+    if (!colDefs.length) {
+      const firstRow = tbody.querySelector('tr');
+      if (firstRow) {
+        const keys = [...firstRow.querySelectorAll('.pta-cell-inp')].map(inp => inp.dataset.key);
+        colDefs = keys.map(k => ({ key: k, label: formatColumnHeader(k), type: getFieldInputType(k), options: [] }));
+      }
+    }
+    if (!colDefs.length) {
+      colDefs = [
+        { key: 'description', label: 'Item Description', type: 'text', options: [] },
+        { key: 'agency', label: 'Agency / Institution', type: 'text', options: [] },
+        { key: 'amount', label: 'Amount / Budget', type: 'number', options: [] },
+        { key: 'remarks', label: 'Remarks', type: 'text', options: [] }
+      ];
     }
     const rowCount = tbody.rows.length + 1;
     const tr = document.createElement('tr');
-    const renderInp = window._renderCellInput || ((k, v) => `<input type="text" class="pta-cell-inp" data-key="${k}" value="${v}" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`);
     tr.innerHTML = `<td style="text-align:center;font-weight:600;color:#6b7280">${rowCount}</td>
-      ${keys.map(k=>`<td>${renderInp(k, '')}</td>`).join('')}
+      ${colDefs.map(cd => `<td>${renderCellInput(cd.key, '', false, cd)}</td>`).join('')}
       <td style="text-align:center"><button type="button" onclick="this.closest('tr').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:bold;">×</button></td>`;
     tbody.appendChild(tr);
   };

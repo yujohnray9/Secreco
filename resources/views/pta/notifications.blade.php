@@ -494,7 +494,63 @@
 let _allPtaNotifications = [];
 let _currentFilter = 'all';
 
+function isAccountApprovalNotif(n) {
+  if (!n) return false;
+
+  // Definite submissions should NOT be account approvals
+  if (n.notif_type === 'submission') return false;
+  const action = String(n.action || n.action_url || '').toLowerCase();
+  if (action.includes('submission')) return false;
+  if (n.table_id || n.table_name) return false;
+
+  // Explicit type checks
+  const notifType = (n.notif_type || n.type || '').toLowerCase();
+  if (['user_approval', 'user_registered', 'account_approval', 'pending_user'].includes(notifType)) {
+    return true;
+  }
+
+  // Key check (derived user notifications from backend)
+  const key = String(n.key || '').toLowerCase();
+  if (key.startsWith('derived_user_') || key.includes('pending_user') || key.includes('user_approval')) {
+    return true;
+  }
+
+  // Action / URL check (navigates to users management)
+  if (action.includes('/users') || action.endsWith('users')) {
+    return true;
+  }
+
+  // Icon check
+  if (n.icon === '👥') return true;
+
+  // Broad text search across all relevant fields
+  const combined = (
+    (n.notif_type || '') + ' ' +
+    (n.type || '') + ' ' +
+    (n.msg || n.message || '') + ' ' +
+    action + ' ' +
+    key
+  ).toLowerCase();
+
+  // If it's year activation, not account approval
+  if (combined.includes('cycle is now open') || combined.includes('is now active')) return false;
+
+  // Check account/user approval keywords
+  if (combined.includes('account approval') || combined.includes('account for approval') || combined.includes('accounts for approval') || combined.includes('pending approval') || combined.includes('awaiting approval') || combined.includes('for approval')) {
+    if (combined.includes('user') || combined.includes('account') || combined.includes('registration') || combined.includes('registered') || combined.includes('register')) {
+      return true;
+    }
+  }
+
+  if (combined.includes('registered as') || combined.includes('new user') || combined.includes('user registered') || combined.includes('user registration') || combined.includes('account registration') || combined.includes('accounts pending') || combined.includes('pending user')) {
+    return true;
+  }
+
+  return false;
+}
+
 function getPtaCardCategory(n) {
+  if (isAccountApprovalNotif(n)) return 'users';
   const t = ((n.notif_type || '') + ' ' + (n.type || '') + ' ' + (n.msg || '')).toLowerCase();
   if (t.includes('submit') || t.includes('submission') || t.includes('accomplishment')) return 'submissions';
   if (t.includes('update') || t.includes('table') || t.includes('edit')) return 'updates';
@@ -502,6 +558,12 @@ function getPtaCardCategory(n) {
 }
 
 function getPtaNotifSvg(category) {
+  if (category === 'users') {
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>`;
+  }
   if (category === 'submissions') {
     return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
@@ -515,6 +577,7 @@ function getPtaNotifSvg(category) {
 }
 
 function getPtaTagLabel(n) {
+  if (isAccountApprovalNotif(n)) return 'Account Approval';
   if (n.table_name) return n.table_name;
   if (n.table_id) return 'Table ' + String(n.table_id).toUpperCase();
   const m = (n.msg || '');
@@ -522,6 +585,55 @@ function getPtaTagLabel(n) {
   if (match) return match[0];
   if (m.toLowerCase().includes('accomplishment')) return 'Accomplishment reports';
   return 'System Report';
+}
+
+function formatPhDateTime(datetimeStr, fallback) {
+  if (!datetimeStr && fallback) return fallback;
+  if (!datetimeStr) return 'Just now';
+  try {
+    let d;
+    if (typeof datetimeStr === 'string' && !datetimeStr.includes('T') && !datetimeStr.includes('Z') && !datetimeStr.includes('+')) {
+      d = new Date(datetimeStr.replace(' ', 'T') + '+08:00');
+    } else {
+      d = new Date(datetimeStr);
+    }
+    if (isNaN(d.getTime())) return fallback || datetimeStr;
+
+    const timeFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    const dateFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    const nowParts  = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date());
+    const dateParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(d);
+    const timeStr   = timeFmt.format(d);
+
+    const diffMins = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (diffMins >= 0 && diffMins < 2) return 'Just now';
+    if (diffMins >= 2 && diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+
+    if (nowParts === dateParts) {
+      return `Today ${timeStr}`;
+    }
+
+    const yest = new Date(Date.now() - 86400000);
+    const yestParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(yest);
+    if (dateParts === yestParts) {
+      return `Yesterday ${timeStr}`;
+    }
+
+    return `${dateFmt.format(d)} ${timeStr}`;
+  } catch (e) {
+    return fallback || datetimeStr || 'Just now';
+  }
 }
 
 function renderPtaCards() {
@@ -537,7 +649,7 @@ function renderPtaCards() {
     if (_currentFilter === 'all') return true;
     if (_currentFilter === 'unread') return isUnread;
     if (_currentFilter === 'submissions') return cat === 'submissions';
-    if (_currentFilter === 'updates') return cat === 'updates';
+    if (_currentFilter === 'updates') return cat === 'updates' || cat === 'users';
     return true;
   });
 
@@ -558,14 +670,17 @@ function renderPtaCards() {
   container.innerHTML = filtered.map(n => {
     const category = getPtaCardCategory(n);
     const isUnread = !!n.unread;
-    const iconClass = category === 'submissions' ? 'icon-green' : 'icon-blue';
+    const iconClass = category === 'submissions' ? 'icon-green' : (category === 'users' ? 'icon-yellow' : 'icon-blue');
     const svgIcon = getPtaNotifSvg(category);
     const tag = getPtaTagLabel(n);
-    const timeStr = n.time ? n.time.substring(0, 16).replace('T', ' ') : 'Just now';
+    const timeStr = formatPhDateTime(n.time, n.time_formatted);
 
     let desc = 'Institutional report information was updated and is ready for review.';
     if (category === 'submissions') {
       desc = 'A new institutional submission has been received and is ready for validation.';
+    }
+    if (isAccountApprovalNotif(n)) {
+      desc = 'A new user account registration is pending review and approval.';
     }
     if (n.notif_type === 'year_activation' || n.type === 'year_activation' || (n.msg && n.msg.toLowerCase().includes('is now active'))) {
       const yrMatch = (n.msg || '').match(/CY\s*(\d{4})/i);
@@ -573,11 +688,15 @@ function renderPtaCards() {
       desc = `The CY ${yr} reporting cycle is now open. CMIs may begin preparing and submitting their tables for this year.`;
     }
 
-    const isApprovalOrActivation = n.notif_type === 'user_approval' || n.notif_type === 'year_activation' || n.type === 'year_activation' || !n.action ||
-      (n.msg && (n.msg.toLowerCase().includes('is now active') || n.msg.toLowerCase().includes('approved') || n.msg.toLowerCase().includes('accepted')));
+    const isApprovalOrActivation = !isAccountApprovalNotif(n) && (
+      n.notif_type === 'year_activation' ||
+      n.type === 'year_activation' ||
+      !n.action ||
+      (n.msg && (n.msg.toLowerCase().includes('is now active') || n.msg.toLowerCase().includes('accepted') || n.msg.toLowerCase().includes('approved')))
+    );
 
-    const actionUrl = n.action ? (n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action) : '';
-    const actionLabel = category === 'submissions' ? 'View' : 'View Submissions';
+    const actionUrl = n.action ? (n.action.startsWith('/') ? n.action : '/dashboard/pta/' + n.action) : (isAccountApprovalNotif(n) ? '/dashboard/pta/users' : '');
+    const actionLabel = n.action_label || (isAccountApprovalNotif(n) ? 'View' : (category === 'submissions' ? 'View' : 'View Submissions'));
 
     return `
     <article class="notif-card ${isUnread ? 'unread' : ''}" data-id="${n.id || ''}" data-key="${n.key || ''}">

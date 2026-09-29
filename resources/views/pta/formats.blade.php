@@ -706,16 +706,19 @@
       return block;
     }
 
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     function appendColRow(colList, colName = '', colType = 'text', colOptions = '') {
       const row = document.createElement('div');
       row.className = 'col-row';
-      row.style.cssText = 'display:flex;flex-direction:column;margin-bottom:6px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:6px 8px;';
+      row.style.cssText = 'display:flex;flex-direction:column;margin-bottom:8px;background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px;';
       const isDropdown = colType === 'dropdown';
-      const optStr = Array.isArray(colOptions) ? colOptions.join(', ') : (colOptions || '');
 
       row.innerHTML = `
         <div style="display:flex;gap:6px;align-items:center;">
-          <input class="form-input title-col-name" value="${colName}" placeholder="Column name (e.g. Agency, Project Title, Date, Amount)" style="flex:1;padding:5px 8px;font-size:12px"/>
+          <input class="form-input title-col-name" value="${esc(colName)}" placeholder="Column name (e.g. Agency, Project Title, Date, Amount)" style="flex:1;padding:5px 8px;font-size:12px"/>
           <select class="form-select title-col-type" onchange="toggleColOptions(this)" style="width:115px;padding:5px 6px;font-size:12px">
             <option value="text" ${colType === 'text' ? 'selected' : ''}>Text</option>
             <option value="number" ${colType === 'number' ? 'selected' : ''}>Number</option>
@@ -725,23 +728,131 @@
           </select>
           <button type="button" onclick="this.closest('.col-row').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 4px;line-height:1" title="Remove column">×</button>
         </div>
-        <div class="col-options-wrap" style="display:${isDropdown ? 'flex' : 'none'};align-items:center;gap:6px;margin-top:6px;padding-top:5px;border-top:1px dashed #e5e7eb;">
-          <span style="font-size:11px;color:#4b5563;white-space:nowrap;font-weight:600">Options:</span>
-          <input class="form-input title-col-options" value="${optStr}" placeholder="Comma-separated options (e.g. Option 1, Option 2, Option 3)" style="flex:1;padding:4px 8px;font-size:11.5px;background:#f9fafb;border-color:#d1d5db;"/>
+        <div class="col-options-wrap" style="display:${isDropdown ? 'block' : 'none'};margin-top:8px;padding:8px 10px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:11.5px;font-weight:700;color:#334155;">Dropdown Options:</span>
+              <span class="dropdown-opts-count" style="font-size:10.5px;font-weight:700;color:#059669;background:#ecfdf5;padding:1px 6px;border-radius:10px;border:1px solid #a7f3d0">0 options</span>
+            </div>
+            <button type="button" class="btn-add-opt" onclick="addDropdownOptionRowFromBtn(this)" style="background:#ecfdf5;border:1px solid #a7f3d0;color:#059669;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              + Add Option
+            </button>
+          </div>
+          <div class="dropdown-options-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:4px;"></div>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">
+            Add unlimited options. Press <kbd style="background:#e2e8f0;padding:1px 4px;border-radius:3px;font-family:inherit;font-size:10px;">Enter</kbd> to add next, or paste comma-separated list.
+          </div>
         </div>
       `;
       colList.appendChild(row);
+
+      const optsList = row.querySelector('.dropdown-options-list');
+      let initialOpts = [];
+      if (Array.isArray(colOptions)) {
+        initialOpts = colOptions.map(s => String(s).trim()).filter(Boolean);
+      } else if (typeof colOptions === 'string' && colOptions.trim()) {
+        initialOpts = colOptions.split(',').map(s => s.trim()).filter(Boolean);
+      }
+
+      if (initialOpts.length > 0) {
+        initialOpts.forEach(opt => addDropdownOptionRow(optsList, opt));
+      } else if (isDropdown) {
+        addDropdownOptionRow(optsList, '');
+        addDropdownOptionRow(optsList, '');
+      }
+
+      updateDropdownOptionIndices(optsList);
+
       if (!colName) {
         row.querySelector('.title-col-name')?.focus();
+      }
+    }
+
+    function addDropdownOptionRow(listEl, val = '') {
+      if (!listEl) return null;
+      const optItem = document.createElement('div');
+      optItem.className = 'dropdown-opt-item';
+      optItem.style.cssText = 'display:flex;align-items:center;gap:6px;';
+      optItem.innerHTML = `
+        <span class="opt-num" style="font-size:11px;font-weight:700;color:#64748b;min-width:20px;text-align:right;">#1</span>
+        <input type="text" class="form-input dropdown-opt-val" value="${esc(val)}" placeholder="Option choice (e.g. Active, Completed, Pending)" style="flex:1;padding:4px 8px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;" onkeydown="handleOptKeydown(event, this)" onpaste="handleOptPaste(event, this)"/>
+        <button type="button" onclick="removeDropdownOptionRow(this)" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;padding:0 4px;line-height:1;border-radius:4px;" title="Remove option">×</button>
+      `;
+      listEl.appendChild(optItem);
+      updateDropdownOptionIndices(listEl);
+      return optItem;
+    }
+
+    function addDropdownOptionRowFromBtn(btn) {
+      const wrap = btn.closest('.col-options-wrap');
+      const listEl = wrap?.querySelector('.dropdown-options-list');
+      if (listEl) {
+        const item = addDropdownOptionRow(listEl, '');
+        item?.querySelector('.dropdown-opt-val')?.focus();
+      }
+    }
+
+    function removeDropdownOptionRow(btn) {
+      const row = btn.closest('.dropdown-opt-item');
+      const listEl = row?.closest('.dropdown-options-list');
+      if (row) row.remove();
+      if (listEl) updateDropdownOptionIndices(listEl);
+    }
+
+    function updateDropdownOptionIndices(listEl) {
+      if (!listEl) return;
+      const items = listEl.querySelectorAll('.dropdown-opt-item');
+      items.forEach((item, idx) => {
+        const numEl = item.querySelector('.opt-num');
+        if (numEl) numEl.textContent = `#${idx + 1}`;
+      });
+      const wrap = listEl.closest('.col-options-wrap');
+      const countBadge = wrap?.querySelector('.dropdown-opts-count');
+      if (countBadge) {
+        countBadge.textContent = `${items.length} option${items.length !== 1 ? 's' : ''}`;
+      }
+    }
+
+    function handleOptKeydown(e, input) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const listEl = input.closest('.dropdown-options-list');
+        if (listEl) {
+          const item = addDropdownOptionRow(listEl, '');
+          item?.querySelector('.dropdown-opt-val')?.focus();
+        }
+      }
+    }
+
+    function handleOptPaste(e, input) {
+      const pasteText = (e.clipboardData || window.clipboardData)?.getData('text');
+      if (pasteText && pasteText.includes(',')) {
+        e.preventDefault();
+        const parts = pasteText.split(',').map(s => s.trim()).filter(Boolean);
+        if (parts.length > 0) {
+          input.value = parts[0];
+          const listEl = input.closest('.dropdown-options-list');
+          for (let i = 1; i < parts.length; i++) {
+            addDropdownOptionRow(listEl, parts[i]);
+          }
+          updateDropdownOptionIndices(listEl);
+        }
       }
     }
 
     function toggleColOptions(sel) {
       const wrap = sel.closest('.col-row')?.querySelector('.col-options-wrap');
       if (wrap) {
-        wrap.style.display = sel.value === 'dropdown' ? 'flex' : 'none';
-        if (sel.value === 'dropdown') {
-          wrap.querySelector('.title-col-options')?.focus();
+        const isDropdown = sel.value === 'dropdown';
+        wrap.style.display = isDropdown ? 'block' : 'none';
+        if (isDropdown) {
+          const listEl = wrap.querySelector('.dropdown-options-list');
+          if (listEl && listEl.querySelectorAll('.dropdown-opt-item').length === 0) {
+            addDropdownOptionRow(listEl, '');
+            addDropdownOptionRow(listEl, '');
+          }
+          listEl?.querySelector('.dropdown-opt-val')?.focus();
         }
       }
     }
@@ -849,8 +960,13 @@
             const type = r.querySelector('.title-col-type')?.value || 'text';
             const colObj = { name, type };
             if (type === 'dropdown') {
-              const rawOpts = (r.querySelector('.title-col-options')?.value || '').trim();
-              colObj.options = rawOpts ? rawOpts.split(',').map(s => s.trim()).filter(Boolean) : [];
+              const optInputs = r.querySelectorAll('.dropdown-options-list .dropdown-opt-val');
+              let opts = [...optInputs].map(i => (i.value || '').trim()).filter(Boolean);
+              if (!opts.length) {
+                const rawOpts = (r.querySelector('.title-col-options')?.value || '').trim();
+                if (rawOpts) opts = rawOpts.split(',').map(s => s.trim()).filter(Boolean);
+              }
+              colObj.options = opts;
             }
             return colObj;
           }).filter(c => c.name);
@@ -991,8 +1107,13 @@
           const type = r.querySelector('.title-col-type')?.value || 'text';
           const colObj = { name, type };
           if (type === 'dropdown') {
-            const rawOpts = (r.querySelector('.title-col-options')?.value || '').trim();
-            colObj.options = rawOpts ? rawOpts.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const optInputs = r.querySelectorAll('.dropdown-options-list .dropdown-opt-val');
+            let opts = [...optInputs].map(i => (i.value || '').trim()).filter(Boolean);
+            if (!opts.length) {
+              const rawOpts = (r.querySelector('.title-col-options')?.value || '').trim();
+              if (rawOpts) opts = rawOpts.split(',').map(s => s.trim()).filter(Boolean);
+            }
+            colObj.options = opts;
           }
           return colObj;
         }).filter(c => c.name);

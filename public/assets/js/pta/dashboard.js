@@ -241,21 +241,44 @@ function institutionShort(name) {
 
 function formatRelativeTime(datetimeStr) {
   if (!datetimeStr) return '—';
-  const date = new Date(datetimeStr);
-  const now  = new Date();
+  let date;
+  if (typeof datetimeStr === 'string' && !datetimeStr.includes('T') && !datetimeStr.includes('Z') && !datetimeStr.includes('+')) {
+    date = new Date(datetimeStr.replace(' ', 'T') + '+08:00');
+  } else {
+    date = new Date(datetimeStr);
+  }
+  if (isNaN(date.getTime())) return datetimeStr;
+  const now = new Date();
 
-  const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const today   = new Date(now.getFullYear(),  now.getMonth(),  now.getDate());
-  const diffDays = Math.round((today - dateDay) / 86400000);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
 
-  const diffMins = Math.floor((now - date) / 60000);
-  const timeStr  = date.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+  const timeStr = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Manila'
+  });
 
-  if (diffMins < 2)   return 'Just now';
-  if (diffMins < 60)  return `${diffMins} mins ago`;
-  if (diffDays === 0) return `Today ${timeStr}`;
-  if (diffDays === 1) return `Yesterday ${timeStr}`;
-  return date.toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ` ${timeStr}`;
+  if (diffMins >= 0 && diffMins < 2) return 'Just now';
+  if (diffMins >= 2 && diffMins < 60) return `${diffMins} mins ago`;
+
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(now);
+  const dateStrDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(date);
+
+  if (dateStrDay === todayStr) return `Today ${timeStr}`;
+
+  const yest = new Date(now.getTime() - 86400000);
+  const yestStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(yest);
+  if (dateStrDay === yestStr) return `Yesterday ${timeStr}`;
+
+  const dateStr = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'Asia/Manila'
+  });
+  return `${dateStr} ${timeStr}`;
 }
 
 function sendReminder(short) {

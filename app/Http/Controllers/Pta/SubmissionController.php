@@ -27,6 +27,7 @@ class SubmissionController extends Controller
 
         $tableSectionMap = [];
         $tableTitleMap   = [];
+        $tableColumnsMap = [];
         $formatTemplateRows = \App\Models\FormatTemplate::where('year', $year)
             ->orderBy('sort_order', 'asc')
             ->get();
@@ -37,6 +38,9 @@ class SubmissionController extends Controller
             $tableTitleMap[$ft->table_no] = $ft->title;
             $tableTitleMap[strtoupper($ft->table_no)] = $ft->title;
             $tableTitleMap[strtolower($ft->table_no)] = $ft->title;
+            $tableColumnsMap[$ft->table_no] = $ft->columns_json;
+            $tableColumnsMap[strtoupper($ft->table_no)] = $ft->columns_json;
+            $tableColumnsMap[strtolower($ft->table_no)] = $ft->columns_json;
         }
 
         $secDefs = config('secreco.sections', [
@@ -373,6 +377,7 @@ class SubmissionController extends Controller
                     'table_no'            => $tNo,
                     'section'             => $tableSectionMap[$tNo] ?? ($tableSectionMap[strtoupper($tNo)] ?? 'R&D Mgt. & Coord.'),
                     'title'               => $tableTitleMap[$tNo] ?? ($tableTitleMap[strtoupper($tNo)] ?? ''),
+                    'columns'             => $tableColumnsMap[$tNo] ?? ($tableColumnsMap[strtoupper($tNo)] ?? null),
                     'table_status'        => $st,
                     'submitted_at'        => $submittedAt,
                     'date_submitted'      => $submittedAt,
@@ -440,8 +445,16 @@ class SubmissionController extends Controller
             $q = ReportTable::where('user_id', $cmiUserId)->where('reporting_year', $year);
             if ($tableNo !== '') {
                 $candidates = array_unique([$tableNo, strtoupper($tableNo), strtolower($tableNo)]);
+                $targetTable = ReportTable::where('user_id', $cmiUserId)->where('reporting_year', $year)->whereIn('table_no', $candidates)->first();
+                if ($targetTable && $targetTable->status === 'draft') {
+                    return response()->json([
+                        'success' => false,
+                        'error'   => "Table {$tableNo} is currently saved as draft and cannot be accepted. It must be completed and submitted by the CMI first.",
+                    ], 422);
+                }
                 $q->whereIn('table_no', $candidates);
             }
+            $q->whereNotIn('status', ['draft', 'not-started', 'deleted']);
             $tablesToAccept = $q->get();
             foreach ($tablesToAccept as $tItem) {
                 $meta = is_array($tItem->meta_json) ? $tItem->meta_json : [];

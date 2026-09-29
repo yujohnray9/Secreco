@@ -61,26 +61,49 @@ async function syncTableOptionsForYear(year) {
     const json = await res.json();
     const templates = json.templates || [];
     const tblSel = el('rptTableFilter');
-    if (!tblSel || templates.length === 0) return;
+    if (!tblSel) return;
+
+    if (!window.TABLE_DEFS) window.TABLE_DEFS = typeof TABLE_DEFS !== 'undefined' ? TABLE_DEFS : {};
+
+    if (templates.length === 0) {
+      tblSel.innerHTML = '<option value="">(No tables configured for this year)</option>';
+      tblSel.value = '';
+      return;
+    }
 
     const currentVal = tblSel.value;
     let matched = false;
     tblSel.innerHTML = templates.map(t => {
       const no = t.table_no;
-      const label = `Table ${no} — ${t.title || no}`;
-      if (!window.TABLE_DEFS) window.TABLE_DEFS = typeof TABLE_DEFS !== 'undefined' ? TABLE_DEFS : {};
-      if (!window.TABLE_DEFS[no]) {
-        window.TABLE_DEFS[no] = {
-          label: label,
-          renderer: typeof renderGeneric !== 'undefined' ? renderGeneric : (data => `<div style="padding:20px;text-align:center;color:#6b7280">Table ${no}</div>`)
-        };
+      const cleanNo = String(no).replace(/^Table\s*/i, '');
+      const label = t.title ? `Table ${cleanNo} — ${t.title}` : `Table ${cleanNo}`;
+
+      const existingDef = window.TABLE_DEFS[no] || window.TABLE_DEFS[cleanNo] || window.TABLE_DEFS['T' + cleanNo] || {};
+      // If table is a custom format with columns_json, or lacks a dedicated renderer, use renderGeneric
+      const hasCustomCols = t.columns_json && (Array.isArray(t.columns_json) ? t.columns_json.length > 0 : Object.keys(t.columns_json).length > 0);
+      let chosenRenderer = existingDef.renderer || (typeof renderGeneric !== 'undefined' ? renderGeneric : null);
+      if (hasCustomCols || !chosenRenderer) {
+        chosenRenderer = (typeof renderGeneric !== 'undefined' ? renderGeneric : existingDef.renderer);
       }
-      if (no === currentVal) matched = true;
+
+      const defObj = {
+        label: label,
+        template: t,
+        renderer: chosenRenderer
+      };
+
+      window.TABLE_DEFS[no] = defObj;
+      window.TABLE_DEFS[cleanNo] = defObj;
+      window.TABLE_DEFS['T' + cleanNo] = defObj;
+
+      if (no === currentVal || cleanNo === currentVal || ('T' + cleanNo) === currentVal) matched = true;
       return `<option value="${no}">${label}</option>`;
     }).join('');
 
     if (matched) {
       tblSel.value = currentVal;
+    } else if (templates.length > 0) {
+      tblSel.value = templates[0].table_no;
     }
   } catch (e) {
     console.warn('[reports] syncTableOptionsForYear warning:', e);

@@ -169,28 +169,40 @@ function updateBellBadge(count) {
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
+function getManilaDateString(d) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(d);
+}
+
+function parseManilaDate(datetimeStr) {
+    if (!datetimeStr) return null;
+    let d;
+    if (typeof datetimeStr === 'string' && !datetimeStr.includes('T') && !datetimeStr.includes('Z') && !datetimeStr.includes('+')) {
+        d = new Date(datetimeStr.replace(' ', 'T') + '+08:00');
+    } else {
+        d = new Date(datetimeStr);
+    }
+    return isNaN(d.getTime()) ? null : d;
+}
+
 function groupByDate(items) {
     const groups = new Map();
-    const now    = new Date();
-    const today  = dateOnly(now);
-    const yest   = new Date(today); yest.setDate(yest.getDate() - 1);
+    const now = new Date();
+    const todayStr = getManilaDateString(now);
+    const yestDate = new Date(now.getTime() - 86400000);
+    const yestStr = getManilaDateString(yestDate);
 
     for (const n of items) {
-        const d    = new Date(n.time);
-        const day  = dateOnly(d);
+        const d = parseManilaDate(n.time) || new Date();
+        const itemDayStr = getManilaDateString(d);
         let label;
-        if (+day === +today) label = 'Today';
-        else if (+day === +yest) label = 'Yesterday';
-        else label = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        if (itemDayStr === todayStr) label = 'Today';
+        else if (itemDayStr === yestStr) label = 'Yesterday';
+        else label = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' });
 
         if (!groups.has(label)) groups.set(label, []);
         groups.get(label).push(n);
     }
     return groups;
-}
-
-function dateOnly(d) {
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 function typeBadgeLabel(type, status) {
@@ -203,19 +215,42 @@ function typeBadgeLabel(type, status) {
     return map[type] ?? type;
 }
 
-function formatRelativeTime(datetimeStr) {
+function formatRelativeTime(datetimeStr, fallback) {
+    if (!datetimeStr && fallback) return fallback;
     if (!datetimeStr) return '—';
-    const date = new Date(datetimeStr);
-    const now  = new Date();
-    const diffMins = Math.floor((now - date) / 60000);
-    const timeStr  = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    const diffDays = Math.round((dateOnly(now) - dateOnly(date)) / 86400000);
+    const date = parseManilaDate(datetimeStr);
+    if (!date) return fallback || datetimeStr;
+    const now = new Date();
 
-    if (diffMins < 2)   return 'Just now';
-    if (diffMins < 60)  return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-    if (diffDays === 0) return `Today ${timeStr}`;
-    if (diffDays === 1) return `Yesterday ${timeStr}`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ` ${timeStr}`;
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    const timeStr = date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Manila'
+    });
+
+    if (diffMins >= 0 && diffMins < 2) return 'Just now';
+    if (diffMins >= 2 && diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+
+    const todayStr = getManilaDateString(now);
+    const itemDayStr = getManilaDateString(date);
+
+    if (itemDayStr === todayStr) return `Today ${timeStr}`;
+
+    const yestDate = new Date(now.getTime() - 86400000);
+    const yestStr = getManilaDateString(yestDate);
+    if (itemDayStr === yestStr) return `Yesterday ${timeStr}`;
+
+    const dateStr = date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'Asia/Manila'
+    });
+    return `${dateStr} ${timeStr}`;
 }
 
 function esc(s) {

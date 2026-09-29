@@ -6,14 +6,24 @@
 
 // ── PER CMI ───────────────────────────────────────────────────
 async function loadCMIView() {
-  // Populate dropdown — use cache or fetch T1 to get CMI list
-  if (_cmiList.length === 0) {
+  // Populate dropdown — use cache or fetch from active table or /api/pta/institutions
+  if (!_cmiList || _cmiList.length === 0) {
     try {
-      const json = await fetchConsolidated('T1');
-      _cmiList = json.data;
+      const activeTable = getTableKey();
+      if (activeTable) {
+        const json = await fetchConsolidated(activeTable);
+        _cmiList = json.data || [];
+      }
+      if (!_cmiList || !_cmiList.length) {
+        const instRes = await fetch('/api/pta/institutions');
+        const instJson = await instRes.json();
+        const instList = instJson.institutions || instJson.data || [];
+        _cmiList = instList.map(i => ({
+          institution: typeof i === 'string' ? i : (i.institution || i.name || '')
+        })).filter(c => c.institution);
+      }
     } catch (e) {
       console.error('[reports] loadCMIView error:', e);
-      return;
     }
   }
   populateCMIDropdown();
@@ -26,7 +36,7 @@ function populateCMIDropdown() {
   const sel = el('rptCMIFilter');
   const cur = sel.value;
   sel.innerHTML = '<option value="">Select Institution...</option>';
-  _cmiList.forEach(c => {
+  (_cmiList || []).forEach(c => {
     const opt = document.createElement('option');
     opt.value       = c.institution;
     opt.textContent = c.institution;
@@ -39,32 +49,30 @@ async function renderCMIAllTables(institution) {
   el('cmiCardTitle').textContent  = institution + ' — All Tables';
   el('cmiContainer').innerHTML    = '<div class="loading-state">⏳ Loading all tables...</div>';
 
-  const keys = Object.keys(TABLE_DEFS);
   try {
-    // 1 single API call for all tables:
     let tableData = {};
     let lockedTables = [];
+    let templatesMap = {};
+
     try {
       const allRes = await fetchConsolidated('all');
       tableData = allRes.tables || allRes.data || {};
       lockedTables = (allRes.locked_tables || []).map(t => String(t).toUpperCase());
+      templatesMap = allRes.templates || {};
     } catch (allErr) {
-      // Fallback: batch individual tables if 'all' fails
-      const results = await Promise.allSettled(keys.map(k => fetchConsolidated(k)));
-      keys.forEach((k, i) => {
-        if (results[i].status === 'fulfilled' && results[i].value?.data) {
-          tableData[k] = results[i].value.data;
-          if (results[i].value.locked_tables) {
-            lockedTables = results[i].value.locked_tables.map(t => String(t).toUpperCase());
-          }
-        }
-      });
+      console.warn('[reports] fetch all failed, trying fallback:', allErr);
+    }
+
+    // Determine the list of keys to display for this year
+    let keys = Object.keys(tableData);
+    if (!keys.length) {
+      keys = Object.keys(window.TABLE_DEFS || {});
     }
 
     const topBtn = el('btnPtaCmiFillOut');
     if (topBtn) {
       if (lockedTables.length > 0) {
-        topBtn.href = `/dashboard/cmi/fillup?year=${getYear()}&inst=${encodeURIComponent(institution)}&table=${lockedTables[0]}`;
+        topBtn.href = `/dashboard/cmi/fillup?year=${getYear()}&inst=${encodeURIComponent(institution)}&table=${encodeURIComponent(lockedTables[0])}`;
         topBtn.style.display = 'inline-flex';
       } else {
         topBtn.style.display = 'none';
@@ -78,19 +86,23 @@ async function renderCMIAllTables(institution) {
       const s        = cmi?.table_status ?? 'not-started';
       const badge    = STATUS_BADGE[s] ?? STATUS_BADGE['not-started'];
       const rowCount = cmi?.rows?.length ?? 0;
-      const title    = TABLE_DEFS[key]?.label?.split('—')[1]?.trim() ?? '';
-      const isLocked = lockedTables.includes(key.toUpperCase());
+
+      const cleanKey = String(key).replace(/^Table\s*/i, '');
+      const def      = (window.TABLE_DEFS && (window.TABLE_DEFS[key] || window.TABLE_DEFS[cleanKey] || window.TABLE_DEFS['T' + cleanKey])) || {};
+      const tmpl     = templatesMap[key] || templatesMap[cleanKey] || def?.template || null;
+      const title    = tmpl?.title || (def?.label ? def.label.split('—')[1]?.trim() : key);
+      const isLocked = lockedTables.includes(key.toUpperCase()) || (tmpl && tmpl.is_locked);
 
       const actionCell = isLocked
         ? `<td style="text-align:center">
-             <a href="/dashboard/cmi/fillup?year=${getYear()}&inst=${encodeURIComponent(institution)}&table=${key}" class="btn btn-sm" style="background:#075b42;color:#fff;border-radius:6px;font-size:11.5px;font-weight:700;padding:4px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Fill out locked Table ${key} for this institution">
+             <a href="/dashboard/cmi/fillup?year=${getYear()}&inst=${encodeURIComponent(institution)}&table=${encodeURIComponent(key)}" class="btn btn-sm" style="background:#075b42;color:#fff;border-radius:6px;font-size:11.5px;font-weight:700;padding:4px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Fill out locked Table ${key} for this institution">
                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out
              </a>
            </td>`
         : `<td style="text-align:center;color:#9ca3af;font-size:13px">—</td>`;
 
       rows += `<tr>
-        <td><strong>${key}</strong> ${isLocked ? '<span style="display:inline-flex;vertical-align:middle;color:#d97706;margin-left:3px;" title="Locked: PTA only"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>' : ''}</td>
+        <td><strong>${esc(key)}</strong> ${isLocked ? '<span style="display:inline-flex;vertical-align:middle;color:#d97706;margin-left:3px;" title="Locked: PTA only"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>' : ''}</td>
         <td>${esc(title)}</td>
         <td>${badge}</td>
         <td style="text-align:center">${rowCount || '—'}</td>
@@ -104,7 +116,7 @@ async function renderCMIAllTables(institution) {
         <thead>
           <tr><th>Table</th><th>Title</th><th>Status</th><th>Rows</th><th>Updated</th><th style="text-align:center">Action</th></tr>
         </thead>
-        <tbody>${rows}</tbody>
+        <tbody>${rows || '<tr><td colspan="6" style="text-align:center;padding:30px;color:#9ca3af">No tables available.</td></tr>'}</tbody>
       </table>`;
   } catch (e) {
     el('cmiContainer').innerHTML =

@@ -1049,24 +1049,33 @@
     }
     CMI.submitReport = async function () {
         window._cmiIsSubmitting = true;
-        // If user is currently editing a table, trigger save first so latest inputs are saved and counted
-        const active = window._cmiActiveTable || 'T1';
-        const winModule = window[active] || window[active.toUpperCase()] || window[active.toLowerCase()];
-        if (winModule && typeof winModule.save === 'function') {
-            try {
-                await winModule.save('done');
-            } catch(e){}
-        }
+        const yr = window.CMI_REPORTING_YEAR || (document.getElementById('fillupYearSel') ? parseInt(document.getElementById('fillupYearSel').value) : new Date().getFullYear());
+        const targetUserId = window.CMI_TARGET_USER_ID || 0;
+        const q = targetUserId ? `&cmi_user_id=${targetUserId}` : '';
+
+        // Fetch fresh statuses from backend first so draft detection is 100% accurate
+        try {
+            const stRes = await fetch(`/api/cmi/tables/statuses?year=${yr}${q}`);
+            const stData = await stRes.json();
+            if (stData && stData.statuses) {
+                for (let k in stData.statuses) {
+                    _status[k] = stData.statuses[k];
+                    _status[k.toUpperCase()] = stData.statuses[k];
+                    _status[k.toLowerCase()] = stData.statuses[k];
+                }
+                renderFillNav();
+            }
+        } catch(e) {}
 
         const allNos = getActiveTableNos();
         const getStatusFor = (n) => {
             return _status[n] || _status[n.toUpperCase()] || _status[n.toLowerCase()] || "not-started";
         };
         const done = allNos.filter((n) => ['done', 'accepted', 'submitted'].includes(getStatusFor(n))).length;
-        const draft = allNos.filter((n) => getStatusFor(n) === "draft").length;
+        const draftTableNos = allNos.filter((n) => getStatusFor(n) === "draft");
+        const draft = draftTableNos.length;
         const blank = allNos.filter((n) => getStatusFor(n) === "not-started").length;
         const total = allNos.length;
-        const yr = window.CMI_REPORTING_YEAR || (document.getElementById('fillupYearSel') ? parseInt(document.getElementById('fillupYearSel').value) : new Date().getFullYear());
 
         const pct = total > 0 ? Math.round((done / total) * 100) : 0;
         const bar = `
@@ -1088,6 +1097,49 @@
       </div>`,
             )
             .join("");
+
+        if (draft > 0) {
+            const draftList = draftTableNos.join(', ');
+            cmiConfirm({
+                title: `Cannot Submit CY ${yr} Annual Report`,
+                html: `${bar}${rows}
+            <div style="margin:14px 0 0;padding:12px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;font-size:12.5px;color:#c2410c;line-height:1.4">
+              <strong>Draft Tables Detected (${draft}):</strong><br>
+              Table(s) <strong>${draftList}</strong> are currently saved as draft.<br>
+              Draft reports cannot be submitted. All draft tables must be saved and completed before submitting your report.
+            </div>`,
+                okLabel: "Review Drafts",
+                onOk() {
+                    window._cmiIsSubmitting = false;
+                    if (draftTableNos[0] && typeof CMI.showTable === 'function') {
+                        CMI.showTable(draftTableNos[0]);
+                    }
+                },
+                onCancel() {
+                    window._cmiIsSubmitting = false;
+                }
+            });
+            return;
+        }
+
+        if (done === 0) {
+            cmiConfirm({
+                title: `Cannot Submit CY ${yr} Annual Report`,
+                html: `${bar}${rows}
+            <div style="margin:14px 0 0;padding:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12.5px;color:#b91c1c;line-height:1.4">
+              <strong>No Completed Tables:</strong><br>
+              Please complete and save at least one table before submitting your report.
+            </div>`,
+                okLabel: "OK",
+                onOk() {
+                    window._cmiIsSubmitting = false;
+                },
+                onCancel() {
+                    window._cmiIsSubmitting = false;
+                }
+            });
+            return;
+        }
 
         cmiConfirm({
             title: `Submit CY ${yr} Annual Report`,
@@ -1121,23 +1173,33 @@
 
     window.confirmAndExecuteSubmit = async function () {
         window._cmiIsSubmitting = true;
+        const allNos = getActiveTableNos();
+        const getStatusFor = (n) => {
+            return _status[n] || _status[n.toUpperCase()] || _status[n.toLowerCase()] || "not-started";
+        };
+        const draftTableNos = allNos.filter((n) => getStatusFor(n) === "draft");
+        if (draftTableNos.length > 0) {
+            window._cmiIsSubmitting = false;
+            window.closeSubmitModal();
+            toast(`Cannot submit: Table(s) ${draftTableNos.join(', ')} are in draft. Please complete and save them before submitting.`, 5000);
+            return;
+        }
+
+        const done = allNos.filter((n) => ['done', 'accepted', 'submitted'].includes(getStatusFor(n))).length;
+        if (done === 0) {
+            window._cmiIsSubmitting = false;
+            window.closeSubmitModal();
+            toast('Cannot submit: No completed tables found. Please complete at least one table before submitting.', 5000);
+            return;
+        }
+
         const btn = document.querySelector('#modalConfirmSubmit .btn-submit-report');
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = '<span class="btn-spinner"></span> Submitting...';
         }
 
-        // Formally save the active table as 'done' now that user confirmed final submit
-        const active = window._cmiActiveTable || 'T1';
-        const winModule = window[active] || window[active.toUpperCase()] || window[active.toLowerCase()];
-        if (winModule && typeof winModule.save === 'function') {
-            try {
-                await winModule.save('done');
-            } catch(e){}
-        }
-
         const yr = window.CMI_REPORTING_YEAR || (document.getElementById('fillupYearSel') ? parseInt(document.getElementById('fillupYearSel').value) : new Date().getFullYear());
-        const allNos = getActiveTableNos();
 
         toast("Submitting report…", 99999);
         try {

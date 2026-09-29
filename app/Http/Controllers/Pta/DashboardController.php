@@ -234,7 +234,7 @@ class DashboardController extends Controller
                 $userTables = $tablesByUser[$uid] ?? [];
                 foreach ($userTables as $tr) {
                     $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tr->table_no));
-                    if (in_array($tr->status, ['done', 'submitted', 'accepted', 'draft'], true) || !empty($tr->rows_json)) {
+                    if (in_array($tr->status, ['done', 'submitted', 'accepted'], true)) {
                         $distinctTables[$cleanKey] = true;
                     }
                     if ($tr->status === 'draft' || !empty($tr->rows_json) || !empty($tr->meta_json)) {

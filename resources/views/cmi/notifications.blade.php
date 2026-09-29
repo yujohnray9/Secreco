@@ -769,14 +769,26 @@ function hashCode(str) {
 
 function formatNiceDateTime(dtStr) {
   try {
-    const d = new Date(dtStr);
+    let d;
+    if (typeof dtStr === 'string' && !dtStr.includes('T') && !dtStr.includes('Z') && !dtStr.includes('+')) {
+      d = new Date(dtStr.replace(' ', 'T') + '+08:00');
+    } else {
+      d = new Date(dtStr);
+    }
     if (isNaN(d.getTime())) return dtStr;
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    let hours = d.getHours();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    const mins = String(d.getMinutes()).padStart(2, '0');
-    return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${hours}:${mins} ${ampm}`;
+    const dateFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    const timeFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    return `${dateFmt.format(d)}, ${timeFmt.format(d)}`;
   } catch(e) {
     return dtStr || 'Just now';
   }

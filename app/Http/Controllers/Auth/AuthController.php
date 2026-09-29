@@ -368,6 +368,23 @@ class AuthController extends Controller
                     'status'      => $status,
                 ]);
 
+                if ($status === 'pending') {
+                    $uName = trim("{$firstName} {$lastName}");
+                    $uRole = strtoupper($role);
+                    $uInst = $instValue ? " ({$instValue})" : '';
+                    \App\Models\Notification::create([
+                        'role'         => 'pta',
+                        'type'         => 'user_approval',
+                        'icon'         => '👥',
+                        'color'        => 'yellow',
+                        'message'      => "New user registered: {$uName}{$uInst} registered as {$uRole} and is pending approval.",
+                        'action_url'   => '/dashboard/pta/users',
+                        'action_label' => 'View',
+                        'is_read'      => false,
+                        'created_at'   => now(),
+                    ]);
+                }
+
                 $pending->delete();
             });
 

@@ -36,26 +36,39 @@ window.switchReportView = switchReportView;
 async function loadTableView() {
   const key  = getTableKey();
   const year = getYear();
-  const def  = TABLE_DEFS[key];
 
-  el('tableCardTitle').textContent = def?.label ?? key;
+  if (!key) {
+    el('tableCardTitle').textContent = 'No Tables Configured';
+    el('rptSubtitle').textContent    = 'Consolidated Annual Accomplishment Report — CY ' + year;
+    el('tableContainer').innerHTML   = '<div class="loading-state" style="padding:40px;text-align:center;color:#9ca3af">No tables are configured for CY ' + year + '. You can add format tables in Manage Formats.</div>';
+    closeWordPreview();
+    const wrap = el('rptExportBtns');
+    if (wrap) wrap.innerHTML = '';
+    return;
+  }
+
+  const cleanKey = String(key).replace(/^Table\s*/i, '');
+  const def = (window.TABLE_DEFS && (window.TABLE_DEFS[key] || window.TABLE_DEFS[cleanKey] || window.TABLE_DEFS['T' + cleanKey])) || null;
+
+  el('tableCardTitle').textContent = def?.label ?? `Table ${key}`;
   el('rptSubtitle').textContent    = 'Consolidated Annual Accomplishment Report — CY ' + year;
   el('tableContainer').innerHTML   = '<div class="loading-state">⏳ Loading...</div>';
   closeWordPreview();
-  renderExportBtns(); // render buttons immediately
+  renderExportBtns();
 
   try {
     const json = await fetchConsolidated(key);
-    _cmiList = json.data;
+    _cmiList = json.data || [];
 
-    const renderer  = def?.renderer ?? renderGeneric;
-    const container = el('tableContainer');
+    const templateMeta = def?.template || json.template || null;
+    const renderer     = def?.renderer ?? renderGeneric;
+    const container    = el('tableContainer');
 
-    if (renderer.length >= 2) {
-      // Legacy signature: renderTX(container, rows) — sets innerHTML directly
+    if (renderer === renderGeneric) {
+      container.innerHTML = renderGeneric(json.data, templateMeta);
+    } else if (renderer.length >= 2) {
       renderer(container, json.data);
     } else {
-      // New signature: renderTX(rows) — returns HTML string
       container.innerHTML = renderer(json.data);
     }
   } catch (e) {

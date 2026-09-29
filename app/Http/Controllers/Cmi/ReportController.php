@@ -16,7 +16,18 @@ class ReportController extends Controller
 {
     public function submit(Request $request): JsonResponse
     {
-        $userId        = Auth::id() ?? session('user_id');
+        $cmiParam      = $request->input('cmi_user_id') ?? $request->input('target_user_id');
+        $userId        = $cmiParam ? (int) $cmiParam : (Auth::id() ?? session('user_id'));
+        $user          = \App\Models\User::find($userId);
+        $mateIds       = [];
+        if ($user && !empty($user->institution)) {
+            $mateIds = \App\Models\User::where('institution', $user->institution)
+                ->where('role', 'cmi')
+                ->where('id', '!=', $userId)
+                ->pluck('id')
+                ->toArray();
+        }
+        $allIds        = array_values(array_unique(array_merge([$userId], $mateIds)));
         $reportingYear = (int) ($request->input('year') ?? $request->input('reporting_year') ?? date('Y'));
         $defaultTables = config('secreco.all_tables', [
             'T1','T2a','T2b','T3','T4','T5','T6','T7a','T7b',
@@ -24,7 +35,7 @@ class ReportController extends Controller
             'T16','T17','T18','T19','T20a','T20b'
         ]);
         $fmtTables  = \App\Models\FormatTemplate::where('year', $reportingYear)->orderBy('sort_order', 'asc')->pluck('table_no')->toArray();
-        $userTables = ReportTable::where('user_id', $userId)->where('reporting_year', $reportingYear)->pluck('table_no')->toArray();
+        $userTables = ReportTable::whereIn('user_id', $allIds)->where('reporting_year', $reportingYear)->pluck('table_no')->toArray();
         if (!empty($fmtTables)) {
             $allTables = array_values(array_unique(array_merge($fmtTables, $userTables)));
         } else {
@@ -46,8 +57,40 @@ class ReportController extends Controller
             $submittedAtStr = $nowManila->format('Y-m-d H:i:s');
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // Validation: Do NOT accept submission if any report table is in "draft".
+        // All tables with data must be saved or marked as complete before submitting.
+        // ─────────────────────────────────────────────────────────────
+        $draftTables = ReportTable::whereIn('user_id', $allIds)
+            ->where('reporting_year', $reportingYear)
+            ->where('status', 'draft')
+            ->pluck('table_no')
+            ->unique()
+            ->toArray();
+
+        if (!empty($draftTables)) {
+            $tableList = implode(', ', $draftTables);
+            return response()->json([
+                'success'      => false,
+                'error'        => "Cannot submit report: Table(s) {$tableList} are currently saved as draft. All draft tables must be saved or marked as complete before submitting.",
+                'draft_tables' => $draftTables,
+            ], 422);
+        }
+
+        $completedTablesCount = ReportTable::whereIn('user_id', $allIds)
+            ->where('reporting_year', $reportingYear)
+            ->whereIn('status', ['done', 'submitted', 'accepted'])
+            ->count();
+
+        if ($completedTablesCount === 0) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'Cannot submit report: No tables have been completed yet. Please fill out and save at least one table before submitting.',
+            ], 422);
+        }
+
         // Look up all historical submissions for this user and year to resolve earliest submission timestamps
-        $priorSubs = ReportSubmission::where('user_id', $userId)
+        $priorSubs = ReportSubmission::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->orderBy('id', 'asc')
             ->get();
@@ -71,14 +114,8 @@ class ReportController extends Controller
             }
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // FIX: "draft" tables stay private and are NOT converted to
-        // "submitted" here. Only tables the CMI explicitly marked as
-        // "done" (or that are already submitted) get finalized when
-        // Submit Reports is clicked. A table stays as 'draft' until
-        // the CMI later saves it as 'done' and submits again.
-        // ─────────────────────────────────────────────────────────────
-        ReportTable::where('user_id', $userId)
+        // Finalize completed tables as submitted
+        ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->whereNotIn('status', ['accepted', 'deleted', 'draft'])
             ->get()
@@ -109,7 +146,7 @@ class ReportController extends Controller
             });
 
         // Also ensure any already-accepted tables retain their original submitted_at in meta_json
-        ReportTable::where('user_id', $userId)
+        ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->where('status', 'accepted')
             ->get()
@@ -127,7 +164,7 @@ class ReportController extends Controller
                 }
             });
 
-        $saved = ReportTable::where('user_id', $userId)
+        $saved = ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->get();
 
@@ -162,7 +199,7 @@ class ReportController extends Controller
             }
         }
 
-        $docs = ReportTableDoc::where('user_id', $userId)
+        $docs = ReportTableDoc::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->orderBy('table_no')
             ->orderBy('sort_order')
@@ -188,13 +225,26 @@ class ReportController extends Controller
         ]);
 
         // Auto-resolve any open correction requests since the revised report has been submitted
-        \App\Models\CorrectionRequest::where('cmi_user_id', $userId)
+        \App\Models\CorrectionRequest::whereIn('cmi_user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->where('status', 'open')
             ->update(['status' => 'resolved', 'resolved_at' => now()]);
 
         $userInst = Auth::user()?->institution ?? 'CMI';
         \App\Services\ActivityLogService::log($userId, "Submitted CY {$reportingYear} Annual Report tables from {$userInst}");
+
+        // Create notification for PTA
+        \App\Models\Notification::create([
+            'role'         => 'pta',
+            'type'         => 'submission',
+            'icon'         => '📋',
+            'color'        => 'green',
+            'message'      => "{$userInst} submitted accomplishment reports for CY {$reportingYear}.",
+            'action_url'   => "/dashboard/pta/submissions?year={$reportingYear}",
+            'action_label' => 'View Submissions',
+            'is_read'      => false,
+            'created_at'   => now(),
+        ]);
 
         return response()->json([
             'success'       => true,
@@ -203,4 +253,4 @@ class ReportController extends Controller
             'summary'       => $summary,
         ]);
     }
-}   
+}

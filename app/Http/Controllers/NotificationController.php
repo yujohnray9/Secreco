@@ -77,10 +77,19 @@ class NotificationController extends Controller
                 }
             }
 
-            $isApprovalOrActivation = in_array($n->type, ['year_activation', 'approval', 'user_approval', 'accepted'], true)
+            $isInfoOnly = in_array($n->type, ['year_activation', 'accepted'], true)
                 || str_contains(strtolower($n->message), 'accepted')
-                || str_contains(strtolower($n->message), 'is now active')
-                || str_contains(strtolower($n->message), 'approved');
+                || str_contains(strtolower($n->message), 'is now active');
+
+            $actionUrl   = $n->action_url;
+            $actionLabel = $n->action_label ?: 'View';
+            if ($n->type === 'user_approval' || str_contains(strtolower($n->message), 'pending approval')) {
+                $actionUrl   = '/dashboard/pta/users';
+                $actionLabel = 'View';
+            } elseif ($isInfoOnly) {
+                $actionUrl   = null;
+                $actionLabel = null;
+            }
 
             $notifications[] = [
                 'id'           => (int) $n->id,
@@ -88,9 +97,10 @@ class NotificationController extends Controller
                 'type'         => $isYearAct ? 'blue' : ($n->color ?: 'blue'),
                 'icon'         => $isYearAct ? '🎉' : ($n->icon ?: '📋'),
                 'msg'          => $msg,
-                'action'       => $isApprovalOrActivation ? null : $n->action_url,
-                'action_label' => $isApprovalOrActivation ? null : ($n->action_label ?: 'View'),
-                'time'         => $n->created_at ? $n->created_at->format('Y-m-d\TH:i:s+08:00') : null,
+                'action'       => $actionUrl,
+                'action_label' => $actionLabel,
+                'time'         => $this->toPhIso($n->created_at),
+                'time_formatted' => $this->toPhFormatted($n->created_at),
                 'unread'       => $unread,
                 'notif_type'   => $n->type,
                 'source'       => 'stored',
@@ -104,30 +114,32 @@ class NotificationController extends Controller
                 ->get();
 
             if ($pendingUsers->count() > 0) {
-                $count  = $pendingUsers->count();
-                $names  = array_slice(array_map(
-                    fn($u) => $u['first_name'] . ' ' . $u['last_name'] . ($u['institution'] ? ' (' . $u['institution'] . ')' : ''),
-                    $pendingUsers->toArray()
-                ), 0, 2);
-                $label  = implode(' and ', $names) . ($count > 2 ? " and " . ($count - 2) . " more" : '');
-                $key    = 'derived_pending_users';
-                if (!in_array($key, $deletedKeys, true)) {
-                    $t      = $pendingUsers[0]->created_at;
+                foreach ($pendingUsers as $pu) {
+                    $key = 'derived_user_' . $pu->id;
+                    if (in_array($key, $deletedKeys, true) || in_array('derived_pending_users', $deletedKeys, true)) {
+                        continue;
+                    }
+                    $t      = $pu->created_at;
                     $tTs    = $t ? strtotime((string)$t) : 0;
                     $unread = true;
-                    if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true)) {
+                    if ($readAll || ($readAtTs && $tTs > 0 && $tTs <= $readAtTs) || in_array($key, $readKeys, true) || in_array('derived_pending_users', $readKeys, true)) {
                         $unread = false;
                     }
+
+                    $uName = trim($pu->first_name . ' ' . $pu->last_name);
+                    $uRole = strtoupper($pu->role);
+                    $uInst = $pu->institution ? " ({$pu->institution})" : '';
 
                     $notifications[] = [
                         'id'           => null,
                         'key'          => $key,
                         'type'         => 'yellow',
                         'icon'         => '👥',
-                        'msg'          => $count === 1 ? "1 account pending approval — {$label}." : "{$count} accounts pending approval — {$label}.",
-                        'action'       => null,
-                        'action_label' => null,
-                        'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
+                        'msg'          => "New user registered: {$uName}{$uInst} registered as {$uRole} and is pending approval.",
+                        'action'       => '/dashboard/pta/users',
+                        'action_label' => 'View',
+                        'time'         => $this->toPhIso($t),
+                        'time_formatted' => $this->toPhFormatted($t),
                         'unread'       => $unread,
                         'notif_type'   => 'user_approval',
                         'source'       => 'derived',
@@ -172,7 +184,8 @@ class NotificationController extends Controller
                     'msg'          => "Table {$cr->table_no} was returned for revision by the PTA Admin: \"{$cr->reason}\"",
                     'action'       => '/dashboard/cmi/fillup',
                     'action_label' => 'Go to ' . $cr->table_no,
-                    'time'         => $t ? $t->format('Y-m-d\TH:i:s+08:00') : null,
+                    'time'         => $this->toPhIso($t),
+                    'time_formatted' => $this->toPhFormatted($t),
                     'unread'       => $unread,
                     'notif_type'   => 'correction',
                     'source'       => 'derived',
@@ -299,5 +312,25 @@ class NotificationController extends Controller
         session(['notifs_delete_all_' . $userId => true]);
 
         return response()->json(['ok' => true, 'message' => 'All notifications deleted.']);
+    }
+
+    protected function toPhIso($datetime): ?string
+    {
+        if (!$datetime) return null;
+        try {
+            return \Carbon\Carbon::parse($datetime)->setTimezone('Asia/Manila')->format('Y-m-d\TH:i:s+08:00');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    protected function toPhFormatted($datetime): ?string
+    {
+        if (!$datetime) return null;
+        try {
+            return \Carbon\Carbon::parse($datetime)->setTimezone('Asia/Manila')->format('M j, Y h:i A');
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

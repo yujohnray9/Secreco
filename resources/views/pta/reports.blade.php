@@ -177,14 +177,14 @@
     <script src="/assets/js/pta/renderers/render-t19.js?v=3"></script>
     <script src="/assets/js/pta/renderers/render-t20a.js?v=3"></script>
     <script src="/assets/js/pta/renderers/render-t20b.js?v=3"></script>
-    <script src="/assets/js/pta/renderers/render-generic.js?v=3"></script>
+    <script src="/assets/js/pta/renderers/render-generic.js?v=6"></script>
     <!-- ── End renderers ── -->
 
-    <script src="/assets/js/pta/reports-renderers.js?v=5"></script>
-    <script src="/assets/js/pta/reports-tabledefs.js?v=5"></script>
-    <script src="/assets/js/pta/reports-api.js?v=5"></script>
-    <script src="/assets/js/pta/reports-view-table.js?v=5"></script>
-    <script src="/assets/js/pta/reports-view-cmi.js?v=5"></script>
-    <script src="/assets/js/pta/reports-export.js?v=5"></script>
-    <script src="/assets/js/pta/reports-boot.js?v=5"></script>
+    <script src="/assets/js/pta/reports-renderers.js?v=6"></script>
+    <script src="/assets/js/pta/reports-tabledefs.js?v=6"></script>
+    <script src="/assets/js/pta/reports-api.js?v=6"></script>
+    <script src="/assets/js/pta/reports-view-table.js?v=6"></script>
+    <script src="/assets/js/pta/reports-view-cmi.js?v=6"></script>
+    <script src="/assets/js/pta/reports-export.js?v=6"></script>
+    <script src="/assets/js/pta/reports-boot.js?v=6"></script>
     @endsection

@@ -36,7 +36,7 @@
           <div class="sc-fc-val" id="statComplete">—</div>
           <span class="sc-fc-badge up" id="statCompleteBadge">↑ 0%</span>
         </div>
-        <span class="sc-fc-sub" id="statCompleteSub">of 24 required tables</span>
+        <span class="sc-fc-sub" id="statCompleteSub">of required tables</span>
         <div class="sc-fc-foot">
           <a href="#" onclick="goToYearPage('/dashboard/cmi/fillup'); return false;" class="sc-fc-link">
             <span>Fill out report</span>
@@ -128,6 +128,34 @@
         </div>
         <div id="recentActivity">
           <div class="loading-state" style="padding:16px;text-align:center;color:#6b7280;">Loading activity...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BOTTOM ROW: INSTITUTION PROGRESS OVERVIEW ── -->
+    <div style="margin-top: 20px;">
+      <div class="card-fc">
+        <div class="card-fc-header" style="flex-wrap: wrap; gap: 12px; align-items: center;">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <h2 class="card-fc-title" style="margin:0;">Institution Progress Overview</h2>
+              <span id="cmiInstCountBadge" style="font-size:11px;font-weight:700;color:#047857;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 8px;border-radius:12px;">Loading...</span>
+            </div>
+            <p class="card-fc-sub" id="cmiInstProgressSub">Submission progress across all consortium member institutions for CY {{ date('Y') }}</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div class="search-wrap" style="width:230px;height:35px;background:#f8fafc;border:1px solid #d1d5db;border-radius:8px;padding:0 10px;display:flex;align-items:center;gap:6px;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="instSearchInput" placeholder="Filter institutions..." style="border:none;background:transparent;outline:none;font-size:12px;width:100%;color:#1e293b;" oninput="filterInstitutions()">
+            </div>
+            <div class="section-badge-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="institution-progress-list" id="institutionProgressList" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(350px, 1fr));gap:14px 20px;padding:4px 0;">
+          <div style="text-align:center; color:#74807c; font-size:12px; padding:30px; grid-column:1/-1;">Loading institution progress...</div>
         </div>
       </div>
     </div>
@@ -258,7 +286,9 @@ async function loadDashboard(year) {
 
       // Update 'of X required tables' dynamically
       const subElReq = document.getElementById('statCompleteSub');
-      if (subElReq && json.stats.totalRequired) subElReq.textContent = 'of ' + json.stats.totalRequired + ' required tables';
+      if (subElReq && json.stats.totalRequired !== undefined) {
+        subElReq.textContent = 'of ' + json.stats.totalRequired + ' required tables';
+      }
 
       // Update % badge dynamically
       const total = json.stats.totalRequired || 1;
@@ -298,9 +328,121 @@ async function loadDashboard(year) {
         </div>
       `;
     }
+
+    // ── Render Institution Progress Overview (All institutions) ──
+    allInstitutionData = json.institution_progress || json.cmi_status_list || json.cmi_list || [];
+    userInstitution = json.my_institution || '';
+    const subProg = document.getElementById('cmiInstProgressSub');
+    if (subProg) {
+      subProg.textContent = `Submission progress across all consortium member institutions for CY ${currentDashYear}`;
+    }
+    const searchInp = document.getElementById('instSearchInput');
+    if (searchInp && searchInp.value.trim()) {
+      filterInstitutions();
+    } else {
+      renderInstitutionProgress(allInstitutionData);
+    }
   } catch (e) {
     console.error('CMI Dashboard load error:', e);
   }
+}
+
+let allInstitutionData = [];
+let userInstitution = '';
+
+function getInstProgressColorSpec(pct) {
+  if (pct === 0) return { fill: '#d1d5db', text: '#6b7280' };
+  if (pct < 30) return { fill: '#10b981', text: '#059669' };
+  if (pct < 60) return { fill: '#059669', text: '#047857' };
+  if (pct < 90) return { fill: '#047857', text: '#064e3b' };
+  return { fill: '#034a36', text: '#022c20' };
+}
+
+function renderInstitutionProgress(list) {
+  const progWrap = document.getElementById('institutionProgressList');
+  if (!progWrap) return;
+
+  const countBadge = document.getElementById('cmiInstCountBadge');
+  if (countBadge) {
+    countBadge.textContent = `${list.length} ${list.length === 1 ? 'Institution' : 'Institutions'}`;
+  }
+
+  if (!list || list.length === 0) {
+    progWrap.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align:center; color:#74807c; font-size:12.5px; padding:32px;">
+        No institution progress records found for CY ${currentDashYear}.
+      </div>
+    `;
+    return;
+  }
+
+  progWrap.innerHTML = list.map(item => {
+    const total = item.total_tables || 24;
+    const done  = item.tables_done || 0;
+    const pct   = total > 0 ? Math.round((done / total) * 100) : (item.pct || 0);
+    const color = getInstProgressColorSpec(pct);
+    const isMine = userInstitution && (
+      item.institution.trim().toLowerCase() === userInstitution.trim().toLowerCase() ||
+      (item.short && userInstitution.trim().toLowerCase().includes(item.short.trim().toLowerCase()))
+    );
+
+    let statusBg = '#f3f4f6';
+    let statusColor = '#4b5563';
+    let statusText = item.status || 'Not Started';
+
+    if (statusText === 'Accepted') {
+      statusBg = '#ecfdf5';
+      statusColor = '#047857';
+    } else if (statusText === 'Submitted') {
+      statusBg = '#eff6ff';
+      statusColor = '#1d4ed8';
+    } else if (statusText === 'Returned') {
+      statusBg = '#fef2f2';
+      statusColor = '#b91c1c';
+    } else if (statusText === 'In Progress') {
+      statusBg = '#fffbeb';
+      statusColor = '#b45309';
+    }
+
+    return `
+      <div class="progress-item" style="padding:${isMine ? '11px 13px' : '9px 12px'}; background:${isMine ? '#f0fdf4' : '#fafbfa'}; border:1px solid ${isMine ? '#86efac' : '#e5e7eb'}; border-radius:10px; transition:all 0.15s ease; box-shadow:${isMine ? '0 2px 8px rgba(16,185,129,0.12)' : 'none'};">
+        <div class="progress-info" style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <div style="display:flex; align-items:center; gap:6px; min-width:0; overflow:hidden;">
+            <span class="progress-label" title="${escapeHtml(item.institution)}" style="font-weight:700; font-size:12px; color:${isMine ? '#065f46' : '#1f2937'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ${escapeHtml(item.institution)}
+            </span>
+            ${isMine ? '<span style="background:#059669; color:#fff; font-size:9.5px; font-weight:700; padding:1.5px 7px; border-radius:10px; white-space:nowrap; flex-shrink:0;">Your Institution</span>' : ''}
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+            <span style="background:${statusBg}; color:${statusColor}; font-size:10px; font-weight:700; padding:2px 7px; border-radius:6px; white-space:nowrap;">
+              ${escapeHtml(statusText)}
+            </span>
+            <span class="progress-pct" style="color:${color.text}; font-weight:700; font-size:11.5px;">
+              ${done}/${total} (${pct}%)
+            </span>
+          </div>
+        </div>
+        <div class="progress-track" style="height:9px; background:#e5e7eb !important; border-radius:20px; overflow:hidden; position:relative; margin-top:7px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.06);">
+          <div class="progress-fill" style="height:100%; border-radius:20px; width:${pct}%; background:${color.fill}; transition:width 0.8s cubic-bezier(0.4,0,0.2,1);"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterInstitutions() {
+  const query = (document.getElementById('instSearchInput')?.value || '').trim().toLowerCase();
+  if (!query) {
+    renderInstitutionProgress(allInstitutionData);
+    return;
+  }
+  const filtered = allInstitutionData.filter(item => {
+    const instName = (item.institution || '').toLowerCase();
+    const short = (item.short || '').toLowerCase();
+    const status = (item.status || '').toLowerCase();
+    return instName.includes(query) || short.includes(query) || status.includes(query);
+  });
+  renderInstitutionProgress(filtered);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
