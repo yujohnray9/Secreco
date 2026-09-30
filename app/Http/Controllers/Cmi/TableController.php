@@ -39,7 +39,17 @@ class TableController extends Controller
         $allIds   = array_merge([$userId], $mateIds);
 
         $priority = ['accepted' => 4, 'done' => 3, 'submitted' => 3, 'returned' => 2.5, 'draft' => 2, 'not-started' => 0, 'deleted' => 0];
-        $candidates = array_unique([$tableNo, strtoupper($tableNo), strtolower($tableNo), preg_replace('/[^A-Za-z0-9]/', '', $tableNo), strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tableNo))]);
+        $cleanNo = ltrim($tableNo, 'Tt');
+        $candidates = array_values(array_unique(array_filter([
+            $tableNo,
+            strtoupper($tableNo),
+            strtolower($tableNo),
+            preg_replace('/[^A-Za-z0-9]/', '', $tableNo),
+            strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tableNo)),
+            $cleanNo,
+            'T' . $cleanNo,
+            't' . $cleanNo,
+        ])));
         $allRows  = ReportTable::whereIn('user_id', $allIds)
             ->where('reporting_year', $reportingYear)
             ->whereIn('table_no', $candidates)
@@ -221,8 +231,23 @@ class TableController extends Controller
         }
         $tableNo = $canonicalMap[strtoupper($tableNo)] ?? $tableNo;
 
+        $cleanNo = ltrim($tableNo, 'Tt');
+        $candidates = array_values(array_unique(array_filter([
+            $tableNo,
+            strtoupper($tableNo),
+            strtolower($tableNo),
+            $cleanNo,
+            'T' . $cleanNo,
+            't' . $cleanNo,
+        ])));
+
+        // Check if table template exists
+        $ft = \App\Models\FormatTemplate::where('year', $reportingYear)->whereIn('table_no', $candidates)->first();
+        if ($ft) {
+            $tableNo = $ft->table_no;
+        }
+
         // Check if table is locked for CMI
-        $ft = \App\Models\FormatTemplate::where('year', $reportingYear)->where('table_no', $tableNo)->first();
         if ($ft && $ft->is_locked) {
             $currentUserRole = Auth::user()?->role;
             if ($currentUserRole !== 'pta') {
@@ -241,7 +266,7 @@ class TableController extends Controller
         // Preserve any previously stored submitted_at in meta_json so saving doesn't wipe out the original submission date
         $existingTable = ReportTable::where('user_id', $userId)
             ->where('reporting_year', $reportingYear)
-            ->where('table_no', $tableNo)
+            ->whereIn('table_no', $candidates)
             ->first();
         if ($existingTable && is_array($existingTable->meta_json) && !empty($existingTable->meta_json['submitted_at'])) {
             if (is_array($meta)) {

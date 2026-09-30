@@ -1,8 +1,7 @@
 /**
  * t15_equipment_facilities.js — Table 15: Equipment/Facilities Funded.
- * Fixed category rows: Endorsed | Approved | Facilities Upgraded |
- *                      Facilities Established | Equipment Purchased
- * Columns: Equipment/Facilities | Location/Agency | Expenditures | Source(s) of Funds
+ * 5 Categories with section headers and designated Add buttons.
+ * Columns: Item Description | Location / Agency | Expenditures | Source(s) of Funds
  */
 
 (function () {
@@ -19,7 +18,7 @@
     'Approved',
     'Facilities Upgraded',
     'Facilities Established',
-    'Equipment Purchased',
+    'Equipment Purchased'
   ];
 
   function render(container) {
@@ -28,14 +27,9 @@
   }
 
   function buildShell() {
-    const rows = CATEGORIES.map((cat, i) => `
-      <tr>
-        <td style="font-weight:600;padding:6px 8px">${esc(cat)}</td>
-        <td><input type="text" class="t15-item"     data-idx="${i}" placeholder="Equipment / Facility name"  value=""/></td>
-        <td><input type="text" class="t15-location" data-idx="${i}" placeholder="Location / Agency"           value=""/></td>
-        <td><input type="text" class="t15-expense"  data-idx="${i}" placeholder="Amount / Expenditures"       value=""/></td>
-        <td><input type="text" class="t15-funds"    data-idx="${i}" placeholder="Source(s) of Funds"          value=""/></td>
-      </tr>`).join('');
+    const addBtns = CATEGORIES.map(cat =>
+      `<button class="btn btn-sm" type="button" onclick="T15.addRow('${esc(cat)}')" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;font-weight:600;padding:7px 12px;text-align:center;font-size:12px">+ Add (${esc(cat)})</button>`
+    ).join('');
 
     return `
     <div class="t-page" id="t15_wrap">
@@ -44,23 +38,28 @@
       </div>
 
       <div class="tbl-wrap" style="margin:14px 0">
-        <table class="merged" style="width:100%;min-width:700px">
+        <table class="merged" style="width:100%;min-width:680px">
           <thead>
             <tr>
-              <th class="group" style="width:180px">Equipment / Facilities Established / Upgraded / Approved</th>
-              <th class="group">Item Description</th>
-              <th class="group" style="width:160px">Location / Agency</th>
-              <th class="group" style="width:140px">Expenditures</th>
-              <th class="group" style="width:150px">Source(s) of Funds</th>
+              <th class="group" style="width:30%">Item Description</th>
+              <th class="group" style="width:25%">Location / Agency</th>
+              <th class="group" style="width:20%">Expenditures</th>
+              <th class="group" style="width:25%">Source(s) of Funds</th>
+              <th class="group" style="width:40px;text-align:center"></th>
             </tr>
           </thead>
-          <tbody id="t15_rows">${rows}</tbody>
+          <tbody id="t15_rows"></tbody>
         </table>
       </div>
 
+      <!-- Add Buttons Grid matching Image 3 -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:8px;margin-bottom:14px">
+        ${addBtns}
+      </div>
+
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-sm" onclick="T15.save()" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
-        <button class="btn t-docs-btn" onclick="T15.openDocs()">
+        <button class="btn btn-sm" type="button" onclick="T15.save()" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
+        <button class="btn t-docs-btn" type="button" onclick="T15.openDocs()">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documentation <span id="t15_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
         <span id="t15_status_badge" style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:10px;display:none"></span>
@@ -69,50 +68,99 @@
     </div>`;
   }
 
+  function makeCatHeader(cat) {
+    return `<tr class="t15-cat-row" data-cat="${esc(cat)}">
+      <td colspan="5" style="font-weight:700;background:var(--bg-soft,#f3f6f4);padding:9px 12px;color:var(--forest,#075b42);border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb">${esc(cat)}</td>
+    </tr>`;
+  }
+
+  function createRowHTML(cat, data = {}) {
+    const tr = document.createElement('tr');
+    tr.className = 't15-data-row';
+    tr.dataset.cat = cat;
+    tr.innerHTML = `
+      <td><input type="text" class="t15-item" placeholder="Item description" value="${esc(data.item || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
+      <td><input type="text" class="t15-location" placeholder="Location / Agency" value="${esc(data.location || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
+      <td><input type="number" step="0.01" min="0" class="t15-expense" placeholder="0.00" value="${esc(data.expense || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
+      <td><input type="text" class="t15-funds" placeholder="Source(s) of Funds" value="${esc(data.funds || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
+      <td style="text-align:center">
+        <button type="button" class="row-remove-btn" onclick="this.closest('tr').remove()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;font-weight:700;padding:0 6px;line-height:1" title="Remove row">&times;</button>
+      </td>
+    `;
+    return tr;
+  }
+
+  function addRow(cat = CATEGORIES[0], data = {}) {
+    const tbody = document.getElementById('t15_rows');
+    if (!tbody) return;
+    const catRows = tbody.querySelectorAll(`tr.t15-data-row[data-cat="${cat}"]`);
+    const tr = createRowHTML(cat, data);
+    if (catRows.length > 0) {
+      catRows[catRows.length - 1].insertAdjacentElement('afterend', tr);
+    } else {
+      const header = tbody.querySelector(`tr.t15-cat-row[data-cat="${cat}"]`);
+      if (header) header.insertAdjacentElement('afterend', tr);
+      else tbody.appendChild(tr);
+    }
+    const input = tr.querySelector('.t15-item');
+    if (input && !data.item) input.focus();
+  }
+
   function collectRows() {
-    return CATEGORIES.map((cat, i) => ({
-      category: cat,
-      item:     document.querySelector(`.t15-item[data-idx="${i}"]`)?.value     || '',
-      location: document.querySelector(`.t15-location[data-idx="${i}"]`)?.value || '',
-      expense:  document.querySelector(`.t15-expense[data-idx="${i}"]`)?.value  || '',
-      funds:    document.querySelector(`.t15-funds[data-idx="${i}"]`)?.value    || '',
-    }));
+    return [...document.querySelectorAll('#t15_rows tr.t15-data-row')].map(tr => ({
+      category: tr.dataset.cat || CATEGORIES[0],
+      item:     tr.querySelector('.t15-item')?.value.trim()     || '',
+      location: tr.querySelector('.t15-location')?.value.trim() || '',
+      expense:  tr.querySelector('.t15-expense')?.value.trim()  || '',
+      funds:    tr.querySelector('.t15-funds')?.value.trim()    || '',
+    })).filter(r => r.item !== '' || r.location !== '' || r.expense !== '' || r.funds !== '');
   }
 
   function loadData() {
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        if (data.rows && data.rows.length) {
-          data.rows.forEach((row, i) => {
-            const set = (cls, val) => {
-              const el = document.querySelector(`.${cls}[data-idx="${i}"]`);
-              if (el) el.value = val || '';
-            };
-            set('t15-item',     row.item);
-            set('t15-location', row.location);
-            set('t15-expense',  row.expense);
-            set('t15-funds',    row.funds);
-          });
-        }
+        const tbody = document.getElementById('t15_rows');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const savedRows = (data.rows && Array.isArray(data.rows)) ? data.rows : [];
+
+        CATEGORIES.forEach(cat => {
+          tbody.insertAdjacentHTML('beforeend', makeCatHeader(cat));
+          const catRows = savedRows.filter(r => r.category === cat);
+          if (catRows.length > 0) {
+            catRows.forEach(r => tbody.appendChild(createRowHTML(cat, r)));
+          } else {
+            // Render 1 blank row under each category
+            tbody.appendChild(createRowHTML(cat, {}));
+          }
+        });
+
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
-        const status = computeStatus(collectRows());
+        const status = data.status || computeStatus(collectRows());
         updateStatusBadge(status);
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
-      .catch(() => {});
+      .catch(() => {
+        const tbody = document.getElementById('t15_rows');
+        if (tbody) {
+          tbody.innerHTML = '';
+          CATEGORIES.forEach(cat => {
+            tbody.insertAdjacentHTML('beforeend', makeCatHeader(cat));
+            tbody.appendChild(createRowHTML(cat, {}));
+          });
+        }
+      });
   }
 
   /* ─────────────────────────────────────────
      STATUS (auto-derived)
   ───────────────────────────────────────── */
-  function isRowTouched(r) { return ['item', 'location', 'expense', 'funds'].some(k => (r[k] || '').trim() !== ''); }
-  function isRowComplete(r) { return (r.item || '').trim() !== '' && (r.location || '').trim() !== ''; }
   function computeStatus(rows) {
-    const touched = rows.filter(isRowTouched);
-    if (touched.length === 0) return 'not-started';
-    return touched.every(isRowComplete) ? 'done' : 'draft';
+    if (rows.length === 0) return 'not-started';
+    return 'done';
   }
   function statusLabel(status) { if (status === 'done') return 'Complete'; if (status === 'draft') return 'In Progress'; return 'Not Started'; }
   function updateStatusBadge(status) {
@@ -132,7 +180,7 @@
     if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
     const status = (requestedStatus === 'draft') ? 'draft' : 'done';
-    const msgs = { 'done': 'Table 15 saved — all rows complete!', 'draft': 'Table 15 saved — some rows still incomplete.', 'not-started': 'Table 15 saved.' };
+    const msgs = { 'done': 'Table 15 saved — all rows complete!', 'draft': 'Table 15 saved — draft saved.', 'not-started': 'Table 15 saved.' };
 
     setMsg('Saving…');
     fetch(API_SAVE, {
@@ -162,11 +210,12 @@
     DocsModal.open(TABLE_NO, _images, saved => { _images = saved; updateBadge(); });
   }
 
-  function esc(s) { return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function esc(s) { return String(s ?? '').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function setMsg(m) { const e = document.getElementById('t15_status_msg'); if (e) e.textContent = m; }
 
   window.T15 = {
     save,
+    addRow,
     openDocs,
   };
 
@@ -177,4 +226,3 @@
   }
   register();
 })();
-

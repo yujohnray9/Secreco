@@ -1,6 +1,6 @@
 /**
  * t13_tech_promotion.js — Table 13: List of Technology Promotion Approaches.
- * Columns: IEC and IMC Approaches | Remarks | Actions
+ * 6 Categories with section headers and designated Add buttons.
  */
 
 (function () {
@@ -12,13 +12,31 @@
 
   let _images = [];
 
-  const FIXED_APPROACHES = [
-    'Regional FIESTA',
-    'Print (press releases, publications, newspapers, magazines, brochures, flyers, leaflets, posters, comics, and others)',
-    'Radio/TV broadcast (news features, plugs, school on the air, interviews, guesting, vlogs, podcasts, and others)',
-    'ICT-based IEC materials (e-publications, static web-based pages, CDs) and online promotion (web and social releases such as social media cards, reels, stories, and short videos)',
-    'IEC-related trainings',
-    'Other Technology Promotion (conduct of communication campaigns/advocacy initiatives, info caravan, and others; participation in NSTW, RSTW, Agrilink, DATE)',
+  const CATEGORIES = [
+    {
+      btnLabel: 'Regional FIESTA',
+      title: 'Regional FIESTA'
+    },
+    {
+      btnLabel: 'Print',
+      title: 'Print (press releases, publications, newspapers, magazines, brochures, flyers, leaflets, posters, comics, and others)'
+    },
+    {
+      btnLabel: 'Radio/TV Broadcast',
+      title: 'Radio/TV broadcast (news features, plugs, school on the air, interviews, guesting, vlogs, podcasts, and others)'
+    },
+    {
+      btnLabel: 'ICT-based IEC Materials',
+      title: 'ICT-based IEC materials (e-publications, static web-based pages, CDs) and online promotion (web and social releases such as social media cards, reels, stories, and short videos)'
+    },
+    {
+      btnLabel: 'IEC-related Trainings',
+      title: 'IEC-related trainings'
+    },
+    {
+      btnLabel: 'Other Technology Promotion',
+      title: 'Other Technology Promotion (conduct of communication campaigns/advocacy initiatives, info caravan, and others; participation in NSTW, RSTW, AgriLink, DATE)'
+    }
   ];
 
   function render(container) {
@@ -27,6 +45,10 @@
   }
 
   function buildShell() {
+    const addBtns = CATEGORIES.map(c =>
+      `<button class="btn btn-sm" type="button" onclick="T13.addRow('${esc(c.title)}')" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;font-weight:600;padding:7px 10px;text-align:center;font-size:12px">+ Add (${esc(c.btnLabel)})</button>`
+    ).join('');
+
     return `
     <div class="t-page" id="t13_wrap">
       <div class="t-hdr">
@@ -34,7 +56,7 @@
       </div>
 
       <div class="tbl-wrap" style="margin:14px 0">
-        <table class="merged" style="width:100%;min-width:600px">
+        <table class="merged" style="width:100%;min-width:650px">
           <thead>
             <tr>
               <th class="group" style="width:65%">Information, Education, and Communication (IEC) and Integrated Marketing Communication (IMC) Approaches</th>
@@ -46,10 +68,14 @@
         </table>
       </div>
 
+      <!-- Add Buttons Grid matching Image 2 -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:8px;margin-bottom:14px">
+        ${addBtns}
+      </div>
+
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-sm" id="t13_add_btn" type="button" onclick="T13.addRow()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;font-weight:600">+ Add Row</button>
-        <button class="btn btn-sm" onclick="T13.save()" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
-        <button class="btn t-docs-btn" onclick="T13.openDocs()">
+        <button class="btn btn-sm" type="button" onclick="T13.save()" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
+        <button class="btn t-docs-btn" type="button" onclick="T13.openDocs()">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documentation <span id="t13_docs_count" class="t-docs-badge" style="display:none">0</span>
         </button>
         <span id="t13_status_badge" style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:10px;display:none"></span>
@@ -58,40 +84,42 @@
     </div>`;
   }
 
-  function createRowHTML(approach = '', remarks = '', isCustom = false) {
+  function makeCatHeader(catTitle) {
+    return `<tr class="t13-cat-row" data-cat="${esc(catTitle)}">
+      <td colspan="3" style="font-weight:700;background:var(--bg-soft,#f3f6f4);padding:9px 12px;color:var(--forest,#075b42);border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb">${esc(catTitle)}</td>
+    </tr>`;
+  }
+
+  function createRowHTML(catTitle, approach = '', remarks = '') {
     const tr = document.createElement('tr');
-    if (!isCustom) {
-      tr.innerHTML = `
-        <td style="padding:8px 10px;line-height:1.4">
-          <div class="t13-approach-text" style="font-weight:500">${esc(approach)}</div>
-          <input type="hidden" class="t13-approach" value="${esc(approach)}" />
-        </td>
-        <td>
-          <textarea class="t13-remarks" rows="2" style="width:100%;resize:vertical;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px" placeholder="Remarks">${esc(remarks)}</textarea>
-        </td>
-        <td style="text-align:center"></td>
-      `;
-    } else {
-      tr.innerHTML = `
-        <td style="padding:6px 8px">
-          <input type="text" class="t13-approach" value="${esc(approach)}" placeholder="Enter custom IEC / IMC approach..." style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:4px;font-size:13px" />
-        </td>
-        <td>
-          <textarea class="t13-remarks" rows="2" style="width:100%;resize:vertical;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px" placeholder="Remarks">${esc(remarks)}</textarea>
-        </td>
-        <td style="text-align:center">
-          <button type="button" onclick="T13.removeRow(this)" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;font-weight:700;padding:0 6px;line-height:1" title="Remove row">&times;</button>
-        </td>
-      `;
-    }
+    tr.className = 't13-data-row';
+    tr.dataset.cat = catTitle;
+    tr.innerHTML = `
+      <td style="padding:6px 8px">
+        <input type="text" class="t13-approach" value="${esc(approach)}" placeholder="Enter specific approach / title / activity..." style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #d1d5db;border-radius:4px;font-size:13px" />
+      </td>
+      <td style="padding:6px 8px">
+        <textarea class="t13-remarks" rows="2" style="width:100%;box-sizing:border-box;resize:vertical;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px" placeholder="Remarks">${esc(remarks)}</textarea>
+      </td>
+      <td style="text-align:center">
+        <button type="button" class="row-remove-btn" onclick="T13.removeRow(this)" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;font-weight:700;padding:0 6px;line-height:1" title="Remove row">&times;</button>
+      </td>
+    `;
     return tr;
   }
 
-  function addRow(approach = '', remarks = '') {
+  function addRow(catTitle = CATEGORIES[0].title, approach = '', remarks = '') {
     const tbody = document.getElementById('t13_rows');
     if (!tbody) return;
-    const tr = createRowHTML(approach, remarks, true);
-    tbody.appendChild(tr);
+    const catRows = tbody.querySelectorAll(`tr.t13-data-row[data-cat="${catTitle}"]`);
+    const tr = createRowHTML(catTitle, approach, remarks);
+    if (catRows.length > 0) {
+      catRows[catRows.length - 1].insertAdjacentElement('afterend', tr);
+    } else {
+      const header = tbody.querySelector(`tr.t13-cat-row[data-cat="${catTitle}"]`);
+      if (header) header.insertAdjacentElement('afterend', tr);
+      else tbody.appendChild(tr);
+    }
     const input = tr.querySelector('.t13-approach');
     if (input && !approach) input.focus();
   }
@@ -102,11 +130,11 @@
   }
 
   function collectRows() {
-    return [...document.querySelectorAll('#t13_rows tr')].map((tr) => {
-      const input = tr.querySelector('.t13-approach');
-      const approach = input ? input.value.trim() : (tr.cells[0]?.textContent?.trim() || '');
+    return [...document.querySelectorAll('#t13_rows tr.t13-data-row')].map((tr) => {
+      const approach = tr.querySelector('.t13-approach')?.value.trim() || '';
       const remarks  = tr.querySelector('.t13-remarks')?.value.trim() || '';
-      return { approach, remarks };
+      const category = tr.dataset.cat || CATEGORIES[0].title;
+      return { category, approach, remarks };
     }).filter(r => r.approach !== '' || r.remarks !== '');
   }
 
@@ -118,40 +146,38 @@
         if (!tbody) return;
         tbody.innerHTML = '';
 
-        if (data.rows && data.rows.length > 0) {
-          const loadedRows = [...data.rows];
-          // First, add fixed approaches
-          FIXED_APPROACHES.forEach((fixedAppr) => {
-            const foundIdx = loadedRows.findIndex(r => r.approach === fixedAppr);
-            let remarks = '';
-            if (foundIdx !== -1) {
-              remarks = loadedRows[foundIdx].remarks || '';
-              loadedRows.splice(foundIdx, 1);
-            }
-            tbody.appendChild(createRowHTML(fixedAppr, remarks, false));
+        const savedRows = (data.rows && Array.isArray(data.rows)) ? data.rows : [];
+
+        CATEGORIES.forEach(c => {
+          tbody.insertAdjacentHTML('beforeend', makeCatHeader(c.title));
+          const catRows = savedRows.filter(r => {
+            const rCat = r.category || '';
+            return rCat === c.title || rCat === c.btnLabel || (r.approach && r.approach === c.title);
           });
-          // Then, add any custom added approaches
-          loadedRows.forEach(r => {
-            tbody.appendChild(createRowHTML(r.approach || '', r.remarks || '', true));
-          });
-        } else {
-          // Default: render all 6 fixed approaches
-          FIXED_APPROACHES.forEach(fixedAppr => {
-            tbody.appendChild(createRowHTML(fixedAppr, '', false));
-          });
-        }
+          if (catRows.length > 0) {
+            catRows.forEach(r => {
+              const appr = (r.approach === c.title) ? '' : (r.approach || '');
+              tbody.appendChild(createRowHTML(c.title, appr, r.remarks || ''));
+            });
+          } else {
+            // Render 1 default row under each category
+            tbody.appendChild(createRowHTML(c.title, '', ''));
+          }
+        });
 
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
-        const status = computeStatus(collectRows());
+        const status = data.status || computeStatus(collectRows());
         updateStatusBadge(status);
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
         const tbody = document.getElementById('t13_rows');
-        if (tbody && tbody.children.length === 0) {
-          FIXED_APPROACHES.forEach(fixedAppr => {
-            tbody.appendChild(createRowHTML(fixedAppr, '', false));
+        if (tbody) {
+          tbody.innerHTML = '';
+          CATEGORIES.forEach(c => {
+            tbody.insertAdjacentHTML('beforeend', makeCatHeader(c.title));
+            tbody.appendChild(createRowHTML(c.title, '', ''));
           });
         }
       });
@@ -161,9 +187,9 @@
      STATUS (auto-derived)
   ───────────────────────────────────────── */
   function computeStatus(rows) {
-    const touched = rows.filter(r => (r.remarks || '').trim() !== '');
+    const touched = rows.filter(r => (r.remarks || '').trim() !== '' || (r.approach || '').trim() !== '');
     if (touched.length === 0) return 'not-started';
-    return touched.length === rows.length ? 'done' : 'draft';
+    return 'done';
   }
   function statusLabel(status) {
     if (status === 'done')  return 'Complete';
@@ -183,11 +209,11 @@
 
   function save(requestedStatus) {
     const rows = collectRows();
-    const fields = ['remarks'];
+    const fields = ['remarks', 'approach'];
     if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
     const status = (requestedStatus === 'draft') ? 'draft' : 'done';
-    const msgs = { 'done': 'Table 13 saved — all rows complete!', 'draft': 'Table 13 saved — some rows still incomplete.', 'not-started': 'Table 13 saved.' };
+    const msgs = { 'done': 'Table 13 saved — all rows complete!', 'draft': 'Table 13 saved — draft saved.', 'not-started': 'Table 13 saved.' };
 
     setMsg('Saving…');
     fetch(API_SAVE, {
@@ -234,4 +260,3 @@
   }
   register();
 })();
-

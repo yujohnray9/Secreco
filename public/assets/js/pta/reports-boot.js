@@ -80,7 +80,8 @@ async function syncTableOptionsForYear(year) {
 
       const existingDef = window.TABLE_DEFS[no] || window.TABLE_DEFS[cleanNo] || window.TABLE_DEFS['T' + cleanNo] || {};
       // If table is a custom format with columns_json, or lacks a dedicated renderer, use renderGeneric
-      const hasCustomCols = t.columns_json && (Array.isArray(t.columns_json) ? t.columns_json.length > 0 : Object.keys(t.columns_json).length > 0);
+      const isPlaceholder = Array.isArray(t.columns_json) && t.columns_json.length === 3 && t.columns_json[0] === 'Item Description';
+      const hasCustomCols = t.columns_json && !isPlaceholder && (Array.isArray(t.columns_json) ? t.columns_json.length > 0 : Object.keys(t.columns_json).length > 0);
       let chosenRenderer = existingDef.renderer || (typeof renderGeneric !== 'undefined' ? renderGeneric : null);
       if (hasCustomCols || !chosenRenderer) {
         chosenRenderer = (typeof renderGeneric !== 'undefined' ? renderGeneric : existingDef.renderer);

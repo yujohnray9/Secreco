@@ -38,10 +38,10 @@ class FormatController extends Controller
         });
 
         $activeYear = (int) (
-            FormatTemplate::where('status', 'active')->value('year')
-            ?? SystemSetting::where('key', 'active_year')->value('value')
-            ?? FormatTemplate::max('year')
-            ?? date('Y')
+            SystemSetting::where('key', 'active_year')->value('value')
+            ?? FormatTemplate::where('status', 'active')->where('year', 2025)->value('year')
+            ?? FormatTemplate::where('status', 'active')->value('year')
+            ?? 2025
         );
         $dbYears = FormatTemplate::distinct()->where('year', '>=', 2025)->pluck('year')->all();
         $settingRow = SystemSetting::where('key', 'format_years')->first();

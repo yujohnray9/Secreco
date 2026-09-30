@@ -96,6 +96,25 @@
 
     /* registry: tableNo → { render } */
     const _registry = {};
+    /* module cache: tableNo → { save: function } */
+    const _tableModules = {};
+
+    function getTableModule(no) {
+        if (!no) return null;
+        const str = String(no).trim();
+        const norm = normalizeTableNo(str);
+        const clean = str.replace(/^T/i, '');
+        const withT = 'T' + clean;
+        const candidates = [str, norm, clean, withT, str.toUpperCase(), str.toLowerCase(), norm.toUpperCase(), norm.toLowerCase()];
+        for (const c of candidates) {
+            if (_tableModules[c]) return _tableModules[c];
+        }
+        for (const c of candidates) {
+            if (isNaN(Number(c)) && window[c] && typeof window[c].save === 'function') return window[c];
+        }
+        return null;
+    }
+
     /* status cache: tableNo → status string */
     const _status = {};
     /* submission state */
@@ -115,6 +134,23 @@
         _registry[canon] = def;
         _registry[canon.toUpperCase()] = def;
         _registry[canon.toLowerCase()] = def;
+    };
+
+    CMI.registerModule = function (tableNo, mod) {
+        if (!tableNo || !mod) return;
+        const str = String(tableNo).trim();
+        const norm = normalizeTableNo(str);
+        const clean = str.replace(/^T/i, '');
+        const withT = 'T' + clean;
+        const candidates = [str, norm, clean, withT, str.toUpperCase(), str.toLowerCase(), norm.toUpperCase(), norm.toLowerCase()];
+        candidates.forEach(c => { _tableModules[c] = mod; });
+        if (isNaN(Number(tableNo))) {
+            try {
+                window[tableNo] = mod;
+                window[tableNo.toUpperCase()] = mod;
+                window[tableNo.toLowerCase()] = mod;
+            } catch (e) {}
+        }
     };
 
     let _activeSections = SECTIONS;
@@ -147,13 +183,16 @@
 
             templates.forEach(function (t) {
                 if (!t || !t.table_no) return;
-                const canonicalNo = normalizeTableNo(t.table_no);
+                const tblNo = String(t.table_no).trim();
+                const canonicalNo = normalizeTableNo(tblNo);
+                const cleanNo = tblNo.replace(/^T/i, '');
+                const withT = 'T' + cleanNo;
 
                 // Find section name from template or from default SECTIONS
                 let secName = t.section;
                 if (!secName) {
                     for (const s of SECTIONS) {
-                        if (s.tables.some(tbl => normalizeTableNo(tbl) === canonicalNo)) {
+                        if (s.tables.some(tbl => normalizeTableNo(tbl) === canonicalNo || String(tbl).replace(/^T/i, '') === cleanNo)) {
                             secName = s.label;
                             break;
                         }
@@ -166,21 +205,29 @@
                     secObj = { label: secName, tables: [] };
                     sections.push(secObj);
                 }
-                if (!secObj.tables.includes(canonicalNo)) {
-                    secObj.tables.push(canonicalNo);
+                if (!secObj.tables.includes(tblNo)) {
+                    secObj.tables.push(tblNo);
                 }
 
                 // Title resolution
-                let shortTitle = t.title || canonicalNo;
+                let shortTitle = t.title || tblNo;
                 if (shortTitle.match(/^Table\s+[A-Za-z0-9.]+\s*[–-]?\s*/i)) {
                     shortTitle = shortTitle.replace(/^Table\s+[A-Za-z0-9.]+\s*[–-]?\s*/i, "").trim();
                 }
-                titles[canonicalNo] = shortTitle || TABLE_TITLES[canonicalNo] || t.title || canonicalNo;
+                const resolvedTitle = shortTitle || TABLE_TITLES[canonicalNo] || t.title || tblNo;
+                titles[tblNo] = resolvedTitle;
+                titles[canonicalNo] = resolvedTitle;
+                titles[cleanNo] = resolvedTitle;
+                titles[withT] = resolvedTitle;
 
+                _templateDefs[tblNo] = t;
+                _templateDefs[tblNo.toUpperCase()] = t;
+                _templateDefs[tblNo.toLowerCase()] = t;
                 _templateDefs[canonicalNo] = t;
                 _templateDefs[canonicalNo.toUpperCase()] = t;
                 _templateDefs[canonicalNo.toLowerCase()] = t;
-                _templateDefs[t.table_no] = t;
+                _templateDefs[cleanNo] = t;
+                _templateDefs[withT] = t;
             });
 
             _activeSections = sections;
@@ -286,44 +333,95 @@
         const body = document.getElementById("fillBody");
         if (!body) return;
 
-        const canon = normalizeTableNo(no);
-        let def = _registry[canon] || _registry[no] || _registry[no.toUpperCase()] || _registry[no.toLowerCase()];
+        const sNo = String(no).trim();
+        const canon = normalizeTableNo(sNo);
+        const cleanNo = sNo.replace(/^T/i, '');
+        const withT = 'T' + cleanNo;
+        const candidates = [sNo, canon, cleanNo, withT, sNo.toUpperCase(), sNo.toLowerCase(), canon.toUpperCase(), canon.toLowerCase()];
+
+        // Find template definition if available
+        let tDef = null;
+        for (const c of candidates) {
+            if (_templateDefs[c]) { tDef = _templateDefs[c]; break; }
+        }
+        if (!tDef) {
+            const matchKey = Object.keys(_templateDefs).find(k => 
+                k.toLowerCase() === sNo.toLowerCase() || 
+                normalizeTableNo(k).toLowerCase() === canon.toLowerCase() ||
+                k.replace(/^T/i, '').toLowerCase() === cleanNo.toLowerCase()
+            );
+            if (matchKey) tDef = _templateDefs[matchKey];
+        }
+
+        // Determine if template has real custom columns (from Manage Formats)
+        let hasCustomCols = false;
+        if (tDef && tDef.columns_json) {
+            let parsedCols = tDef.columns_json;
+            if (typeof parsedCols === 'string') {
+                try { parsedCols = JSON.parse(parsedCols); } catch (e) { parsedCols = null; }
+            }
+            if (parsedCols && typeof parsedCols === 'object') {
+                if (Array.isArray(parsedCols.titles) && parsedCols.titles.length > 0) {
+                    hasCustomCols = true;
+                } else if (Array.isArray(parsedCols.columns) && parsedCols.columns.length > 0) {
+                    hasCustomCols = true;
+                } else if (Array.isArray(parsedCols) && parsedCols.length > 0) {
+                    // Ignore legacy seeder placeholder ['Item Description', 'Agency', 'Remarks']
+                    const isLegacyPlaceholder = parsedCols.length === 3 &&
+                        parsedCols[0] === 'Item Description' &&
+                        parsedCols[1] === 'Agency' &&
+                        parsedCols[2] === 'Remarks';
+                    if (!isLegacyPlaceholder) {
+                        hasCustomCols = true;
+                    }
+                }
+            }
+        }
+
+        // Find built-in registered renderer
+        let def = null;
+        for (const c of candidates) {
+            if (_registry[c]) { def = _registry[c]; break; }
+        }
         if (!def) {
-            const matchKey = Object.keys(_registry).find(k => k.toLowerCase() === String(no).toLowerCase());
+            const matchKey = Object.keys(_registry).find(k => 
+                k.toLowerCase() === sNo.toLowerCase() || 
+                normalizeTableNo(k).toLowerCase() === canon.toLowerCase()
+            );
             if (matchKey) def = _registry[matchKey];
         }
 
-        if (!def) {
-            let tDef = _templateDefs[no] || _templateDefs[no.toUpperCase()] || _templateDefs[no.toLowerCase()];
-            if (!tDef) {
-                const matchT = Object.keys(_templateDefs).find(k => k.toLowerCase() === String(no).toLowerCase());
-                if (matchT) tDef = _templateDefs[matchT];
-            }
-            if (tDef) {
-                const canonicalNo = tDef.table_no;
-                window._cmiActiveTable = canonicalNo;
-                renderFillNav();
-                renderDynamicTable(canonicalNo, tDef, body);
-                setTimeout(() => applyLock(canonicalNo), 100);
-                setTimeout(() => applyLock(canonicalNo), 550);
-                return;
-            }
-
-            body.innerHTML =
-                `<div style="padding:32px;color:var(--text-muted);font-size:14px">` +
-                `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:6px;vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` +
-                `Table <strong>${no}</strong> is not defined for this year.</div>`;
-            window._cmiActiveTable = no;
+        // Precedence:
+        // 1. If template definition has custom columns OR if no built-in renderer exists, but template exists:
+        //    Render dynamic table!
+        if (tDef && (hasCustomCols || !def)) {
+            const canonicalNo = tDef.table_no || canon || sNo;
+            window._cmiActiveTable = canonicalNo;
             renderFillNav();
+            renderDynamicTable(canonicalNo, tDef, body);
+            setTimeout(() => applyLock(canonicalNo), 100);
+            setTimeout(() => applyLock(canonicalNo), 550);
             return;
         }
 
-        const canonicalNo = def.no || no;
-        window._cmiActiveTable = canonicalNo;
+        // 2. Otherwise if built-in registry renderer exists:
+        if (def) {
+            const canonicalNo = def.no || canon || sNo;
+            window._cmiActiveTable = canonicalNo;
+            renderFillNav();
+            def.render(body);
+            setTimeout(() => applyLock(canonicalNo), 100);
+            setTimeout(() => applyLock(canonicalNo), 550);
+            return;
+        }
+
+        // 3. Neither template nor built-in renderer found
+        body.innerHTML =
+            `<div style="padding:32px;color:var(--text-muted);font-size:14px">` +
+            `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:6px;vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` +
+            `Table <strong>${no}</strong> is not defined for this year.</div>`;
+        window._cmiActiveTable = no;
         renderFillNav();
-        def.render(body);
-        setTimeout(() => applyLock(canonicalNo), 100);
-        setTimeout(() => applyLock(canonicalNo), 550);
     };
 
     /* ─────────────────────────────────────────
@@ -413,9 +511,10 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="dyn_${tableNo}_cat_btns">
             ${addButtonsHTML}
           </div>
-          <div class="t-footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:gap:10px">
+          <div class="t-footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px">
             <div style="display:flex;gap:8px">
-              <button class="btn btn-sm" id="dyn_${tableNo}_save_btn" type="button" data-action="save" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600">Save</button>
+              <button class="btn btn-sm" id="dyn_${tableNo}_save_btn" type="button" data-action="save" style="background:#2e7d32;color:#fff;border:none;padding:6px 16px;font-weight:600;cursor:pointer">Save</button>
+              <button class="btn btn-sm" id="dyn_${tableNo}_draft_btn" type="button" data-action="draft" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:6px 16px;font-weight:600;cursor:pointer">Save Draft</button>
             </div>
             <div style="display:flex;align-items:center;gap:10px">
               <button class="btn t-docs-btn" id="dyn_${tableNo}_docs_btn" type="button">
@@ -566,43 +665,75 @@
                 rows: rows
             };
 
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const headers = { "Content-Type": "application/json" };
+            if (csrfToken) headers["X-CSRF-TOKEN"] = csrfToken;
+
             return fetch(API_SAVE, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: headers,
                 body: JSON.stringify(payload)
             })
             .then(r => r.json())
             .then(res => {
+                const toastFn = (typeof window.showToast === "function") ? window.showToast : ((typeof showToast === "function") ? showToast : null);
                 if (res.ok || res.success) {
                     if (msgEl) msgEl.textContent = computedStatus === 'draft' ? "Saved draft" : "Saved (Complete)";
                     CMI.updateStatus(tableNo, computedStatus);
-                    if (typeof showToast === "function") showToast("Table data saved successfully.");
+                    if (toastFn) toastFn(computedStatus === 'draft' ? "Table draft saved successfully." : "Table data saved successfully.");
                 } else {
                     if (msgEl) msgEl.textContent = "Error saving";
-                    if (typeof showToast === "function") showToast(res.message || "Failed to save data.");
+                    if (toastFn) toastFn(res.message || "Failed to save data.");
                 }
                 return res;
             })
             .catch((err) => {
                 if (msgEl) msgEl.textContent = "Error saving";
-                if (typeof showToast === "function") showToast("Error saving data.");
+                const toastFn = (typeof window.showToast === "function") ? window.showToast : ((typeof showToast === "function") ? showToast : null);
+                if (toastFn) toastFn("Error saving data.");
                 throw err;
             });
         }
 
-        window[tableNo] = {
+        const dynModule = {
             save: function (status) {
                 return performDynamicSave(status || 'done');
             }
         };
-        window[tableNo.toUpperCase()] = window[tableNo];
-        window[tableNo.toLowerCase()] = window[tableNo];
+
+        const modCandidates = [
+            tableNo,
+            normalizeTableNo(tableNo),
+            String(tableNo).replace(/^T/i, ''),
+            'T' + String(tableNo).replace(/^T/i, ''),
+            String(tableNo).toUpperCase(),
+            String(tableNo).toLowerCase()
+        ];
+        modCandidates.forEach(c => {
+            _tableModules[c] = dynModule;
+        });
+
+        if (isNaN(Number(tableNo))) {
+            try {
+                window[tableNo] = dynModule;
+                window[tableNo.toUpperCase()] = dynModule;
+                window[tableNo.toLowerCase()] = dynModule;
+            } catch (e) {}
+        }
 
         if (saveBtn) {
             if (isLockedForCmi) saveBtn.style.display = "none";
-            saveBtn.addEventListener("click", function () {
+            saveBtn.onclick = function () {
                 performDynamicSave('done');
-            });
+            };
+        }
+
+        const draftBtn = document.getElementById(`dyn_${tableNo}_draft_btn`);
+        if (draftBtn) {
+            if (isLockedForCmi) draftBtn.style.display = "none";
+            draftBtn.onclick = function () {
+                performDynamicSave('draft');
+            };
         }
 
         // Load existing row data
@@ -928,32 +1059,44 @@
 
     CMI.saveDraft = function () {
         const active = window._cmiActiveTable || 'T1';
-        const tDef = _templateDefs[active] || _templateDefs[normalizeTableNo(active)] || _templateDefs[String(active).toUpperCase()] || _templateDefs[String(active).toLowerCase()];
+        const sActive = String(active).trim();
+        const normActive = normalizeTableNo(sActive);
+        const cleanActive = sActive.replace(/^T/i, '');
+        const withTActive = 'T' + cleanActive;
+        const candidates = [sActive, normActive, cleanActive, withTActive, sActive.toUpperCase(), sActive.toLowerCase()];
+
+        let tDef = null;
+        for (const c of candidates) {
+            if (_templateDefs[c]) { tDef = _templateDefs[c]; break; }
+        }
+
         const isPtaLocked = tDef && !!tDef.is_locked;
         if (isPtaLocked && !window.IS_PTA_USER) {
-            if (typeof window.showToast === "function") {
-                window.showToast("Table " + active + " is designated as PTA-only and locked for CMI entry.");
-            }
+            const toastFn = (typeof window.showToast === "function") ? window.showToast : ((typeof showToast === "function") ? showToast : null);
+            if (toastFn) toastFn("Table " + active + " is designated as PTA-only and locked for CMI entry.");
             return;
         }
 
         window._cmiSavingDraft = true;
-        const winModule = window[active] || window[active.toUpperCase()] || window[active.toLowerCase()];
-        if (winModule && typeof winModule.save === 'function') {
-            winModule.save('draft');
+        const mod = getTableModule(active);
+        if (mod && typeof mod.save === 'function') {
+            mod.save('draft');
         } else {
             const body = document.getElementById("fillBody");
             if (body) {
+                const draftBtn = body.querySelector('button[data-action="draft"]');
                 const saveBtn =
                     body.querySelector('button[data-action="save"]') ||
                     [...body.querySelectorAll("button")].find((b) =>
                         /save/i.test(b.textContent),
                     );
-                if (saveBtn) {
+                if (draftBtn) {
+                    draftBtn.click();
+                } else if (saveBtn) {
                     saveBtn.click();
                 } else {
-                    if (typeof window.showToast === "function")
-                        window.showToast("Nothing to save yet — add some data first.");
+                    const toastFn = (typeof window.showToast === "function") ? window.showToast : ((typeof showToast === "function") ? showToast : null);
+                    if (toastFn) toastFn("Nothing to save yet — add some data first.");
                 }
             }
         }

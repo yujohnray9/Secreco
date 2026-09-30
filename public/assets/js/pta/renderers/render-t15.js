@@ -1,8 +1,9 @@
 /**
  * render-t15.js  —  SecReCo · PTA Portal
  * Custom renderer for Table 15 — Equipment/Facilities Funded.
- * Rows are fixed categories (Endorsed, Approved, Facilities Upgraded,
- * Facilities Established, Equipment Purchased) per institution.
+ * Rows grouped by 5 categories: Endorsed, Approved, Facilities Upgraded,
+ * Facilities Established, Equipment Purchased.
+ * Columns: Item Description | Location / Agency | Expenditures | Source(s) of Funds
  */
 'use strict';
 
@@ -11,41 +12,72 @@ function renderT15(data) {
 
   let out = '';
 
+  const CATEGORIES = [
+    'Endorsed',
+    'Approved',
+    'Facilities Upgraded',
+    'Facilities Established',
+    'Equipment Purchased'
+  ];
+
   data.forEach(cmi => {
     const badge    = STATUS_BADGE[cmi.table_status] ?? STATUS_BADGE['not-started'];
     const docsHtml = renderDocsSection(cmi.docs);
-    const rows = cmi.rows || [];
-    const items = rows.filter(r =>
+    const rows = (cmi.rows || []).filter(r =>
       ['item', 'location', 'expense', 'funds'].some(k => (r[k] || '').trim() !== '')
     );
+
+    let tbodyHtml = '';
+    const hasCategoryInRows = rows.some(r => r.category);
+
+    if (hasCategoryInRows) {
+      CATEGORIES.forEach(cat => {
+        const catRows = rows.filter(r => r.category === cat);
+        if (catRows.length > 0) {
+          tbodyHtml += `
+            <tr style="background:#f3f6f4;font-weight:700;color:#075b42">
+              <td colspan="4">${esc(cat)}</td>
+            </tr>`;
+          catRows.forEach(r => {
+            tbodyHtml += `
+              <tr>
+                <td style="padding-left:18px">${esc(r.item || '—')}</td>
+                <td>${esc(r.location || '—')}</td>
+                <td>${esc(r.expense || '—')}</td>
+                <td>${esc(r.funds || '—')}</td>
+              </tr>`;
+          });
+        }
+      });
+    } else {
+      tbodyHtml = rows.map(r => `
+        <tr>
+          <td>${esc(r.item || '—')}</td>
+          <td>${esc(r.location || '—')}</td>
+          <td>${esc(r.expense || '—')}</td>
+          <td>${esc(r.funds || '—')}</td>
+        </tr>`).join('');
+    }
 
     out += `
       <div class="rpt-cmi-block" style="margin-bottom:18px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
           <strong>${esc(cmi.institution)}</strong>
-          <span style="font-size:11px;color:var(--text-muted)">${items.length} item(s)</span>
+          <span style="font-size:11px;color:var(--text-muted)">${rows.length} item(s)</span>
         </div>
         ${docsHtml || ''}
         ${rows.length ? `
           <table class="dt" style="width:100%;margin-top:6px">
             <thead>
               <tr>
-                <th style="width:170px">Category</th>
-                <th>Item Description</th>
-                <th>Location / Agency</th>
-                <th>Expenditures</th>
-                <th>Source(s) of Funds</th>
+                <th style="width:30%">Item Description</th>
+                <th style="width:25%">Location / Agency</th>
+                <th style="width:20%">Expenditures</th>
+                <th style="width:25%">Source(s) of Funds</th>
               </tr>
             </thead>
             <tbody>
-              ${rows.map(r => `
-                <tr>
-                  <td style="font-weight:600">${esc(r.category || '—')}</td>
-                  <td>${esc(r.item || '—')}</td>
-                  <td>${esc(r.location || '—')}</td>
-                  <td>${esc(r.expense || '—')}</td>
-                  <td>${esc(r.funds || '—')}</td>
-                </tr>`).join('')}
+              ${tbodyHtml}
             </tbody>
           </table>
         ` : `<div style="font-size:12px;color:var(--text-muted)">No data submitted.</div>`}

@@ -100,11 +100,11 @@ class DatabaseSeeder extends Seeder
 
         foreach ($templates as $tmpl) {
             FormatTemplate::updateOrCreate(
-                ['year' => (int)date('Y'), 'table_no' => $tmpl['table_no']],
+                ['year' => 2025, 'table_no' => $tmpl['table_no']],
                 array_merge($tmpl, [
-                    'year'         => (int)date('Y'),
+                    'year'         => 2025,
                     'status'       => 'active',
-                    'columns_json' => ['Item Description', 'Agency', 'Remarks'],
+                    'columns_json' => null,
                     'created_by'   => $ptaUser->id,
                     'created_at'   => now(),
                     'updated_at'   => now(),

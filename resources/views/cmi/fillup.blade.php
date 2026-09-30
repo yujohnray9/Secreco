@@ -101,7 +101,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     return s;
   }
-  const initialTable = normalizeTableKey(params.get('table') || params.get('t') || window._cmiActiveTable || 'T1');
+  const rawReqTable = params.get('table') || params.get('t') || '';
+  const requestedTable = rawReqTable ? normalizeTableKey(rawReqTable) : '';
 
   if (yearSel) {
     // Load format years from Manage Formats
@@ -119,30 +120,34 @@ document.addEventListener('DOMContentLoaded', function() {
           yearSel.value = activeYr;
           if (subtitle) subtitle.textContent = 'CY ' + activeYr + ' Annual Accomplishment Report — All Sections & Tables';
 
-          // Render initial table with synchronized reporting year
-          if (typeof CMI !== 'undefined' && typeof CMI.showTable === 'function') {
-            CMI.showTable(initialTable);
-          }
-
-          // Fetch format templates and statuses sequentially for active year
+          // Fetch format templates and statuses sequentially for active year before rendering table
           fetch('/api/formats?year=' + activeYr)
             .then(r => r.json())
             .then(fmtData => {
               if (fmtData && Array.isArray(fmtData.templates) && typeof CMI !== 'undefined') {
                 CMI.setFormatTemplates(fmtData.templates);
               }
+              const firstTemplateNo = (fmtData && Array.isArray(fmtData.templates) && fmtData.templates.length > 0 && fmtData.templates[0].table_no)
+                ? fmtData.templates[0].table_no
+                : 'T1';
+              const targetTable = requestedTable || firstTemplateNo;
+
               const cmiUserId = params.get('cmi_user_id') || '';
               const cmiQuery = cmiUserId ? '&cmi_user_id=' + encodeURIComponent(cmiUserId) : '';
-              return fetch('/api/cmi/tables/statuses?year=' + activeYr + cmiQuery);
+              return fetch('/api/cmi/tables/statuses?year=' + activeYr + cmiQuery)
+                .then(r => r.json())
+                .then(stData => ({ fmtData, stData, targetTable }));
             })
-            .then(r => r.json())
-            .then(stData => {
+            .then(({ fmtData, stData, targetTable }) => {
               if (stData && typeof CMI !== 'undefined') {
                 CMI.setStatuses(stData.statuses || {}, stData);
-                const curActive = window._cmiActiveTable || initialTable;
-                CMI.showTable(curActive);
+                CMI.showTable(targetTable);
               }
-            }).catch(() => {});
+            }).catch(() => {
+              if (typeof CMI !== 'undefined' && typeof CMI.showTable === 'function') {
+                CMI.showTable(requestedTable || 'T1');
+              }
+            });
         }
       }).catch(() => {});
 
@@ -154,20 +159,35 @@ document.addEventListener('DOMContentLoaded', function() {
       const body = document.getElementById('fillBody');
       if (body) body.innerHTML = '<div style="padding:32px;text-align:center;color:#9ca3af">Loading CY ' + selectedYear + ' data...</div>';
 
-      // Reload format templates and statuses for selected year then re-show current table
+      // Reload format templates and statuses for selected year then re-show appropriate table
       fetch('/api/formats?year=' + selectedYear)
         .then(r => r.json())
         .then(fmtData => {
           if (fmtData && Array.isArray(fmtData.templates) && typeof CMI !== 'undefined') {
             CMI.setFormatTemplates(fmtData.templates);
           }
-          return fetch('/api/cmi/tables/statuses?year=' + selectedYear);
+          const cmiUserId = params.get('cmi_user_id') || '';
+          const cmiQuery = cmiUserId ? '&cmi_user_id=' + encodeURIComponent(cmiUserId) : '';
+          return fetch('/api/cmi/tables/statuses?year=' + selectedYear + cmiQuery)
+            .then(r => r.json())
+            .then(stData => ({ fmtData, stData }));
         })
-        .then(r => r.json())
-        .then(data => {
-          if (typeof CMI !== 'undefined') CMI.setStatuses(data ? data.statuses : {}, data);
-          const active = window._cmiActiveTable || 'T1';
-          if (typeof CMI !== 'undefined' && typeof CMI.showTable === 'function') CMI.showTable(active);
+        .then(({ fmtData, stData }) => {
+          if (typeof CMI !== 'undefined') {
+            CMI.setStatuses(stData ? stData.statuses : {}, stData);
+            const tmpls = (fmtData && Array.isArray(fmtData.templates)) ? fmtData.templates : [];
+            const curActive = window._cmiActiveTable;
+            let target = curActive;
+            const existsInNewYear = tmpls.some(t => 
+              String(t.table_no).toLowerCase() === String(curActive).toLowerCase() ||
+              normalizeTableKey(t.table_no).toLowerCase() === normalizeTableKey(curActive).toLowerCase()
+            );
+            if (!existsInNewYear && tmpls.length > 0) {
+              target = tmpls[0].table_no;
+            }
+            target = target || (tmpls[0] ? tmpls[0].table_no : 'T1');
+            if (typeof CMI.showTable === 'function') CMI.showTable(target);
+          }
         })
         .catch(() => {});
     });
