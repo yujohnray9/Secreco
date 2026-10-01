@@ -19,7 +19,7 @@ function renderT1(data) {
   data.forEach(cmi => {
     const s = cmi.table_status;
 
-    if (s === 'done' || s === 'submitted' || s === 'accepted') {
+    if (s === 'accepted') {
       const rows = cmi.rows ?? [];
       const hasCategories = rows.some(r => r.category);
 
@@ -100,7 +100,7 @@ function renderT1(data) {
         </tr>
       </thead>
       <tbody>
-        ${submitted || '<tr><td colspan="7" class="not-submitted">No submissions yet.</td></tr>'}
+        ${submitted || '<tr><td colspan="7" class="not-submitted">No accepted reports yet.</td></tr>'}
       </tbody>
     </table>
     ${docsSection}`;

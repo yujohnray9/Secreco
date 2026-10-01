@@ -5,12 +5,13 @@
 'use strict';
 
 function renderT16(data) {
-  if (!data?.length) return '<div class="loading-state">No CMI data found for this year.</div>';
+  const acceptedData = (data || []).filter(cmi => cmi.table_status === 'accepted' && (cmi.rows || []).length > 0);
+  if (!acceptedData.length) return '<div class="loading-state" style="padding:40px;text-align:center;color:#6b7280">No accepted reports for Table 16 yet. Reports must be accepted by PTA before appearing in consolidated reports.</div>';
 
   const CATEGORIES = ['Local', 'Regional', 'National', 'International'];
   let out = '';
 
-  data.forEach(cmi => {
+  acceptedData.forEach(cmi => {
     const docsHtml = renderDocsSection(cmi.docs);
     const allRows = (cmi.rows || []).filter(r =>
       ['award', 'recipient', 'sponsor', 'event', 'venue', 'date'].some(k => (r[k] || '').trim() !== '')

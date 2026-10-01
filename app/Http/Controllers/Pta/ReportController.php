@@ -227,8 +227,10 @@ class ReportController extends Controller
                 $tStatus = 'submitted';
             }
 
-            $rows = (is_array($tData) && !empty($tData['rows'])) ? $tData['rows'] : [];
-            $meta = is_array($tData) ? ($tData['meta'] ?? null) : null;
+            $isAccepted = ($tStatus === 'accepted') || ($subStatus === 'accepted');
+
+            $rows = ($isAccepted && is_array($tData) && !empty($tData['rows'])) ? $tData['rows'] : [];
+            $meta = ($isAccepted && is_array($tData)) ? ($tData['meta'] ?? null) : null;
 
             $resultMap[$uid] = [
                 'user_id'      => $uid,
@@ -252,18 +254,22 @@ class ReportController extends Controller
             $rtUpdated = $rt->updated_at ? $rt->updated_at->toDateTimeString() : null;
 
             if (isset($resultMap[$uid])) {
-                $existingRows = $resultMap[$uid]['rows'] ?? [];
                 $existingStatus = $resultMap[$uid]['table_status'] ?? 'not-started';
                 $pNew = $statusPriority[$st] ?? 0;
                 $pOld = $statusPriority[$existingStatus] ?? 0;
 
-                if (!empty($rtRows) || $pNew >= $pOld) {
-                    if (!empty($rtRows) || empty($existingRows)) {
-                        $resultMap[$uid]['rows'] = $rtRows;
-                    }
+                if ($st === 'accepted') {
+                    $resultMap[$uid]['rows'] = $rtRows;
                     if ($rtMeta) {
                         $resultMap[$uid]['meta'] = $rtMeta;
                     }
+                    $resultMap[$uid]['table_status'] = 'accepted';
+                    if ($rtUpdated) {
+                        $resultMap[$uid]['updated_at'] = $rtUpdated;
+                    }
+                } elseif ($resultMap[$uid]['table_status'] !== 'accepted') {
+                    $resultMap[$uid]['rows'] = [];
+                    $resultMap[$uid]['meta'] = null;
                     if ($pNew >= $pOld || empty($existingStatus) || $existingStatus === 'not-started') {
                         $resultMap[$uid]['table_status'] = $st;
                     }
@@ -272,6 +278,7 @@ class ReportController extends Controller
                     }
                 }
             } else {
+                $isAccepted = ($st === 'accepted');
                 $resultMap[$uid] = [
                     'user_id'      => $uid,
                     'institution'  => $rt->user?->institution ?: $rt->user?->name,
@@ -279,8 +286,8 @@ class ReportController extends Controller
                     'sub_status'   => $st === 'accepted' ? 'accepted' : 'draft',
                     'table_status' => $st,
                     'updated_at'   => $rtUpdated,
-                    'rows'         => $rtRows,
-                    'meta'         => $rtMeta,
+                    'rows'         => $isAccepted ? $rtRows : [],
+                    'meta'         => $isAccepted ? $rtMeta : null,
                     'docs'         => [],
                 ];
             }
@@ -303,11 +310,13 @@ class ReportController extends Controller
             }
         }
 
-        // Group docs by user_id
+        // Group docs by user_id — only attach docs if table is accepted
         $groupedDocs = $docs->groupBy('user_id');
         foreach ($resultMap as $uid => &$entry) {
-            if (isset($groupedDocs[$uid])) {
+            if ($entry['table_status'] === 'accepted' && isset($groupedDocs[$uid])) {
                 $entry['docs'] = $groupedDocs[$uid]->toArray();
+            } else {
+                $entry['docs'] = [];
             }
         }
         unset($entry);

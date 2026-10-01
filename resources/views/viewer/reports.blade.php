@@ -136,31 +136,31 @@
 <script src="/assets/js/pta/reports-docs-lightbox.js"></script>
 
 <!-- ── Table renderers (must load before reports-tabledefs.js) ── -->
-<script src="/assets/js/pta/renderers/render-t1.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t2a.js?v=4"></script>
-<script src="/assets/js/pta/renderers/render-t2b.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t3.js?v=5"></script>
-<script src="/assets/js/pta/renderers/render-t4.js?v=5"></script>
-<script src="/assets/js/pta/renderers/render-t5.js?v=5"></script>
-<script src="/assets/js/pta/renderers/render-t6.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t7a.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t7b.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t8a.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t8b.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t9.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t10.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t11.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t12.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t13.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t14.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t15.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t16.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t17.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t18.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t19.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t20a.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-t20b.js?v=3"></script>
-<script src="/assets/js/pta/renderers/render-generic.js?v=3"></script>
+<script src="/assets/js/pta/renderers/render-t1.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t2a.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t2b.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t3.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t4.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t5.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t6.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t7a.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t7b.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t8a.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t8b.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t9.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t10.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t11.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t12.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t13.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t14.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t15.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t16.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t17.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t18.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t19.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t20a.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t20b.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-generic.js?v=7"></script>
 <!-- ── End renderers ── -->
 
 <script src="/assets/js/pta/reports-renderers.js?v=5"></script>

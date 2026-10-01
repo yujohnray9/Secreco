@@ -104,7 +104,7 @@ function renderGeneric(data, template) {
   data.forEach(cmi => {
     const s = cmi.table_status;
     const badge = STATUS_BADGE[s] ?? STATUS_BADGE['not-started'];
-    const docs = cmi.docs || [];
+    const docs = (s === 'accepted') ? (cmi.docs || []) : [];
     if (docs.length) {
       docBlocks += renderCMIDocsBlock(cmi.institution, docs);
     }
@@ -115,7 +115,7 @@ function renderGeneric(data, template) {
       return Object.entries(r).some(([k, v]) => k !== '_cat' && String(v || '').trim() !== '');
     });
 
-    if ((s === 'done' || s === 'submitted' || s === 'accepted') && validRows.length > 0) {
+    if (s === 'accepted' && validRows.length > 0) {
       validRows.forEach((r, rIdx) => {
         overallIdx++;
         let cells = '';
@@ -208,7 +208,7 @@ function renderGeneric(data, template) {
         </tr>
       </thead>
       <tbody>
-        ${submitted || `<tr><td colspan="${totalCols}" style="text-align:center;padding:36px 20px;color:#9ca3af;font-style:italic">No entries submitted yet for this table.</td></tr>`}
+        ${submitted || `<tr><td colspan="${totalCols}" style="text-align:center;padding:36px 20px;color:#9ca3af;font-style:italic">No accepted entries yet for this table.</td></tr>`}
       </tbody>
       ${tfootHtml}
     </table>

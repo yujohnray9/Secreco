@@ -64,8 +64,8 @@
         const errText = document.getElementById('loginErrorText');
         const btn     = document.querySelector('#loginView .btn-signin');
 
-        if (!email.toLowerCase().endsWith('@gmail.com')) {
-          errText.textContent = 'Only @gmail.com addresses are accepted.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          errText.textContent = 'Please enter a valid email address.';
           errBox.classList.add('show');
           document.getElementById('loginEmail').classList.add('invalid');
           return;
@@ -165,23 +165,36 @@
         }
       }
 
-      /* ── GMAIL LIVE VALIDATION ── */
-      function validateGmailLive(input) {
-        const fb  = document.getElementById('emailFeedback');
-        const val = input.value.trim().toLowerCase();
-        if (!val) { fb.style.display = 'none'; input.classList.remove('invalid','valid'); return; }
-        if (val.endsWith('@gmail.com')) {
-          fb.style.display = 'block';
-          fb.style.color   = '#2d6a30';
-          fb.textContent   = '✓ Valid Gmail address';
-          input.classList.remove('invalid'); input.classList.add('valid');
+      /* ── EMAIL LIVE VALIDATION ── */
+      function validateEmailLive(input) {
+        const container = input.closest('.field');
+        const fb  = container ? (container.querySelector('.email-feedback') || container.querySelector('[id*="emailFeedback"]') || container.querySelector('#emailFeedback')) : document.getElementById('emailFeedback');
+        const val = input.value.trim();
+        if (!val) {
+          if (fb) fb.style.display = 'none';
+          input.classList.remove('invalid','valid');
+          return;
+        }
+        const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+        if (isValid) {
+          if (fb) {
+            fb.style.display = 'block';
+            fb.style.color   = '#2d6a30';
+            fb.textContent   = '✓ Valid email address';
+          }
+          input.classList.remove('invalid');
+          input.classList.add('valid');
         } else {
-          fb.style.display = 'block';
-          fb.style.color   = '#c62828';
-          fb.textContent   = '✕ Must be a @gmail.com address';
-          input.classList.add('invalid'); input.classList.remove('valid');
+          if (fb) {
+            fb.style.display = 'block';
+            fb.style.color   = '#c62828';
+            fb.textContent   = '✕ Please enter a valid email address';
+          }
+          input.classList.add('invalid');
+          input.classList.remove('valid');
         }
       }
+      const validateGmailLive = validateEmailLive;
 
       /* ── OCCUPIED INSTITUTIONS (1 CMI per institution rule & 1 PTA rule) ── */
       let occupiedInstitutions = [];
@@ -403,8 +416,8 @@
         const pw    = document.getElementById('regPw').value;
         const pwc   = document.getElementById('regPwConfirm').value;
 
-        if (!email.toLowerCase().endsWith('@gmail.com')) {
-          showAlert('Only @gmail.com addresses are accepted.');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showAlert('Please enter a valid email address.');
           return;
         }
         if (pw.length < 8) {
@@ -790,7 +803,7 @@
             btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Reset Code`;
             if (res.success) {
               _fpEmail = email;
-              _fpShowMsg('fpSuccess', 'OTP sent! Check your Gmail inbox.', false);
+              _fpShowMsg('fpSuccess', 'OTP sent! Check your email inbox.', false);
               setTimeout(() => {
                 document.getElementById('fpStep1').style.display  = 'none';
                 document.getElementById('fpStep2a').style.display = '';

@@ -10,8 +10,9 @@
   'use strict';
 
   window.renderT4 = function (container, allRows) {
-    if (!allRows || allRows.length === 0) {
-      container.innerHTML = '<div class="empty-state">No data submitted yet.</div>';
+    const acceptedRows = (allRows || []).filter(inst => inst.table_status === 'accepted' && (inst.rows || []).length > 0);
+    if (!acceptedRows || acceptedRows.length === 0) {
+      container.innerHTML = '<div class="empty-state">No accepted reports for Table 4 yet. Reports must be accepted by PTA before appearing in consolidated reports.</div>';
       return;
     }
 
@@ -20,7 +21,7 @@
     let totalEntries = 0;
     const detailRows = [];
 
-    const summaryList = allRows.map(inst => {
+    const summaryList = acceptedRows.map(inst => {
       const rows = (inst.rows || []).filter(r => (r.donor && r.donor.trim()) || (r.activity && r.activity.trim()) || (r.amount && String(r.amount).trim()));
       let instTotal = 0;
 

@@ -459,7 +459,7 @@ class AuthController extends Controller
         $sent = $this->mailService->sendOtpEmail($email, $user->first_name, $otp);
 
         if ($sent) {
-            return response()->json(['success' => true, 'message' => 'OTP sent! Check your Gmail inbox.']);
+            return response()->json(['success' => true, 'message' => 'OTP sent! Check your email inbox.']);
         }
 
         return response()->json(['success' => false, 'message' => 'Failed to send email. Please try again.']);

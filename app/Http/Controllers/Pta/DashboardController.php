@@ -291,7 +291,7 @@ class DashboardController extends Controller
             $cleanTableKeys = array_map(fn($k) => strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $k)), $tableKeys);
             foreach ($allTables as $row) {
                 $cleanRowTable = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $row->table_no));
-                if (in_array($cleanRowTable, $cleanTableKeys, true) && in_array($row->status, ['done', 'submitted', 'accepted'], true)) {
+                if (in_array($cleanRowTable, $cleanTableKeys, true) && $row->status === 'accepted') {
                     $doneCount++;
                 }
             }

@@ -13,8 +13,9 @@
   ];
 
   window.renderT8a = function (container, allRows) {
-    if (!allRows || allRows.length === 0) {
-      container.innerHTML = '<div class="empty-state">No data submitted yet.</div>';
+    const acceptedRows = (allRows || []).filter(inst => inst.table_status === 'accepted' && (inst.rows || []).length > 0);
+    if (!acceptedRows || acceptedRows.length === 0) {
+      container.innerHTML = '<div class="empty-state">No accepted reports for Table 8a yet. Reports must be accepted by PTA before appearing in consolidated reports.</div>';
       return;
     }
 
@@ -34,7 +35,7 @@
     const colTotals = { packaged: 0, implemented: 0 };
     let grandAll = 0;
 
-    allRows.forEach(inst => {
+    acceptedRows.forEach(inst => {
       const rows  = (inst.rows || []).filter(r => r.title?.trim());
       const byCat = { packaged: 0, implemented: 0 };
       rows.forEach(r => { if (byCat[r.category] !== undefined) byCat[r.category]++; });
@@ -66,7 +67,7 @@
 
     // ── Drill-down ──
     html += '<div class="rpt-drilldown">';
-    allRows.forEach(inst => {
+    acceptedRows.forEach(inst => {
       const rows = (inst.rows || []).filter(r => r.title?.trim());
       if (!rows.length) return;
       html += `<details class="rpt-detail-block">

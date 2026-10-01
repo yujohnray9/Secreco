@@ -221,10 +221,10 @@
                     <polyline points="22,6 12,13 2,6"/>
                   </svg>
                 </span>
-                <input type="email" id="loginEmail" placeholder="yourname@gmail.com" autocomplete="email"
-                      oninput="validateGmailLive(this)"/>
+                <input type="email" id="loginEmail" placeholder="yourname@email.com" autocomplete="email"
+                      oninput="validateEmailLive(this)"/>
               </div>
-              <div id="emailFeedback" style="font-size:11px; margin-top:5px; display:none;"></div>
+              <div id="loginEmailFeedback" class="email-feedback" style="font-size:11px; margin-top:5px; display:none;"></div>
             </div>
 
             <!-- Password field -->
@@ -288,7 +288,7 @@
             <div id="fpStep1">
               <div class="card-head">
                 <h3>Forgot your password?</h3>
-                <p>Enter your registered Gmail address and we'll send a reset code.</p>
+                <p>Enter your registered email address and we'll send a reset code.</p>
               </div>
 
               <div class="error-msg" id="fpError" style="display:none;">
@@ -313,7 +313,7 @@
                       <polyline points="22,6 12,13 2,6"/>
                     </svg>
                   </span>
-                  <input type="email" id="fpEmail" placeholder="yourname@gmail.com" autocomplete="email"
+                  <input type="email" id="fpEmail" placeholder="yourname@email.com" autocomplete="email"
                         onkeydown="if(event.key==='Enter') fpSendOtp()"/>
                 </div>
               </div>
@@ -594,10 +594,10 @@
                       <polyline points="22,6 12,13 2,6"/>
                     </svg>
                   </span>
-                  <input type="email" id="regEmail" placeholder="yourname@gmail.com" autocomplete="email"
-                        oninput="validateGmailLive(this)"/>
+                  <input type="email" id="regEmail" placeholder="yourname@email.com" autocomplete="email"
+                        oninput="validateEmailLive(this)"/>
                 </div>
-                <div id="emailFeedback" style="font-size:11px; margin-top:5px; display:none;"></div>
+                <div id="regEmailFeedback" class="email-feedback" style="font-size:11px; margin-top:5px; display:none;"></div>
               </div>
 
               <div class="field">
@@ -672,11 +672,11 @@
             <div id="regStep3" style="display:none">
               <p class="otp-sent-to" id="otpSentMsg" style="display:none">
                 A 6-digit code was sent to<br/>
-                <strong id="otpEmailDisplay">yourname@gmail.com</strong>
+                <strong id="otpEmailDisplay">yourname@email.com</strong>
               </p>
               <p class="otp-sent-to" id="otpPreMsg">
                 We'll send a 6-digit verification code to<br/>
-                <strong id="otpEmailPreview">yourname@gmail.com</strong>
+                <strong id="otpEmailPreview">yourname@email.com</strong>
               </p>
 
               <div class="field">
@@ -725,7 +725,7 @@
                   <span class="review-value" id="rv-name">—</span>
                 </div>
                 <div class="review-row">
-                  <span class="review-label">Gmail</span>
+                  <span class="review-label">Email</span>
                   <span class="review-value" id="rv-email">—</span>
                 </div>
                 <div class="review-row">

@@ -23,7 +23,7 @@ function renderT2a(data) {
   data.forEach(cmi => {
     const s = cmi.table_status;
 
-    if (s === 'done' || s === 'submitted' || s === 'accepted') {
+    if (s === 'accepted') {
       const rows  = cmi.rows  ?? [];
 
       // Group rows by category, preserving order
@@ -88,7 +88,7 @@ function renderT2a(data) {
   return `
     <table class="merged" style="width:100%">
       <tbody>
-        ${allRows || '<tr><td colspan="6" class="not-submitted">No submissions yet.</td></tr>'}
+        ${allRows || '<tr><td colspan="6" class="not-submitted">No accepted reports yet.</td></tr>'}
       </tbody>
     </table>
     ${docsSection}`;

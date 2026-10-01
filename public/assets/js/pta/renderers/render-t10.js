@@ -14,8 +14,9 @@
   ];
 
   window.renderT10 = function (container, allRows) {
-    if (!allRows || allRows.length === 0) {
-      container.innerHTML = '<div class="empty-state">No data submitted yet.</div>';
+    const acceptedRows = (allRows || []).filter(inst => inst.table_status === 'accepted' && (inst.rows || []).length > 0);
+    if (!acceptedRows || acceptedRows.length === 0) {
+      container.innerHTML = '<div class="empty-state">No accepted reports for Table 10 yet. Reports must be accepted by PTA before appearing in consolidated reports.</div>';
       return;
     }
 
@@ -41,7 +42,7 @@
 
     let totals = { packaged: 0, impl_approved: 0, impl_revision: 0, impl_disapproved: 0, impl_total: 0, grand: 0 };
 
-    allRows.forEach(inst => {
+    acceptedRows.forEach(inst => {
       const rows    = (inst.rows || []).filter(r => r.title?.trim() || r.approved || r.for_revision || r.disapproved);
       const packed  = rows.filter(r => r.category === 'packaged');
       const impl    = rows.filter(r => r.category === 'implemented');
@@ -86,7 +87,7 @@
 
     // ── Drill-down ──
     html += '<div class="rpt-drilldown">';
-    allRows.forEach(inst => {
+    acceptedRows.forEach(inst => {
       const rows = (inst.rows || []).filter(r => r.title?.trim() || r.approved || r.for_revision || r.disapproved);
       if (!rows.length) return;
       html += `<details class="rpt-detail-block">

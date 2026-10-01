@@ -16,11 +16,12 @@ const T11_MOD_LABELS = {
 };
 
 function renderT11(data) {
-  if (!data?.length) return '<div class="loading-state">No CMI data found for this year.</div>';
+  const acceptedData = (data || []).filter(cmi => cmi.table_status === 'accepted' && (cmi.rows || []).length > 0);
+  if (!acceptedData.length) return '<div class="loading-state" style="padding:40px;text-align:center;color:#6b7280">No accepted reports for Table 11 yet. Reports must be accepted by PTA before appearing in consolidated reports.</div>';
 
   let out = '';
 
-  data.forEach(cmi => {
+  acceptedData.forEach(cmi => {
     const badge    = STATUS_BADGE[cmi.table_status] ?? STATUS_BADGE['not-started'];
     const docsHtml = renderDocsSection(cmi.docs);
     const items = (cmi.rows || []).filter(r =>
