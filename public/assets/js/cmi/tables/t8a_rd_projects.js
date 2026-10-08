@@ -159,24 +159,43 @@
     }));
   }
 
+  function setRows(rows) {
+    const tbody = document.getElementById('t8a_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const saved = (rows && rows.length) ? rows : [];
+    const byCat = {};
+    CATEGORIES.forEach(c => { byCat[c.key] = []; });
+    saved.forEach(row => {
+      const hasContent = ['title', 'researcher', 'agency', 'duration', 'funds', 'commodity'].some(f => (row[f] || '').toString().trim() !== '');
+      if (!hasContent) return;
+
+      let k = (row.category || '').toLowerCase().trim();
+      if (!byCat[k]) {
+        k = k.includes('package') || k.includes('prop') ? 'packaged' : 'implemented';
+      }
+      if (!byCat[k]) byCat[k] = [];
+      byCat[k].push(row);
+    });
+
+    CATEGORIES.forEach(cat => {
+      tbody.appendChild(makeCatHeader(cat));
+      const catRows = byCat[cat.key].length ? byCat[cat.key] : [{}];
+      catRows.forEach((row, i) => tbody.appendChild(makeRow(cat.key, row, i > 0)));
+      renumber(cat.key);
+    });
+    const status = computeStatus(saved.length ? saved : []);
+    updateStatusBadge(status);
+  }
+
   function loadData() {
     const tbody = document.getElementById('t8a_rows');
     if (!tbody) return;
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const saved = (data.rows && data.rows.length) ? data.rows : [];
-        const byCat = {};
-        CATEGORIES.forEach(c => { byCat[c.key] = []; });
-        saved.forEach(row => { if (byCat[row.category]) byCat[row.category].push(row); });
-
-        CATEGORIES.forEach(cat => {
-          tbody.appendChild(makeCatHeader(cat));
-          const rows = byCat[cat.key].length ? byCat[cat.key] : [{}];
-          rows.forEach((row, i) => tbody.appendChild(makeRow(cat.key, row, i > 0)));
-          renumber(cat.key);
-        });
+        setRows(saved);
 
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
@@ -239,7 +258,8 @@
   function setMsg(m) { const e = document.getElementById('t8a_status_msg'); if (e) e.textContent = m; }
 
   window.T8a = {
-    addRow(catKey)    { addRow(catKey, {}, true); },
+    addRow(catKey, data = {}, removable = true) { addRow(catKey, data, removable); },
+    setRows,
     save,
     openDocs,
     _renumber(catKey) { renumber(catKey); },

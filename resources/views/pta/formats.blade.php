@@ -522,20 +522,26 @@
 
     // ── Load Formats for a Year ───────────────────────────────────────
     async function loadFormats(year) {
-      fmtCurrentYear = year;
-      try { localStorage.setItem('secreco_selected_year', String(year)); } catch(e){}
-      const res  = await fetch(`/api/pta/formats?year=${year}`);
+      const url = year ? `/api/pta/formats?year=${year}` : `/api/pta/formats`;
+      const res  = await fetch(url);
       const json = await res.json();
       const templates = json.templates || [];
       cachedTemplates = templates;
-      allYears = json.years || [year];
+      const actualYear = json.year || json.active_year || year || 2025;
+      fmtCurrentYear = actualYear;
+      try { localStorage.setItem('secreco_selected_year', String(actualYear)); } catch(e){}
+      allYears = json.years || [actualYear];
+      if (!allYears.includes(actualYear)) {
+        allYears.push(actualYear);
+        allYears.sort((a,b) => b - a);
+      }
 
       // Update clone select options
       const sel = document.getElementById('cloneFromYear');
-      sel.innerHTML = allYears.map(y => `<option value="${y}">${y}</option>`).join('');
+      if (sel) sel.innerHTML = allYears.map(y => `<option value="${y}">${y}</option>`).join('');
 
       // Render year tabs
-      renderYearTabs(allYears, year, templates);
+      renderYearTabs(allYears, actualYear, templates, json.active_year);
 
       // Status
       fmtYearStatus = templates.length > 0 ? (templates[0].status || 'draft') : 'draft';
@@ -543,30 +549,30 @@
       // Alert
       const alertDiv = document.getElementById('statusAlert');
       if (fmtYearStatus === 'archived') {
-        alertDiv.innerHTML = `<div class="alert alert-info"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12H2"/><path d="M5 5 L12 12 L5 19"/></svg> CY ${year} is <strong>archived</strong>. All data is permanently preserved and read-only.</div>`;
+        alertDiv.innerHTML = `<div class="alert alert-info"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12H2"/><path d="M5 5 L12 12 L5 19"/></svg> CY ${actualYear} is <strong>archived</strong>. All data is permanently preserved and read-only.</div>`;
         alertDiv.style.display = 'block';
       } else if (fmtYearStatus === 'active') {
-        alertDiv.innerHTML = `<div class="alert alert-success"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> CY ${year} is the <strong>active year</strong>. Tables with existing submissions are protected from deletion.</div>`;
+        alertDiv.innerHTML = `<div class="alert alert-success"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> CY ${actualYear} is the <strong>active year</strong>. Tables with existing submissions are protected from deletion.</div>`;
         alertDiv.style.display = 'block';
       } else {
-        alertDiv.innerHTML = `<div class="alert alert-warning"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> CY ${year} is a <strong>draft</strong>. Add, edit, or remove tables. Click "Activate" when ready for CMI submissions.</div>`;
+        alertDiv.innerHTML = `<div class="alert alert-warning"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> CY ${actualYear} is a <strong>draft</strong>. Add, edit, or remove tables. Click "Activate" when ready for CMI submissions.</div>`;
         alertDiv.style.display = 'block';
       }
 
       // Card title
-      document.getElementById('cardTitle').textContent = `CY ${year} — ${templates.length} Tables`;
+      document.getElementById('cardTitle').textContent = `CY ${actualYear} — ${templates.length} Tables`;
 
       // Card action buttons
       const actions = document.getElementById('cardActions');
-      let btns = `<button class="btn-outline-fc" onclick="openAddModal(${year})">
+      let btns = `<button class="btn-outline-fc" onclick="openAddModal(${actualYear})">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ Add Table</button>`;
       if (fmtYearStatus === 'draft') {
         if (templates.length > 0) {
-          btns += `<button class="btn-primary-fc" onclick="confirmActivate(${year})">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activate CY ${year}</button>`;
+          btns += `<button class="btn-primary-fc" onclick="confirmActivate(${actualYear})">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activate CY ${actualYear}</button>`;
         } else {
           btns += `<button class="btn-primary-fc" disabled style="opacity:0.45;cursor:not-allowed;" title="You must add at least one table before activating this year">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activate CY ${year}</button>`;
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activate CY ${actualYear}</button>`;
         }
       }
       actions.innerHTML = btns;
@@ -574,17 +580,25 @@
       renderFormatsTable();
     }
 
-    function renderYearTabs(years, selectedYear, templates) {
+    function renderYearTabs(years, selectedYear, templates, activeYear) {
       const tabs = document.getElementById('yearTabs');
       if (!years.length) { tabs.innerHTML = '<div style="color:#9ca3af;font-size:13px">No years found. Prepare a new year to start.</div>'; return; }
       tabs.innerHTML = years.map(y => {
         let yCls = 'draft-year', icon = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`, label = 'Draft';
-        if (y === selectedYear && templates.length) {
+        if (y === activeYear) {
+          yCls = 'active-year';
+          icon = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+          label = 'Active';
+        } else if (activeYear && y < activeYear) {
+          yCls = 'archived-year';
+          icon = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 8v13H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/></svg>`;
+          label = 'Archived';
+        } else if (y === selectedYear && templates.length) {
           const st = templates[0].status || 'draft';
-          if (st === 'active')    { yCls = 'active-year';   icon = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`; label = 'Active'; }
-          if (st === 'archived')  { yCls = 'archived-year'; icon = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 8v13H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/></svg>`; label = 'Archived'; }
+          if (st === 'active') { yCls = 'active-year'; icon = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`; label = 'Active'; }
+          if (st === 'archived') { yCls = 'archived-year'; icon = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 8v13H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/></svg>`; label = 'Archived'; }
         }
-        return `<a href="#" class="year-tab ${yCls} ${y==selectedYear?'selected':''}" onclick="loadFormats(${y});return false">${icon} CY ${y} — ${label}</a>`;
+        return `<a href="#" class="year-tab ${yCls} ${y == selectedYear ? 'selected' : ''}" onclick="loadFormats(${y});return false">${icon} CY ${y} — ${label}</a>`;
       }).join('');
     }
 
@@ -1265,7 +1279,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const urlYear = parseInt(new URLSearchParams(window.location.search).get('year'));
       const storedYear = parseInt(localStorage.getItem('secreco_selected_year'));
-      const initialYear = urlYear || storedYear || {{ date('Y') }};
+      const initialYear = urlYear || storedYear || null;
       loadFormats(initialYear);
     });
     </script>

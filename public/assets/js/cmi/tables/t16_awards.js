@@ -30,16 +30,16 @@
       </div>
 
       <div class="tbl-wrap" style="margin:14px 0">
-        <table class="merged" style="width:100%;min-width:870px">
+        <table class="merged" style="width:100%;min-width:1050px">
           <thead>
             <tr>
               <th class="group" style="width:150px">Category</th>
               <th class="group">Title of Award</th>
-              <th class="group" style="width:150px">Recipient / Agency</th>
-              <th class="group" style="width:130px">Sponsor</th>
-              <th class="group" style="width:150px">Event / Activity</th>
-              <th class="group" style="width:140px">Venue (Place of Award)</th>
-              <th class="group" style="width:110px">Date Awarded</th>
+              <th class="group" style="width:160px">Recipient / Agency</th>
+              <th class="group" style="width:140px">Sponsor</th>
+              <th class="group" style="width:160px">Event / Activity</th>
+              <th class="group" style="width:160px">Place of Award</th>
+              <th class="group" style="width:180px">Date of Award</th>
               <th class="group" style="width:36px"></th>
             </tr>
           </thead>
@@ -75,8 +75,8 @@
       <td><input type="text" class="t16-recipient" placeholder="Recipient / Agency"    value="${esc(data.recipient||'')}"/></td>
       <td><input type="text" class="t16-sponsor"   placeholder="Sponsor"               value="${esc(data.sponsor||'')}"/></td>
       <td><input type="text" class="t16-event"     placeholder="Event / Activity"      value="${esc(data.event||'')}"/></td>
-      <td><input type="text" class="t16-venue"     placeholder="Venue / Place"         value="${esc(data.venue||'')}"/></td>
-      <td><input type="date" class="t16-date" value="${esc(data.date||'')}"/></td>
+      <td><input type="text" class="t16-venue"     placeholder="Place of Award"         value="${esc(data.venue||'')}"/></td>
+      <td><input type="text" class="t16-date"      placeholder="Date of Award"         value="${esc(data.date||'')}"/></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
@@ -138,25 +138,34 @@
     badge.style.color = c.fg;
   }
 
+  function setRows(rows) {
+    const tbody = document.getElementById('t16_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const defaultRows = CATEGORIES.map(c => ({ category: c }));
+    const list = (rows && rows.length) ? rows : defaultRows;
+    list.forEach((row, i) => tbody.appendChild(makeRow(row, i >= CATEGORIES.length)));
+    const status = computeStatus(list);
+    updateStatusBadge(status);
+  }
+
   function loadData() {
     const tbody = document.getElementById('t16_rows');
     if (!tbody) return;
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const defaultRows = CATEGORIES.map(c => ({ category: c }));
         const rows = (data.rows && data.rows.length) ? data.rows : defaultRows;
-        rows.forEach((row, i) => tbody.appendChild(makeRow(row, i >= CATEGORIES.length)));
+        setRows(rows);
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
-        const status = computeStatus(rows);
+        const status = data.status || computeStatus(rows);
         updateStatusBadge(status);
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        tbody.innerHTML = '';
-        CATEGORIES.forEach(c => tbody.appendChild(makeRow({ category: c }, false)));
+        setRows([]);
         updateStatusBadge('not-started');
       });
   }
@@ -205,7 +214,8 @@
   function setMsg(m) { const e = document.getElementById('t16_status_msg'); if (e) e.textContent = m; }
 
   window.T16 = {
-    addRow() { addRow({}, true); },
+    addRow(data = {}, removable = true) { addRow(data, removable); },
+    setRows,
     save,
     openDocs,
   };

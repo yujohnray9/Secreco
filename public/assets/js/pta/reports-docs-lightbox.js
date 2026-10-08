@@ -90,3 +90,9 @@ function closeLightbox() {
   overlay.style.display    = 'none';
   el('imgLightboxImg').src = '';
 }
+
+window.openLightbox     = openLightbox;
+window.closeLightbox    = closeLightbox;
+window.openDocLightbox  = openLightbox;
+window.closeDocLightbox = closeLightbox;
+

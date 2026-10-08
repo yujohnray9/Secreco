@@ -311,9 +311,10 @@
                           '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
                           '</span>'
                         : '';
+                    const safeTtl = String(ttl).replace(/"/g, '&quot;');
                     return (
-                        `<div class="fill-nav-sub ${st}${active}" onclick="CMI.showTable('${no}')" style="display:flex;align-items:center;gap:4px">` +
-                        `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${STATUS_ICON[st] ?? STATUS_ICON["not-started"]} ${no} — ${ttl}</span>${lockBadge}</div>`
+                        `<div class="fill-nav-sub ${st}${active}" onclick="CMI.showTable('${no}')" title="${no} — ${safeTtl}" style="display:flex;align-items:center;gap:4px">` +
+                        `<span class="fn-label" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${STATUS_ICON[st] ?? STATUS_ICON["not-started"]} <span class="fn-no">${no}</span><span class="fn-title"> — ${ttl}</span></span>${lockBadge}</div>`
                     );
                 })
                 .join("");
@@ -321,7 +322,7 @@
             return `<div class="fill-nav-item">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-        </svg>${s.label}</div>${items}`;
+        </svg><span class="fn-sec-label">${s.label}</span></div>${items}`;
         }).join("");
     }
 
@@ -399,8 +400,17 @@
             window._cmiActiveTable = canonicalNo;
             renderFillNav();
             renderDynamicTable(canonicalNo, tDef, body);
-            setTimeout(() => applyLock(canonicalNo), 100);
-            setTimeout(() => applyLock(canonicalNo), 550);
+            if (window.CMIExcel && typeof window.CMIExcel.renderToolbar === 'function') {
+                window.CMIExcel.renderToolbar(canonicalNo);
+            }
+            setTimeout(() => {
+                if (window.CMIExcel) window.CMIExcel.renderToolbar(canonicalNo);
+                applyLock(canonicalNo);
+            }, 100);
+            setTimeout(() => {
+                if (window.CMIExcel) window.CMIExcel.renderToolbar(canonicalNo);
+                applyLock(canonicalNo);
+            }, 550);
             return;
         }
 
@@ -410,8 +420,17 @@
             window._cmiActiveTable = canonicalNo;
             renderFillNav();
             def.render(body);
-            setTimeout(() => applyLock(canonicalNo), 100);
-            setTimeout(() => applyLock(canonicalNo), 550);
+            if (window.CMIExcel && typeof window.CMIExcel.renderToolbar === 'function') {
+                window.CMIExcel.renderToolbar(canonicalNo);
+            }
+            setTimeout(() => {
+                if (window.CMIExcel) window.CMIExcel.renderToolbar(canonicalNo);
+                applyLock(canonicalNo);
+            }, 100);
+            setTimeout(() => {
+                if (window.CMIExcel) window.CMIExcel.renderToolbar(canonicalNo);
+                applyLock(canonicalNo);
+            }, 550);
             return;
         }
 
@@ -695,10 +714,33 @@
             });
         }
 
+        function setDynRows(rows) {
+            const savedRows = (rows && Array.isArray(rows)) ? rows : [];
+            if (hasCategories) {
+                let html = "";
+                categories.forEach(cat => {
+                    html += makeCatHeaderHTML(cat);
+                    const catRows = savedRows.filter(r => (r._cat === cat || r.category === cat));
+                    if (catRows.length > 0) {
+                        catRows.forEach((r, i) => {
+                            html += makeRowHTML(r, i, cat);
+                        });
+                    } else {
+                        html += makeRowHTML({}, 0, cat);
+                    }
+                });
+                tbody.innerHTML = html;
+            } else {
+                const rowsData = savedRows.length > 0 ? savedRows : [{}];
+                tbody.innerHTML = rowsData.map((r, i) => makeRowHTML(r, i, null)).join("");
+            }
+        }
+
         const dynModule = {
             save: function (status) {
                 return performDynamicSave(status || 'done');
-            }
+            },
+            setRows: setDynRows
         };
 
         const modCandidates = [
@@ -743,24 +785,7 @@
             .then(r => r.json())
             .then(res => {
                 const savedRows = (res && Array.isArray(res.rows)) ? res.rows : [];
-                if (hasCategories) {
-                    let html = "";
-                    categories.forEach(cat => {
-                        html += makeCatHeaderHTML(cat);
-                        const catRows = savedRows.filter(r => r._cat === cat);
-                        if (catRows.length > 0) {
-                            catRows.forEach((r, i) => {
-                                html += makeRowHTML(r, i, cat);
-                            });
-                        } else {
-                            html += makeRowHTML({}, 0, cat);
-                        }
-                    });
-                    tbody.innerHTML = html;
-                } else {
-                    const rowsData = savedRows.length > 0 ? savedRows : [{}];
-                    tbody.innerHTML = rowsData.map((r, i) => makeRowHTML(r, i, null)).join("");
-                }
+                setDynRows(savedRows);
                 if (res && res.status) {
                     CMI.updateStatus(tableNo, res.status);
                 }
@@ -769,16 +794,7 @@
                 applyLock(tableNo);
             })
             .catch(() => {
-                if (hasCategories) {
-                    let html = "";
-                    categories.forEach(cat => {
-                        html += makeCatHeaderHTML(cat);
-                        html += makeRowHTML({}, 0, cat);
-                    });
-                    tbody.innerHTML = html;
-                } else {
-                    tbody.innerHTML = makeRowHTML({}, 0, null);
-                }
+                setDynRows([]);
                 _dynImages = [];
                 updateDynDocsBadge();
                 applyLock(tableNo);
@@ -914,6 +930,15 @@
                             el.style.cursor = "not-allowed";
                             return;
                         }
+                        if (el.classList.contains("btn-table-excel")) {
+                            el.disabled = true;
+                            el.setAttribute("disabled", "disabled");
+                            el.style.opacity = "0.45";
+                            el.style.cursor = "not-allowed";
+                            el.style.pointerEvents = "none";
+                            el.title = "Table is locked: Excel actions are disabled";
+                            return;
+                        }
                         const isActionBtn = text.includes('save') || text.includes('add') || text.includes('remove') || text.includes('delete') ||
                                             title.includes('remove') || title.includes('delete') ||
                                             el.classList.contains("row-remove-btn") || el.classList.contains("row-del-btn") || el.classList.contains("btn-del") ||
@@ -944,6 +969,15 @@
                         el.style.pointerEvents = "none";
                         el.style.opacity = "0.5";
                         el.style.cursor = "not-allowed";
+                        return;
+                    }
+                    if (el.classList.contains("btn-table-excel")) {
+                        el.disabled = true;
+                        el.setAttribute("disabled", "disabled");
+                        el.style.opacity = "0.45";
+                        el.style.cursor = "not-allowed";
+                        el.style.pointerEvents = "none";
+                        el.title = "Table is locked: Excel actions are disabled";
                         return;
                     }
                     const isActionBtn = text.includes('save') || text.includes('add') || text.includes('remove') || text.includes('delete') ||
@@ -996,6 +1030,15 @@
                 el.style.cursor = "";
             });
             body.querySelectorAll("button").forEach((el) => {
+                if (el.classList.contains("btn-table-excel")) {
+                    el.disabled = false;
+                    el.removeAttribute("disabled");
+                    el.style.opacity = "";
+                    el.style.cursor = "";
+                    el.style.pointerEvents = "";
+                    el.title = el.classList.contains("btn-download-template") ? "Download Template" : "Import Excel";
+                    return;
+                }
                 el.disabled = false;
                 el.style.pointerEvents = "";
                 el.style.opacity = "";

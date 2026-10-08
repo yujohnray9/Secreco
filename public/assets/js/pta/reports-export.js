@@ -442,42 +442,60 @@ async function exportToDOCX(logos = {}) {
   const mainDocxElements = [];
 
   if (tableContainer) {
-    // 1. Process main summary table(s)
-    const summaryTables = [];
-    const directTables  = [...tableContainer.children].filter(c => c.tagName === 'TABLE' || (c.classList && c.classList.contains('tbl-wrap')));
-    directTables.forEach(c => {
-      if (c.tagName === 'TABLE') summaryTables.push(c);
-      else summaryTables.push(...c.querySelectorAll('table'));
+    const children = [...tableContainer.children];
+
+    children.forEach(c => {
+      // 1. Check for section title
+      if (c.classList && (c.classList.contains('rpt-sec-title') || c.tagName === 'H3' || c.tagName === 'H4')) {
+        const text = c.textContent.trim();
+        if (text) {
+          mainDocxElements.push(new Paragraph({
+            children: [new TextRun({ text, bold: true, size: 22, color: BLACK, font: { name: 'Calibri' } })],
+            spacing: { before: 200, after: 100 },
+          }));
+        }
+        return;
+      }
+
+      // 2. Check for sub-scope or small header
+      if (c.tagName === 'DIV' && c.style && c.style.fontWeight === '600' && !c.classList.contains('tbl-wrap') && !c.classList.contains('rpt-footnote') && !c.classList.contains('rpt-docs-section')) {
+        const text = c.textContent.trim();
+        if (text) {
+          mainDocxElements.push(new Paragraph({
+            children: [new TextRun({ text, bold: true, italics: true, size: 20, color: '333333', font: { name: 'Calibri' } })],
+            spacing: { before: 140, after: 60 },
+          }));
+        }
+        return;
+      }
+
+      // 3. Check for tables (direct or inside .tbl-wrap or details)
+      let tables = [];
+      if (c.tagName === 'TABLE' && !c.classList.contains('doc-table')) {
+        tables.push(c);
+      } else if (c.querySelectorAll) {
+        tables = [...c.querySelectorAll('table:not(.doc-table)')];
+      }
+
+      tables.forEach(st => {
+        const docxT = buildDocxTableFromDOM(st);
+        if (docxT) {
+          mainDocxElements.push(docxT);
+          mainDocxElements.push(new Paragraph({ children: [], spacing: { after: 140 } }));
+        }
+      });
     });
 
-    if (summaryTables.length === 0) {
-      const firstT = tableContainer.querySelector('table:not(.doc-table)');
-      if (firstT) summaryTables.push(firstT);
-    }
-
-    summaryTables.forEach(st => {
-      const docxT = buildDocxTableFromDOM(st);
-      if (docxT) {
-        mainDocxElements.push(docxT);
-        mainDocxElements.push(new Paragraph({ children: [], spacing: { after: 140 } }));
-      }
-    });
-
-    // 2. Only process drilldown sub-tables if NO main consolidated table exists
-    if (summaryTables.length === 0) {
-      const detailBlocks = [...tableContainer.querySelectorAll('.rpt-detail-block, details')];
-      if (detailBlocks.length > 0) {
-        detailBlocks.forEach(block => {
-          const subTables = [...block.querySelectorAll('table')];
-          subTables.forEach(st => {
-            const docxST = buildDocxTableFromDOM(st);
-            if (docxST) {
-              mainDocxElements.push(docxST);
-              mainDocxElements.push(new Paragraph({ children: [], spacing: { after: 140 } }));
-            }
-          });
-        });
-      }
+    // Fallback: if no tables found via children, grab any table:not(.doc-table)
+    if (mainDocxElements.length === 0) {
+      const allTables = [...tableContainer.querySelectorAll('table:not(.doc-table)')];
+      allTables.forEach(st => {
+        const docxT = buildDocxTableFromDOM(st);
+        if (docxT) {
+          mainDocxElements.push(docxT);
+          mainDocxElements.push(new Paragraph({ children: [], spacing: { after: 140 } }));
+        }
+      });
     }
   }
 

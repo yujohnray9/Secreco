@@ -58,16 +58,22 @@
 
   function makeRow(data = {}, removable = false) {
     const tr = document.createElement('tr');
+    const titleVal = data.title || data.activity || '';
+    const venueVal = data.venue || data.date_venue || data.date || '';
+    const participantsVal = data.participants ?? data.count ?? '';
+    const expendituresVal = data.expenditures ?? data.expenditure ?? data.amount ?? data.expense ?? data.cost ?? '';
+    const fundsVal = data.funds || data.fundsource || data.source || '';
+
     tr.innerHTML = `
       <td class="t14-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t14-title"   placeholder="Title of Activity"       value="${esc(data.title||'')}"/></td>
+      <td><input type="text" class="t14-title"   placeholder="Title of Activity"       value="${esc(titleVal)}"/></td>
       <td><textarea class="t14-venue" rows="2" style="width:100%;resize:vertical"
-            placeholder="Date / Venue">${esc(data.venue||'')}</textarea></td>
+            placeholder="Date / Venue">${esc(venueVal)}</textarea></td>
       <td><input type="number" class="t14-participants" placeholder="No. of Participants"
-            style="width:100%" value="${esc(data.participants||'')}"/></td>
+            style="width:100%" value="${esc(participantsVal)}"/></td>
       <td><input type="text" class="t14-expenditures" placeholder="Amount / Expenditures"
-            value="${esc(data.expenditures||'')}"/></td>
-      <td><input type="text" class="t14-funds"   placeholder="Source of Funds"         value="${esc(data.funds||'')}"/></td>
+            value="${esc(expendituresVal)}"/></td>
+      <td><input type="text" class="t14-funds"   placeholder="Source of Funds"         value="${esc(fundsVal)}"/></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T14._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
@@ -89,6 +95,17 @@
     renumber();
   }
 
+  function setRows(rows) {
+    const tbody = document.getElementById('t14_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const list = (rows && rows.length) ? rows : [{}];
+    list.forEach((row, i) => tbody.appendChild(makeRow(row, i > 0)));
+    renumber();
+    const status = computeStatus(list);
+    updateStatusBadge(status);
+  }
+
   function collectRows() {
     return [...document.querySelectorAll('#t14_rows tr')].map(tr => ({
       title:        tr.querySelector('.t14-title')?.value        || '',
@@ -105,20 +122,17 @@
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const rows = (data.rows && data.rows.length) ? data.rows : [{}];
-        rows.forEach((row, i) => tbody.appendChild(makeRow(row, i > 0)));
-        renumber();
+        setRows(rows);
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
-        const status = computeStatus(rows);
+        const status = data.status || computeStatus(rows);
         updateStatusBadge(status);
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        tbody.innerHTML = '';
-        [{}].forEach((r, i) => tbody.appendChild(makeRow(r, i > 0)));
-        renumber();
+        setRows([]);
+        updateStatusBadge('not-started');
       });
   }
 
@@ -184,7 +198,8 @@
   function setMsg(m) { const e = document.getElementById('t14_status_msg'); if (e) e.textContent = m; }
 
   window.T14 = {
-    addRow()   { addRow({}, true); },
+    addRow(data = {}, removable = true) { addRow(data, removable); },
+    setRows,
     save,
     openDocs,
     _renumber: renumber,

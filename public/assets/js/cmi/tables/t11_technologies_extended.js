@@ -14,7 +14,7 @@
 
   let _images = [];
 
-  const MODALITIES = ['STCBF', 'STC4iD', 'SAFE', 'Food Value Chain', 'Other extension initiatives'];
+  const MODALITIES = ['STCBF', 'STC4iD', 'SAFE', 'Food Value Chain', 'Others'];
 
   function render(container) {
     container.innerHTML = buildShell();
@@ -23,7 +23,7 @@
 
   function buildShell() {
     const modalityHeaders = MODALITIES.map(m =>
-      `<th class="sub" style="width:70px;font-size:10px;line-height:1.3">${esc(m)}</th>`
+      `<th class="sub" style="width:${m === 'Others' ? '120px' : '70px'};font-size:10.5px;line-height:1.3">${esc(m)}</th>`
     ).join('');
 
     return `
@@ -66,10 +66,46 @@
     </div>`;
   }
 
+  function isTruthyVal(v) {
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return v > 0;
+    if (!v) return false;
+    const str = String(v).toLowerCase().trim();
+    return ['approved', 'yes', 'true', '1', '✓', 'x', 'checked', 'y'].includes(str);
+  }
+
   function makeRow(data = {}, removable = false) {
-    const modalities = data.modalities || {};
+    const modalities = Object.assign({}, data.modalities || {});
+    MODALITIES.forEach(m => {
+      const key = m.toLowerCase().replace(/\s+/g, '_');
+      if (modalities[key] === undefined) {
+        if (data[key] !== undefined) {
+          modalities[key] = (key === 'others' || key === 'other_extension_initiatives') ? data[key] : isTruthyVal(data[key]);
+        } else if (data[m] !== undefined) {
+          modalities[key] = (key === 'others' || key === 'other_extension_initiatives') ? data[m] : isTruthyVal(data[m]);
+        }
+      }
+    });
+
+    if (data.modality) {
+      const mStr = String(data.modality).toLowerCase().trim();
+      if (mStr.includes('stcbf')) modalities.stcbf = true;
+      if (mStr.includes('stc4id')) modalities.stc4id = true;
+      if (mStr.includes('safe')) modalities.safe = true;
+      if (mStr.includes('food') || mStr.includes('value')) modalities.food_value_chain = true;
+      if (mStr.includes('other')) {
+        modalities.others = data.modality_other || data.others || data.modality;
+      }
+    }
+
     const modalityCells = MODALITIES.map(m => {
       const key = m.toLowerCase().replace(/\s+/g, '_');
+      if (key === 'others' || key === 'other_extension_initiatives') {
+        const val = typeof modalities.others === 'string' ? modalities.others : (typeof modalities.other_extension_initiatives === 'string' ? modalities.other_extension_initiatives : (modalities.others || modalities.other_extension_initiatives ? '/' : ''));
+        return `<td style="text-align:center">
+          <input type="text" class="t11-mod-other" data-mod="others" placeholder="Specify /" value="${esc(val)}" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:12px;"/>
+        </td>`;
+      }
       return `<td style="text-align:center">
         <input type="checkbox" class="t11-mod" data-mod="${key}" ${modalities[key] ? 'checked' : ''}/>
       </td>`;
@@ -106,16 +142,44 @@
   function collectRows() {
     return [...document.querySelectorAll('#t11_rows tr')].map(tr => {
       const mods = {};
+      const activeMods = [];
       tr.querySelectorAll('.t11-mod').forEach(cb => {
-        mods[cb.dataset.mod] = cb.checked;
+        const isChecked = cb.checked;
+        mods[cb.dataset.mod] = isChecked;
+        if (isChecked) {
+          activeMods.push(cb.dataset.mod.toUpperCase().replace(/_/g, ' '));
+        }
       });
+      const otherInp = tr.querySelector('.t11-mod-other');
+      if (otherInp && otherInp.value.trim()) {
+        mods['others'] = otherInp.value.trim();
+        mods['other_extension_initiatives'] = otherInp.value.trim();
+        activeMods.push(`Others: ${otherInp.value.trim()}`);
+      }
       return {
         tech:       tr.querySelector('.t11-tech')?.value    || '',
         project:    tr.querySelector('.t11-project')?.value || '',
         agency:     tr.querySelector('.t11-agency')?.value  || '',
         modalities: mods,
+        modality:   activeMods.join(', '),
+        stcbf:      Boolean(mods.stcbf),
+        stc4id:     Boolean(mods.stc4id),
+        safe:       Boolean(mods.safe),
+        food_value_chain: Boolean(mods.food_value_chain),
+        others:     mods.others || '',
       };
     });
+  }
+
+  function setRows(rows) {
+    const tbody = document.getElementById('t11_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const validRows = (rows && rows.length) ? rows : [{}];
+    validRows.forEach((r, i) => tbody.appendChild(makeRow(r, i > 0)));
+    renumber();
+    const status = computeStatus(validRows);
+    updateStatusBadge(status);
   }
 
   function loadData() {
@@ -124,20 +188,14 @@
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const rows = (data.rows && data.rows.length) ? data.rows : [{}];
-        rows.forEach((row, i) => tbody.appendChild(makeRow(row, i > 0)));
-        renumber();
+        setRows(rows);
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
-        const status = computeStatus(rows);
-        updateStatusBadge(status);
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        tbody.innerHTML = '';
-        [{}].forEach((r, i) => tbody.appendChild(makeRow(r, i > 0)));
-        renumber();
+        setRows([{}]);
       });
   }
 
@@ -234,6 +292,7 @@
 
   window.T11 = {
     addRow()   { addRow({}, true); },
+    setRows,
     save,
     openDocs,
     _renumber: renumber,

@@ -31,9 +31,9 @@
             <tr>
               <th class="group" style="width:36px">#</th>
               <th class="group">Policy Analysis / Advocacy Project</th>
-              <th class="group" style="width:140px">Agency</th>
-              <th class="group" style="width:140px">Author</th>
-              <th class="group" style="width:200px">Description of the Project</th>
+              <th class="group" style="width:160px">Agency</th>
+              <th class="group" style="width:160px">Author</th>
+              <th class="group" style="width:220px">Description of the Project</th>
               <th class="group" style="width:200px">Findings</th>
               <th class="group" style="width:36px"></th>
             </tr>
@@ -87,6 +87,17 @@
     if (!tbody) return;
     tbody.appendChild(makeRow(data, removable));
     renumber();
+  }
+
+  function setRows(rows) {
+    const tbody = document.getElementById('t20a_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const list = (rows && rows.length) ? rows : [{}];
+    list.forEach((row, i) => tbody.appendChild(makeRow(row, i > 0)));
+    renumber();
+    const status = computeStatus(list);
+    updateStatusBadge(status);
   }
 
   function collectRows() {
@@ -203,7 +214,8 @@
   function setMsg(m) { const e = document.getElementById('t20a_status_msg'); if (e) e.textContent = m; }
 
   window.T20A = {
-    addRow() { addRow({}, true); },
+    addRow(data = {}, removable = true) { addRow(data, removable); },
+    setRows,
     save,
     openDocs,
     _renumber: renumber,

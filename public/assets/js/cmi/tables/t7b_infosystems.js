@@ -143,24 +143,49 @@
     }));
   }
 
+  function normalizeCat(catStr) {
+    const s = String(catStr || '').toLowerCase().trim();
+    if (s.includes('main')) return 'maintained';
+    return 'developed';
+  }
+
+  function setRows(rows) {
+    const tbody = document.getElementById('t7b_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const saved = (rows && rows.length) ? rows : [];
+    const byCat = {};
+    CATEGORIES.forEach(c => { byCat[c.key] = []; });
+
+    saved.forEach(row => {
+      const hasContent = ['type', 'date', 'purpose'].some(f => (row[f] || '').trim() !== '');
+      if (!hasContent) return;
+
+      const rawCat = row.category || row.type_cat || '';
+      const catKey = normalizeCat(rawCat);
+      byCat[catKey].push(row);
+    });
+
+    CATEGORIES.forEach(cat => {
+      tbody.appendChild(makeCatHeader(cat));
+      const list = byCat[cat.key].length ? byCat[cat.key] : [{}];
+      list.forEach((row, i) => tbody.appendChild(makeRow(cat.key, row, i > 0)));
+      renumber(cat.key);
+    });
+
+    const status = computeStatus(collectRows());
+    updateStatusBadge(status);
+  }
+
   function loadData() {
     const tbody = document.getElementById('t7b_rows');
     if (!tbody) return;
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const saved = (data.rows && data.rows.length) ? data.rows : [];
-        const byCat = {};
-        CATEGORIES.forEach(c => { byCat[c.key] = []; });
-        saved.forEach(row => { if (byCat[row.category]) byCat[row.category].push(row); });
-
-        CATEGORIES.forEach(cat => {
-          tbody.appendChild(makeCatHeader(cat));
-          const rows = byCat[cat.key].length ? byCat[cat.key] : [{}];
-          rows.forEach((row, i) => tbody.appendChild(makeRow(cat.key, row, i > 0)));
-          renumber(cat.key);
-        });
+        setRows(saved);
 
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
@@ -169,12 +194,7 @@
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        tbody.innerHTML = '';
-        CATEGORIES.forEach(cat => {
-          tbody.appendChild(makeCatHeader(cat));
-          tbody.appendChild(makeRow(cat.key, {}, false));
-          renumber(cat.key);
-        });
+        setRows([]);
         updateStatusBadge('not-started');
       });
   }
@@ -227,6 +247,7 @@
     save,
     openDocs,
     _renumber(catKey) { renumber(catKey); },
+    setRows,
   };
   window.T7B = window.T7b;
 

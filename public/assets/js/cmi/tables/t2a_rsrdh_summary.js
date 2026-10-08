@@ -184,6 +184,35 @@
   /* ─────────────────────────────────────────
      LOAD DATA
   ───────────────────────────────────────── */
+  function setRows(rows) {
+    const tbody = document.getElementById('t2a_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const saved = (rows && rows.length) ? rows : [];
+    const byCat = {};
+    CATEGORIES.forEach(cat => byCat[cat.key] = []);
+    saved.forEach(row => {
+      let key = (row.category || '').toLowerCase().trim();
+      if (!byCat[key]) {
+        key = key.includes('dev') ? 'development' : 'research';
+      }
+      if (!byCat[key]) byCat[key] = [];
+      byCat[key].push(row);
+    });
+
+    CATEGORIES.forEach(cat => {
+      tbody.appendChild(makeCatHeader(cat));
+      const catRows = byCat[cat.key].length ? byCat[cat.key] : [{}];
+      catRows.forEach((row, i) => {
+        tbody.appendChild(makeRow(cat.key, row, i > 0));
+      });
+    });
+    renumberAll();
+    const status = computeStatus(saved);
+    updateStatusBadge(status);
+  }
+
   function loadData() {
     const tbody = document.getElementById('t2a_rows');
     if (!tbody) return;
@@ -191,27 +220,8 @@
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
-
-        // group saved rows by category
         const saved = (data.rows && data.rows.length) ? data.rows : [];
-        const byCat = {};
-        CATEGORIES.forEach(cat => byCat[cat.key] = []);
-        saved.forEach(row => {
-          const key = row.category || CATEGORIES[0].key;
-          if (!byCat[key]) byCat[key] = [];
-          byCat[key].push(row);
-        });
-
-        // build table: header + rows for each category (min 1 row each)
-        CATEGORIES.forEach(cat => {
-          tbody.appendChild(makeCatHeader(cat));
-          const rows = byCat[cat.key].length ? byCat[cat.key] : [{}];
-          rows.forEach((row, i) => {
-            tbody.appendChild(makeRow(cat.key, row, i > 0));
-          });
-        });
-        renumberAll();
+        setRows(saved);
 
         const meta = data.meta || {};
 
@@ -324,9 +334,10 @@
      PUBLIC (window.T2a)
   ───────────────────────────────────────── */
   window.T2a = {
-    addRow(catKey) {
-      addRow(catKey, {}, true);
+    addRow(catKey, data = {}, removable = true) {
+      addRow(catKey, data, removable);
     },
+    setRows,
     save,
     openDocs,
     _renumber(catKey) { renumber(catKey); },

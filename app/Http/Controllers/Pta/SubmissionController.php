@@ -165,6 +165,7 @@ class SubmissionController extends Controller
 
         $corrByUserTable = [];
         $returnedDates   = [];
+        $resubmittedDates = [];
         if ($userIds) {
             $corrections = CorrectionRequest::where('reporting_year', $year)
                 ->whereIn('cmi_user_id', $userIds)
@@ -180,6 +181,13 @@ class SubmissionController extends Controller
                 $returnedDates[$key] = $rDate;
                 $returnedDates[$cr->cmi_user_id . '_' . strtoupper($cr->table_no)] = $rDate;
                 $returnedDates[$cr->cmi_user_id . '_' . strtolower($cr->table_no)] = $rDate;
+
+                if ($cr->status === 'resolved' && $cr->resolved_at) {
+                    $resDate = $cr->resolved_at ? (is_string($cr->resolved_at) ? $cr->resolved_at : $cr->resolved_at->toDateTimeString()) : null;
+                    $resubmittedDates[$key] = $resDate;
+                    $resubmittedDates[$cr->cmi_user_id . '_' . strtoupper($cr->table_no)] = $resDate;
+                    $resubmittedDates[$cr->cmi_user_id . '_' . strtolower($cr->table_no)] = $resDate;
+                }
             }
         }
 
@@ -370,6 +378,20 @@ class SubmissionController extends Controller
                     }
                 }
 
+                $tableResubmittedAt = $foundTr?->meta_json['resubmitted_at'] ?? ($foundTr?->meta_json['revised_at'] ?? null);
+                if (!$tableResubmittedAt) {
+                    $tableResubmittedAt = $resubmittedDates[$key]
+                        ?? ($resubmittedDates[$foundUser->id . '_' . strtoupper($tNo)]
+                        ?? ($resubmittedDates[$foundUser->id . '_' . strtolower($tNo)] ?? null));
+                }
+                if (!$tableResubmittedAt && $st !== 'returned' && $dateReturned && $foundTr?->updated_at) {
+                    $tUp = strtotime((string)$foundTr->updated_at);
+                    $tRet = strtotime((string)$dateReturned);
+                    if ($tUp > $tRet) {
+                        $tableResubmittedAt = $foundTr->updated_at->toDateTimeString();
+                    }
+                }
+
                 $rows[] = [
                     'cmi_user_id'         => (int) $foundUser->id,
                     'institution'         => $instName,
@@ -381,6 +403,8 @@ class SubmissionController extends Controller
                     'table_status'        => $st,
                     'submitted_at'        => $submittedAt,
                     'date_submitted'      => $submittedAt,
+                    'resubmitted_at'      => $tableResubmittedAt,
+                    'date_resubmitted'    => $tableResubmittedAt,
                     'date_returned'       => $dateReturned,
                     'updated_at'          => $foundTr?->updated_at ? $foundTr->updated_at->toDateTimeString() : null,
                     'meta'                => $foundTr?->meta_json ?? [],

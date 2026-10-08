@@ -128,11 +128,17 @@ class ReportController extends Controller
 
                     // Check if this table was ALREADY officially submitted in an earlier batch
                     $wasAlreadySubmitted = ($tbl->status === 'submitted') && !empty($meta['submitted_at']);
+                    $wasReturned = ($tbl->status === 'returned') || !empty($meta['resubmitted_at']);
                     $priorDate = $historicalTableSubmittedAt[$tbl->table_no]
                         ?? ($historicalTableSubmittedAt[strtoupper($tbl->table_no)]
                         ?? ($historicalTableSubmittedAt[strtolower($tbl->table_no)] ?? null));
 
-                    if ($wasAlreadySubmitted && !empty($meta['submitted_at'])) {
+                    if ($wasReturned) {
+                        $meta['resubmitted_at'] = $submittedAtStr;
+                        if (empty($meta['submitted_at']) && $priorDate) {
+                            $meta['submitted_at'] = $priorDate;
+                        }
+                    } elseif ($wasAlreadySubmitted && !empty($meta['submitted_at'])) {
                         // Keep its existing submission time
                     } elseif ($priorDate) {
                         $meta['submitted_at'] = $priorDate;

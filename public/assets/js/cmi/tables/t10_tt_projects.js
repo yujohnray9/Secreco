@@ -124,13 +124,26 @@
     return tr;
   }
 
+  function isTruthyVal(v) {
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return v > 0;
+    if (!v) return false;
+    const str = String(v).toLowerCase().trim();
+    return ['approved', 'yes', 'true', '1', '✓', 'x', 'checked', 'y'].includes(str);
+  }
+
   function makeRow(catKey, data = {}, removable = false) {
     const tr = document.createElement('tr');
     tr.className = 'data-row';
     tr.dataset.cat = catKey;
 
-    const mkChk = (field) =>
-      `<input type="checkbox" class="t10-${field}" ${data[field] ? 'checked' : ''}
+    const statusNorm = String(data.status || '').toLowerCase().trim();
+    const isApp = isTruthyVal(data.approved) || statusNorm === 'approved' || statusNorm === 'app';
+    const isRev = isTruthyVal(data.for_revision) || statusNorm.includes('revis');
+    const isDis = isTruthyVal(data.disapproved) || statusNorm.includes('disapprov');
+
+    const mkChk = (field, isChecked) =>
+      `<input type="checkbox" class="t10-${field}" ${isChecked ? 'checked' : ''}
         onchange="T10._syncStatus(this,'${field}')"/>`;
 
     tr.innerHTML = `
@@ -138,9 +151,9 @@
       <td><input type="text" class="t10-title"    placeholder="Program / Project Title"   value="${esc(data.title||'')}"/></td>
       <td><input type="text" class="t10-agency"   placeholder="Agency Proponent"          value="${esc(data.agency||'')}"/></td>
       <td><input type="text" class="t10-priority" placeholder="Regional Priority"         value="${esc(data.priority||'')}"/></td>
-      <td style="text-align:center">${mkChk('approved')}</td>
-      <td style="text-align:center">${mkChk('for_revision')}</td>
-      <td style="text-align:center">${mkChk('disapproved')}</td>
+      <td style="text-align:center">${mkChk('approved', isApp)}</td>
+      <td style="text-align:center">${mkChk('for_revision', isRev)}</td>
+      <td style="text-align:center">${mkChk('disapproved', isDis)}</td>
       <td><input type="text" class="t10-duration" placeholder="Duration (if approved)"    value="${esc(data.duration||'')}"/></td>
       <td><input type="text" class="t10-budget"   placeholder="Budget (if approved)"      value="${esc(data.budget||'')}"/></td>
       <td><input type="text" class="t10-fund"     placeholder="Funding Source"            value="${esc(data.fund||'')}"/></td>
@@ -182,18 +195,69 @@
   }
 
   function collectRows() {
-    return [...document.querySelectorAll('#t10_rows tr.data-row')].map(tr => ({
-      category:     tr.dataset.cat,
-      title:        tr.querySelector('.t10-title')?.value          || '',
-      agency:       tr.querySelector('.t10-agency')?.value         || '',
-      priority:     tr.querySelector('.t10-priority')?.value       || '',
-      approved:     tr.querySelector('.t10-approved')?.checked     || false,
-      for_revision: tr.querySelector('.t10-for_revision')?.checked || false,
-      disapproved:  tr.querySelector('.t10-disapproved')?.checked  || false,
-      duration:     tr.querySelector('.t10-duration')?.value       || '',
-      budget:       tr.querySelector('.t10-budget')?.value         || '',
-      fund:         tr.querySelector('.t10-fund')?.value           || '',
-    }));
+    return [...document.querySelectorAll('#t10_rows tr.data-row')].map(tr => {
+      const isApp = tr.querySelector('.t10-approved')?.checked     || false;
+      const isRev = tr.querySelector('.t10-for_revision')?.checked || false;
+      const isDis = tr.querySelector('.t10-disapproved')?.checked  || false;
+      let statusStr = '';
+      if (isApp) statusStr = 'Approved';
+      else if (isRev) statusStr = 'For Revision';
+      else if (isDis) statusStr = 'Disapproved';
+
+      return {
+        category:     tr.dataset.cat,
+        title:        tr.querySelector('.t10-title')?.value          || '',
+        agency:       tr.querySelector('.t10-agency')?.value         || '',
+        priority:     tr.querySelector('.t10-priority')?.value       || '',
+        approved:     isApp,
+        for_revision: isRev,
+        disapproved:  isDis,
+        status:       statusStr,
+        duration:     tr.querySelector('.t10-duration')?.value       || '',
+        budget:       tr.querySelector('.t10-budget')?.value         || '',
+        fund:         tr.querySelector('.t10-fund')?.value           || '',
+      };
+    });
+  }
+
+  function setRows(rows) {
+    const tbody = document.getElementById('t10_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const saved = (rows && rows.length) ? rows : [];
+    const byCat = {};
+    CATEGORIES.forEach(c => { byCat[c.key] = []; });
+    saved.forEach(row => {
+      const hasContent = ['title', 'agency', 'priority', 'status', 'approved', 'for_revision', 'disapproved', 'duration', 'budget', 'fund'].some(f => (row[f] !== undefined && row[f] !== null && String(row[f]).trim() !== ''));
+      if (!hasContent) return;
+
+      if (row.status && !row.approved && !row.for_revision && !row.disapproved) {
+        const s = String(row.status).toLowerCase().trim();
+        if (s === 'approved' || s === 'yes' || s === '✓' || s === 'x' || s === '1') {
+          row.approved = true;
+        } else if (s.includes('revis')) {
+          row.for_revision = true;
+        } else if (s.includes('disapprov')) {
+          row.disapproved = true;
+        }
+      }
+
+      let k = (row.category || '').toLowerCase().trim();
+      if (!byCat[k]) {
+        k = k.includes('package') || k.includes('prop') ? 'packaged' : 'implemented';
+      }
+      if (!byCat[k]) byCat[k] = [];
+      byCat[k].push(row);
+    });
+
+    CATEGORIES.forEach(cat => {
+      tbody.appendChild(makeCatHeader(cat));
+      const catRows = byCat[cat.key].length ? byCat[cat.key] : [{}];
+      catRows.forEach((row, i) => tbody.appendChild(makeRow(cat.key, row, i > 0)));
+      renumber(cat.key);
+    });
+    const status = computeStatus(saved.length ? saved : []);
+    updateStatusBadge(status);
   }
 
   function loadData() {
@@ -202,18 +266,8 @@
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const saved = (data.rows && data.rows.length) ? data.rows : [];
-        const byCat = {};
-        CATEGORIES.forEach(c => { byCat[c.key] = []; });
-        saved.forEach(row => { if (byCat[row.category]) byCat[row.category].push(row); });
-
-        CATEGORIES.forEach(cat => {
-          tbody.appendChild(makeCatHeader(cat));
-          const rows = byCat[cat.key].length ? byCat[cat.key] : [{}];
-          rows.forEach((row, i) => tbody.appendChild(makeRow(cat.key, row, i > 0)));
-          renumber(cat.key);
-        });
+        setRows(saved);
 
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
@@ -282,7 +336,8 @@
   function setMsg(m) { const e = document.getElementById('t10_status_msg'); if (e) e.textContent = m; }
 
   window.T10 = {
-    addRow(catKey)         { addRow(catKey, {}, true); },
+    addRow(catKey, data = {}, removable = true) { addRow(catKey, data, removable); },
+    setRows,
     save,
     openDocs,
     _renumber(catKey)      { renumber(catKey); },

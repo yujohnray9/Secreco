@@ -42,7 +42,10 @@
 .fc-table td { padding:13px 16px; color:#374151; vertical-align:middle; }
 .fc-table td strong { color:#111827; font-weight:600; }
 
-/* ── Toggle ── */
+/* ── Controls ── */
+.header-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.year-pill { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:5px 12px; font-size:12.5px; font-weight:600; color:#374151; }
+.year-pill select { border:none; background:transparent; font-size:12.5px; font-weight:700; color:#111827; cursor:pointer; outline:none; }
 .view-toggle { display:flex; gap:4px; background:#f3f4f6; border-radius:10px; padding:3px; }
 .view-toggle-btn { border:none; background:transparent; border-radius:8px; padding:6px 12px; cursor:pointer; color:#6b7280; transition:all .15s; display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; }
 .view-toggle-btn.active { background:#fff; color:#111827; box-shadow:0 1px 4px rgba(0,0,0,.1); }
@@ -57,6 +60,7 @@
 
 @media (max-width: 640px) {
   .pg-banner { flex-direction: column; align-items: stretch; gap: 12px; }
+  .header-actions { justify-content: space-between; }
   .view-toggle { align-self: flex-start; }
   .fc-card-head { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; }
   .fc-card-body { padding: 16px 14px; }
@@ -74,15 +78,23 @@
         <div class="pg-banner-title">Member Institutions</div>
         <div class="pg-banner-sub">CVAARRD Region 2 Consortium Member Institutions</div>
       </div>
-      <div class="view-toggle">
-        <button class="view-toggle-btn active" id="btnCardView" onclick="setView('cards')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          Cards
-        </button>
-        <button class="view-toggle-btn" id="btnTableView" onclick="setView('table')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          Table
-        </button>
+      <div class="header-actions">
+        <div class="year-pill">
+          <span>Reporting Year:</span>
+          <select id="instYearFilter">
+            <option value="2025">CY 2025</option>
+          </select>
+        </div>
+        <div class="view-toggle">
+          <button class="view-toggle-btn active" id="btnCardView" onclick="setView('cards')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Cards
+          </button>
+          <button class="view-toggle-btn" id="btnTableView" onclick="setView('table')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Table
+          </button>
+        </div>
       </div>
     </div>
 
@@ -340,15 +352,41 @@ function renderTable(data) {
 window.backToInstList = function() {
   document.getElementById('viewInstDetail').style.display = 'none';
   document.getElementById('viewInstMain').style.display = 'block';
+  loadInstitutions(currentYear);
   if (history.pushState) {
-    history.pushState(null, null, window.location.pathname);
+    history.pushState(null, null, window.location.pathname + `?year=${currentYear}`);
   }
 };
+
+async function loadInstitutions(year) {
+  currentYear = year || currentYear;
+  const countEl = document.getElementById('instCount');
+  const cardsWrap = document.getElementById('viewCards');
+  const tbody = document.getElementById('instTbody');
+
+  cardsWrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:36px;color:#9ca3af">Loading institutions...</div>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:#9ca3af">Loading institutions...</td></tr>';
+
+  try {
+    const res  = await fetch(`/api/pta/institutions?year=${currentYear}`);
+    const json = await res.json();
+    instData = json.institutions || [];
+    lockedTables = (json.locked_tables || []).map(t => String(t).toUpperCase());
+    if (countEl) countEl.textContent = `${instData.length} institutions`;
+    renderCards(instData);
+    renderTable(instData);
+  } catch(e) {
+    console.error('Institutions load error:', e);
+    cardsWrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:36px;color:#ef4444">Failed to load institutions.</div>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:#ef4444">Failed to load institutions.</td></tr>';
+  }
+}
 
 window.openInstDetail = async function(instName, selectedYear) {
   currentDetailInstName = instName;
   const yearSel = document.getElementById('detailYearSel');
   const year = selectedYear || (yearSel ? yearSel.value : currentYear);
+  if (yearSel && year) yearSel.value = year;
 
   document.getElementById('viewInstMain').style.display = 'none';
   document.getElementById('viewInstDetail').style.display = 'block';
@@ -414,41 +452,62 @@ window.openInstDetail = async function(instName, selectedYear) {
 
 window.onDetailYearChange = function() {
   if (currentDetailInstName) {
-    const yr = document.getElementById('detailYearSel').value;
+    const yr = document.getElementById('detailYearSel')?.value;
+    if (yr) {
+      currentYear = parseInt(yr);
+      const yrFilter = document.getElementById('instYearFilter');
+      if (yrFilter) yrFilter.value = yr;
+    }
     openInstDetail(currentDetailInstName, yr);
   }
 };
 
 document.addEventListener('DOMContentLoaded', async function () {
   try {
-    currentYear = new Date().getFullYear();
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlYear = urlParams.get('year');
+
+    const yrFilter = document.getElementById('instYearFilter');
+    const detailYearSel = document.getElementById('detailYearSel');
 
     // Populate Year Selectors
     try {
       const fRes = await fetch('/api/formats');
       const fData = await fRes.json();
       if (fData && fData.years && Array.isArray(fData.years) && fData.years.length > 0) {
-        const detailYearSel = document.getElementById('detailYearSel');
-        const activeYr = fData.active_year || currentYear;
-        if (detailYearSel) {
-          detailYearSel.innerHTML = fData.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
-        }
-      }
-    } catch(err) {}
+        const availableYears = fData.years.map(y => parseInt(y));
 
-    const res  = await fetch(`/api/pta/institutions?year=${currentYear}`);
-    const json = await res.json();
-    instData = json.institutions || [];
-    lockedTables = (json.locked_tables || []).map(t => String(t).toUpperCase());
-    document.getElementById('instCount').textContent = `${instData.length} institutions`;
-    renderCards(instData);
-    renderTable(instData);
+        if (urlYear && availableYears.includes(parseInt(urlYear))) {
+          currentYear = parseInt(urlYear);
+        } else if (fData.active_year && availableYears.includes(parseInt(fData.active_year))) {
+          currentYear = parseInt(fData.active_year);
+        } else {
+          currentYear = availableYears[0] || new Date().getFullYear();
+        }
+
+        const optionsHtml = fData.years.map(y => `<option value="${y}" ${parseInt(y) === currentYear ? 'selected' : ''}>CY ${y}</option>`).join('');
+        if (yrFilter) yrFilter.innerHTML = optionsHtml;
+        if (detailYearSel) detailYearSel.innerHTML = optionsHtml;
+      }
+    } catch(err) {
+      if (urlYear) currentYear = parseInt(urlYear);
+    }
+
+    if (yrFilter) {
+      yrFilter.addEventListener('change', function () {
+        currentYear = parseInt(this.value);
+        const detailYearSel = document.getElementById('detailYearSel');
+        if (detailYearSel) detailYearSel.value = this.value;
+        loadInstitutions(currentYear);
+      });
+    }
+
+    await loadInstitutions(currentYear);
 
     // If query string has institution, open it directly
-    const urlParams = new URLSearchParams(window.location.search);
     const targetInst = urlParams.get('institution') || urlParams.get('inst');
     if (targetInst) {
-      openInstDetail(targetInst);
+      openInstDetail(targetInst, currentYear);
     }
   } catch(e) { console.error('Institutions load error:', e); }
 });

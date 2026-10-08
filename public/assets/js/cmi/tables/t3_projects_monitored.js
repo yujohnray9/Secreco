@@ -132,18 +132,25 @@
   }
 
   /* ─── LOAD ─── */
+  function setRows(rows) {
+    const tbody = document.getElementById('t3_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const list = (rows && rows.length) ? rows : [{}];
+    list.forEach((row, i) => tbody.appendChild(makeRow(row, i > 0)));
+    renumber();
+    const status = computeStatus(list);
+    updateStatusBadge(status);
+  }
+
   function loadData() {
     const tbody = document.getElementById('t3_rows');
     if (!tbody) return;
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const rows = (data.rows && data.rows.length) ? data.rows : [{}];
-        rows.forEach((row, i) => {
-          tbody.appendChild(makeRow(row, i > 0));
-        });
-        renumber();
+        setRows(rows);
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
         const status = data.status || computeStatus(rows);
@@ -151,9 +158,7 @@
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        tbody.innerHTML = '';
-        [{}].forEach((r, i) => tbody.appendChild(makeRow(r, i > 0)));
-        renumber();
+        setRows([]);
         updateStatusBadge('not-started');
       });
   }
@@ -206,10 +211,11 @@
 
   /* ─── PUBLIC ─── */
   window.T3 = {
-    addRow()       { addRow({}, true); },
+    addRow(data = {}, removable = true) { addRow(data, removable); },
+    setRows,
     save,
     openDocs,
-    _renumber:     renumber,
+    _renumber: renumber,
   };
 
   /* ─── REGISTER ─── */

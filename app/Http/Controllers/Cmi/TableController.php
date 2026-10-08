@@ -277,6 +277,17 @@ class TableController extends Controller
         }
 
         $updatedAt = now();
+        $updatedAtStr = $updatedAt->toDateTimeString();
+        $isDraft      = ($requested === 'draft' || $status === 'draft');
+
+        $wasReturned = ($existingTable && $existingTable->status === 'returned');
+        if ($wasReturned && !$isDraft && $status === 'done') {
+            if (is_array($meta)) {
+                $meta['resubmitted_at'] = $updatedAtStr;
+            } elseif (is_object($meta)) {
+                $meta->resubmitted_at = $updatedAtStr;
+            }
+        }
 
         ReportTable::updateOrCreate(
             ['user_id' => $userId, 'reporting_year' => $reportingYear, 'table_no' => $tableNo],
@@ -340,8 +351,11 @@ class TableController extends Controller
                         $snap[$existingKey]['rows'] = $rows;
                         $snap[$existingKey]['updated_at'] = $updatedAtStr;
                         // If table was returned, update its snapshot status to submitted so PTA sees it as resubmitted
-                        if (($snap[$existingKey]['status'] ?? '') === 'returned') {
+                        if (($snap[$existingKey]['status'] ?? '') === 'returned' || $wasReturned) {
                             $snap[$existingKey]['status'] = 'submitted';
+                            if (is_array($snap[$existingKey]['meta'])) {
+                                $snap[$existingKey]['meta']['resubmitted_at'] = $updatedAtStr;
+                            }
                         }
                         $latestSub->update(['snapshot_json' => $snap]);
                     }

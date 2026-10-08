@@ -222,17 +222,10 @@
       function updatePtaRoleOption() {
         const ptaOpt = document.querySelector('#regRoleSelect option[value="pta"]');
         if (!ptaOpt) return;
-        if (ptaAccountExists) {
-          ptaOpt.disabled = true;
-          ptaOpt.style.color = '#9ca3af';
-          if (!ptaOpt.textContent.includes('(Already Registered)')) {
-            ptaOpt.textContent = 'Project Technical Assistant II (Already Registered)';
-          }
-        } else {
-          ptaOpt.disabled = false;
-          ptaOpt.style.color = '';
-          ptaOpt.textContent = 'Project Technical Assistant II';
-        }
+        ptaOpt.disabled = true;
+        ptaOpt.setAttribute('disabled', 'disabled');
+        ptaOpt.style.color = '#9ca3af';
+        ptaOpt.textContent = 'Project Technical Assistant II (Disabled)';
       }
 
       function updateRegInstSelectOptions() {
@@ -270,6 +263,7 @@
         otpSent        = false;
         const instField = document.getElementById('regInstField');
         if (instField) instField.style.display = 'none';
+        updatePtaRoleOption();
         loadOccupiedInstitutions();
         updateSteps();
       }
@@ -319,17 +313,21 @@
       }
 
       /* ── ROLE SELECT ──
-        - PTA: walang institution, walang designation
+        - PTA: disabled (cannot be selected)
         - CMI: may institution AT designation
         - Guest/Viewer: designation lang, walang institution */
       function selectRole(role) {
-        if (role === 'pta' && ptaAccountExists) {
-          showAlert('A Project Technical Assistant II account already exists. Only 1 PTA account is allowed.');
-          const roleEl = document.getElementById('regRoleSelect');
-          if (roleEl) roleEl.value = '';
-          selectedRole = null;
+        if (role === 'pta') {
+          const roleSelect = document.getElementById('regRoleSelect');
+          if (roleSelect) {
+            roleSelect.value = '';
+            roleSelect.selectedIndex = 0;
+          }
+          selectedRole = '';
           const instField = document.getElementById('regInstField');
           if (instField) instField.style.display = 'none';
+          updatePtaRoleOption();
+          showAlert('Project Technical Assistant II registration is disabled. PTA accounts must be created by an administrator.');
           return;
         }
 
@@ -382,8 +380,8 @@
           showAlert('Please select a role.', () => { if (roleEl) roleEl.focus(); });
           return;
         }
-        if (selectedRole === 'pta' && ptaAccountExists) {
-          showAlert('A Project Technical Assistant II account already exists. Only 1 PTA account is allowed.', () => { if (roleEl) roleEl.focus(); });
+        if (selectedRole === 'pta') {
+          showAlert('Project Technical Assistant II registration is disabled. PTA accounts must be created by an administrator.', () => { if (roleEl) roleEl.focus(); });
           return;
         }
         if (selectedRole === 'cmi') {
@@ -987,5 +985,29 @@
           })
           .catch(() => _fpShowMsg('fpStep2bError', 'Network error. Please try again.', true));
       }
+
+      /* ── DOM Init for Role Restrictions ── */
+      function initPtaRestrictions() {
+        updatePtaRoleOption();
+        const roleSelect = document.getElementById('regRoleSelect');
+        if (roleSelect && !roleSelect._hasPtaGuard) {
+          roleSelect._hasPtaGuard = true;
+          roleSelect.addEventListener('change', function () {
+            if (this.value === 'pta') {
+              this.value = '';
+              this.selectedIndex = 0;
+              selectRole('');
+              showAlert('Project Technical Assistant II registration is disabled. PTA accounts must be created by an administrator.');
+            }
+          });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPtaRestrictions);
+      } else {
+        initPtaRestrictions();
+      }
+
 
 

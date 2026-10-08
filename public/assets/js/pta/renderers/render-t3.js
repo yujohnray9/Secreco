@@ -100,6 +100,24 @@
     }
 
     html += `</tbody></table>`;
+    html += `
+      <div class="rpt-footnote" style="margin-top:12px;font-size:11px;color:#6b7280;font-style:italic;">
+        Note: The Regional Consortium may prepare other tables for ease in data presentation.
+      </div>
+    `;
+
+    let docRows = '';
+    acceptedRows.forEach(inst => {
+      if (inst.docs) docRows += renderCMIDocsBlock(inst.institution, inst.docs);
+    });
+    if (docRows) {
+      html += `
+        <div class="rpt-docs-section" style="margin-top:30px;border-top:1px dashed #e5e7eb;padding-top:20px;">
+          <h4 style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px;">Submitted Documentation &amp; Attachments</h4>
+          ${docRows}
+        </div>
+      `;
+    }
 
     container.innerHTML = html;
   };

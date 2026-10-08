@@ -58,10 +58,10 @@
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="t17-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t17-type"  placeholder="Type of Meeting / Activity" value="${esc(data.type||'')}"/></td>
+      <td><input type="text" class="t17-type"  placeholder="Type of Meeting / Activity" value="${esc(data.type || data.activity || data.meeting || '')}"/></td>
       <td><textarea class="t17-venue" rows="2" style="width:100%;resize:vertical"
-            placeholder="Venue and Date">${esc(data.venue||'')}</textarea></td>
-      <td><input type="text" class="t17-host"  placeholder="Host Agency"                value="${esc(data.host||'')}"/></td>
+            placeholder="Venue and Date">${esc(data.venue || data.venue_date || '')}</textarea></td>
+      <td><input type="text" class="t17-host"  placeholder="Host Agency"                value="${esc(data.host || data.agency || '')}"/></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T17._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
@@ -192,8 +192,22 @@
   function esc(s) { return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function setMsg(m) { const e = document.getElementById('t17_status_msg'); if (e) e.textContent = m; }
 
+  function setRows(rows) {
+    const tbody = document.getElementById('t17_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const validRows = (rows && rows.length) ? rows : [{}];
+    validRows.forEach((r, i) => tbody.appendChild(makeRow({
+      type: r.type || r.activity || r.meeting || '',
+      venue: r.venue || r.venue_date || '',
+      host: r.host || r.agency || ''
+    }, i > 0)));
+    renumber();
+  }
+
   window.T17 = {
-    addRow() { addRow({}, true); },
+    addRow(data = {}, removable = true) { addRow(data, removable); },
+    setRows,
     save,
     openDocs,
     _renumber: renumber,
@@ -201,8 +215,12 @@
 
   (window.CMI = window.CMI || {});
   function register() {
-    if (window.CMI && CMI.registerTable) CMI.registerTable({ no: TABLE_NO, render });
-    else setTimeout(register, 50);
+    if (window.CMI && CMI.registerTable) {
+      CMI.registerTable({ no: TABLE_NO, render });
+      if (CMI.registerModule) CMI.registerModule(TABLE_NO, window.T17);
+    } else {
+      setTimeout(register, 50);
+    }
   }
   register();
 })();

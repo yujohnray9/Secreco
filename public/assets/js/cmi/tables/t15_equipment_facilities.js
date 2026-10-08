@@ -81,8 +81,8 @@
     tr.innerHTML = `
       <td><input type="text" class="t15-item" placeholder="Item description" value="${esc(data.item || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
       <td><input type="text" class="t15-location" placeholder="Location / Agency" value="${esc(data.location || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
-      <td><input type="number" step="0.01" min="0" class="t15-expense" placeholder="0.00" value="${esc(data.expense || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
-      <td><input type="text" class="t15-funds" placeholder="Source(s) of Funds" value="${esc(data.funds || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
+      <td><input type="number" step="0.01" min="0" class="t15-expense" placeholder="0.00" value="${esc(data.expense || data.expenditures || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
+      <td><input type="text" class="t15-funds" placeholder="Source(s) of Funds" value="${esc(data.funds || data.source || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
       <td style="text-align:center">
         <button type="button" class="row-remove-btn" onclick="this.closest('tr').remove()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;font-weight:700;padding:0 6px;line-height:1" title="Remove row">&times;</button>
       </td>
@@ -116,26 +116,62 @@
     })).filter(r => r.item !== '' || r.location !== '' || r.expense !== '' || r.funds !== '');
   }
 
+  function matchCategory(catStr) {
+    const s = String(catStr || '').toLowerCase().trim();
+    if (s.includes('endors')) return 'Endorsed';
+    if (s.includes('approv')) return 'Approved';
+    if (s.includes('upgrad')) return 'Facilities Upgraded';
+    if (s.includes('estab')) return 'Facilities Established';
+    if (s.includes('purch') || s.includes('equip')) return 'Equipment Purchased';
+    return CATEGORIES[0];
+  }
+
+  function setRows(rows) {
+    const tbody = document.getElementById('t15_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const savedRows = (rows && Array.isArray(rows)) ? rows : [];
+    const byCat = {};
+    CATEGORIES.forEach(c => { byCat[c] = []; });
+
+    savedRows.forEach(r => {
+      const rowItem = (r.item || '').trim();
+      const rowLoc  = (r.location || '').trim();
+      const rowExp  = (r.expense || r.expenditures || '').toString().trim();
+      const rowFunds= (r.funds || r.source || '').trim();
+      if (!rowItem && !rowLoc && !rowExp && !rowFunds) return;
+
+      const normRow = {
+        item: rowItem,
+        location: rowLoc,
+        expense: rowExp,
+        funds: rowFunds,
+      };
+      const cat = matchCategory(r.category);
+      byCat[cat].push(normRow);
+    });
+
+    CATEGORIES.forEach(cat => {
+      tbody.insertAdjacentHTML('beforeend', makeCatHeader(cat));
+      const list = byCat[cat];
+      if (list && list.length > 0) {
+        list.forEach(r => tbody.appendChild(createRowHTML(cat, r)));
+      } else {
+        tbody.appendChild(createRowHTML(cat, {}));
+      }
+    });
+
+    const status = computeStatus(collectRows());
+    updateStatusBadge(status);
+  }
+
   function loadData() {
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        const tbody = document.getElementById('t15_rows');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
         const savedRows = (data.rows && Array.isArray(data.rows)) ? data.rows : [];
-
-        CATEGORIES.forEach(cat => {
-          tbody.insertAdjacentHTML('beforeend', makeCatHeader(cat));
-          const catRows = savedRows.filter(r => r.category === cat);
-          if (catRows.length > 0) {
-            catRows.forEach(r => tbody.appendChild(createRowHTML(cat, r)));
-          } else {
-            // Render 1 blank row under each category
-            tbody.appendChild(createRowHTML(cat, {}));
-          }
-        });
+        setRows(savedRows);
 
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
@@ -144,14 +180,7 @@
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        const tbody = document.getElementById('t15_rows');
-        if (tbody) {
-          tbody.innerHTML = '';
-          CATEGORIES.forEach(cat => {
-            tbody.insertAdjacentHTML('beforeend', makeCatHeader(cat));
-            tbody.appendChild(createRowHTML(cat, {}));
-          });
-        }
+        setRows([]);
       });
   }
 
@@ -217,6 +246,7 @@
     save,
     addRow,
     openDocs,
+    setRows,
   };
 
   (window.CMI = window.CMI || {});

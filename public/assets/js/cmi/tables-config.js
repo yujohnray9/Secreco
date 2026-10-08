@@ -73,7 +73,7 @@ window.CMI_TABLES = (function () {
       columns: [
         { key: 'title',   label: 'Title',                  type: 'text', width: 220 },
         { key: 'agency',  label: 'Implementing Agency(ies)', type: 'text', width: 160 },
-        { key: 'researchers', label: 'Researcher(s)',       type: 'text', width: 160 },
+        { key: 'researcher', label: 'Researcher(s)',       type: 'text', width: 160 },
         { key: 'recommendations', label: 'Major Recommendations', type: 'textarea', width: 220 },
         { key: 'winners', label: 'Winners',                 type: 'text', width: 120 },
       ],
@@ -140,11 +140,11 @@ window.CMI_TABLES = (function () {
     T6: {
       title: 'Table 6. Linkages Forged and Maintained',
       columns: [
+        { key: 'scope',   label: 'Scope / Level', type: 'select', options: ['Local', 'Regional', 'National', 'International'], width: 140 },
         { key: 'agency',  label: 'Agency/ Institution', type: 'text', width: 200 },
         { key: 'address', label: 'Address', type: 'text', width: 200 },
         { key: 'year',    label: 'Year', type: 'text', width: 90 },
         { key: 'nature',  label: 'Nature of Assistance / Linkages / Project', type: 'textarea', width: 240 },
-        { key: 'scope',   label: 'Scope', type: 'select', options: ['Local', 'National', 'International'] },
       ],
       fixedRows: [
         { group: 'Developed/New' },
@@ -230,13 +230,17 @@ window.CMI_TABLES = (function () {
     T10: {
       title: 'Table 10. List of Technology Transfer Program/ Projects Packaged, Approved, and Implemented',
       columns: [
-        { key: 'program',  label: 'Program Title', type: 'text', width: 170 },
-        { key: 'project',  label: 'Project Title', type: 'text', width: 170 },
-        { key: 'agency',   label: 'Implementing Agency/ Institution', type: 'text', width: 170 },
-        { key: 'duration', label: 'Duration*', type: 'text', width: 110 },
-        { key: 'budget',   label: 'Budget', type: 'number', step: '0.01' },
-        { key: 'fundsource', label: 'Source(s) of Fund', type: 'text', width: 140 },
-        { key: 'role',     label: 'Role of Consortium', type: 'textarea', width: 200 },
+        { key: 'title',        label: 'Program / Project Title', type: 'text', width: 220 },
+        { key: 'agency',       label: 'Agency Proponent', type: 'text', width: 170 },
+        { key: 'priority',     label: 'Regional Priority Addressed', type: 'textarea', width: 200 },
+        { key: 'duration',     label: 'Approved Duration', type: 'text', width: 130 },
+        { key: 'budget',       label: 'Approved Budget', type: 'text', width: 130 },
+        { key: 'fund',         label: 'Funding Source', type: 'text', width: 150 },
+      ],
+      fixedRows: [
+        { group: 'Proposals Packaged', rows: 3 },
+        { group: 'Proposals Approved', rows: 3 },
+        { group: 'Proposals Implemented', rows: 3 },
       ],
     },
 
@@ -295,11 +299,11 @@ window.CMI_TABLES = (function () {
     T14: {
       title: 'Table 14. Non-degree Trainings Conducted/ Facilitated',
       columns: [
-        { key: 'title',    label: 'Title of Activity', type: 'text', width: 220 },
-        { key: 'venue',    label: 'Date/ Venue', type: 'text', width: 180 },
+        { key: 'title',        label: 'Title of Activity', type: 'text', width: 220 },
+        { key: 'venue',        label: 'Date/ Venue', type: 'text', width: 180 },
         { key: 'participants', label: 'Number of Participants', type: 'number' },
-        { key: 'expenditures', label: 'Expenditures', type: 'number', step: '0.01' },
-        { key: 'fundsource', label: 'Source of funds', type: 'text', width: 160 },
+        { key: 'expenditures', label: 'Expenditures', type: 'text', width: 160 },
+        { key: 'funds',        label: 'Source of funds', type: 'text', width: 160 },
       ],
     },
 
@@ -309,7 +313,7 @@ window.CMI_TABLES = (function () {
       columns: [
         { key: 'equipment', label: 'Equipment/ Facilities Established/ Upgraded/ Approved', type: 'textarea', width: 240 },
         { key: 'location',  label: 'Location/Agency', type: 'text', width: 160 },
-        { key: 'expenditures', label: 'Expenditures', type: 'number', step: '0.01' },
+        { key: 'expenditures', label: 'Expenditures', type: 'text', width: 160 },
         { key: 'fundsource', label: 'Source(s) of funds', type: 'text', width: 160 },
       ],
       fixedRows: [
@@ -322,12 +326,12 @@ window.CMI_TABLES = (function () {
     T16: {
       title: 'Table 16. Awards Received',
       columns: [
-        { key: 'title',    label: 'Title of Award', type: 'text', width: 180 },
+        { key: 'award',     label: 'Title of Award', type: 'text', width: 180 },
         { key: 'recipient', label: 'Recipient/ Agency', type: 'text', width: 160 },
-        { key: 'sponsor',  label: 'Sponsor', type: 'text', width: 140 },
-        { key: 'activity', label: 'Event/Activity', type: 'text', width: 160 },
-        { key: 'venue',    label: 'Venue (Place of Award)', type: 'text', width: 160 },
-        { key: 'date',     label: 'Date Awarded', type: 'date' },
+        { key: 'sponsor',   label: 'Sponsor', type: 'text', width: 140 },
+        { key: 'event',     label: 'Event/Activity', type: 'text', width: 160 },
+        { key: 'venue',     label: 'Place of Award', type: 'text', width: 160 },
+        { key: 'date',      label: 'Date of Award', type: 'text', width: 150 },
       ],
       fixedRows: [
         { label: 'Local' },
@@ -361,7 +365,7 @@ window.CMI_TABLES = (function () {
       title: 'Table 19. List of New Initiatives on Governance',
       columns: [
         { key: 'initiative', label: 'New Initiatives', type: 'textarea', width: 320 },
-        { key: 'date',       label: 'Date Conducted/Implemented', type: 'date' },
+        { key: 'date',       label: 'Date Conducted/Implemented', type: 'text', width: 200 },
       ],
     },
 
@@ -381,15 +385,14 @@ window.CMI_TABLES = (function () {
     T20B: {
       title: 'Table 20b. Policies Formulated, Advocated, Implemented, and Institutionalized',
       columns: [
-        { key: 'policy',      label: 'List of policies', type: 'text', width: 220 },
-        { key: 'agency',      label: 'Agency', type: 'text', width: 160 },
-        { key: 'description', label: 'Description', type: 'textarea', width: 260 },
+        { key: 'policy',      label: 'List of Policies', type: 'text', width: 240 },
+        { key: 'agency',      label: 'Agency', type: 'text', width: 180 },
+        { key: 'description', label: 'Description', type: 'textarea', width: 300 },
       ],
-      fixedRows: [
-        { label: 'Policy formulated' },
-        { label: 'Policy advocated' },
-        { label: 'Policy implemented' },
-        { label: 'Policy institutionalized' },
+      categories: [
+        'Policy Formulated',
+        'Policy Advocated',
+        'Policy Implemented or Institutionalized'
       ],
     },
 

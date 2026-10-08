@@ -19,6 +19,11 @@
       return;
     }
 
+    let docRows = '';
+    acceptedRows.forEach(inst => {
+      if (inst.docs) docRows += renderCMIDocsBlock(inst.institution, inst.docs);
+    });
+
     // ── Summary ──
     let html = `
       <table class="rpt-table merged">
@@ -65,46 +70,72 @@
         </tfoot>
       </table>`;
 
-    // ── Drill-down ──
-    html += '<div class="rpt-drilldown">';
-    acceptedRows.forEach(inst => {
-      const rows = (inst.rows || []).filter(r => r.title?.trim());
-      if (!rows.length) return;
-      html += `<details class="rpt-detail-block">
-        <summary><strong>${esc(inst.institution || '—')}</strong> — ${rows.length} project(s)</summary>`;
-
-      CATEGORIES.forEach(cat => {
-        const catRows = rows.filter(r => r.category === cat.key);
-        if (!catRows.length) return;
-        html += `<div style="font-weight:700;margin:10px 0 4px;color:var(--text)">${esc(cat.label)}</div>
-          <table class="rpt-table merged" style="margin-bottom:6px">
-            <thead><tr>
-              <th style="width:36px">#</th>
-              <th>Program / Project Title</th>
-              <th style="width:140px">Researcher</th>
-              <th style="width:150px">Implementing Agency</th>
-              <th style="width:130px">Duration</th>
-              <th style="width:130px">Source of Funds</th>
-              <th style="width:150px">Priority Commodity</th>
-            </tr></thead>
-            <tbody>`;
-        catRows.forEach((r, i) => {
-          html += `<tr>
-            <td style="text-align:center">${i + 1}.</td>
-            <td>${esc(r.title || '—')}</td>
-            <td>${esc(r.researcher || '—')}</td>
-            <td>${esc(r.agency || '—')}</td>
-            <td>${esc(r.duration || '—')}</td>
-            <td>${esc(r.funds || '—')}</td>
-            <td>${esc(r.commodity || '—')}</td>
-          </tr>`;
+    // ── Consolidated Detail Tables by Category ──
+    CATEGORIES.forEach(cat => {
+      const catRows = [];
+      acceptedRows.forEach(inst => {
+        (inst.rows || []).filter(r => (r.title || '').trim() && r.category === cat.key).forEach(r => {
+          catRows.push({
+            title: r.title || '—',
+            researcher: r.researcher || '—',
+            agency: r.agency || inst.institution || '—',
+            duration: r.duration || '—',
+            funds: r.funds || '—',
+            commodity: r.commodity || '—',
+            institution: inst.institution
+          });
         });
-        html += '</tbody></table>';
       });
 
-      html += '</details>';
+      if (catRows.length > 0) {
+        html += `
+          <div class="rpt-sec-title" style="font-size:13px;font-weight:700;color:#111827;margin:22px 0 8px 0;">${esc(cat.label)}</div>
+          <div class="tbl-wrap" style="overflow-x:auto;margin-bottom:14px;">
+            <table class="merged" style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:#00875a;color:#ffffff;">
+                  <th style="width:40px;text-align:center;padding:8px 10px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;">#</th>
+                  <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Program / Project Title</th>
+                  <th style="width:150px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Researcher</th>
+                  <th style="width:160px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Implementing Agency</th>
+                  <th style="width:110px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:center;">Duration</th>
+                  <th style="width:120px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Source of Funds</th>
+                  <th style="width:140px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Priority Commodity</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${catRows.map((r, i) => `
+                  <tr>
+                    <td style="text-align:center;padding:7px 10px;">${i + 1}</td>
+                    <td style="padding:7px 12px;">${esc(r.title)}</td>
+                    <td style="padding:7px 12px;">${esc(r.researcher)}</td>
+                    <td style="padding:7px 12px;">${esc(r.agency)}</td>
+                    <td style="text-align:center;padding:7px 12px;">${esc(r.duration)}</td>
+                    <td style="padding:7px 12px;">${esc(r.funds)}</td>
+                    <td style="padding:7px 12px;">${esc(r.commodity)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
     });
-    html += '</div>';
+
+    html += `
+      <div class="rpt-footnote" style="margin-top:12px;font-size:11px;color:#6b7280;font-style:italic;">
+        Note: The Regional Consortium may prepare other tables for ease in data presentation.
+      </div>
+    `;
+
+    if (docRows) {
+      html += `
+        <div class="rpt-docs-section" style="margin-top:30px;border-top:1px dashed #e5e7eb;padding-top:20px;">
+          <h4 style="font-size:14px;font-weight:700;color:#1e3a5f;margin-bottom:12px;">📁 Supporting Documents</h4>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            ${docRows}
+          </div>
+        </div>`;
+    }
 
     container.innerHTML = html;
   };

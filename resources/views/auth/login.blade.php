@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="/assets/css/login.css?v=2"/>
+  <link rel="stylesheet" href="/assets/css/login.css?v={{ file_exists(public_path('assets/css/login.css')) ? filemtime(public_path('assets/css/login.css')) : time() }}"/>
   <!-- Google reCAPTCHA v2 -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
@@ -517,15 +517,11 @@
 
               <div class="field">
                 <label>ROLE <span style="color:#ef4444">*</span></label>
-                @php
-                  $ptaExists = \App\Models\User::where('role', 'pta')->exists();
-                @endphp
                 <select class="inst-select" id="regRoleSelect" onchange="selectRole(this.value)">
                   <option value="">— Select your role —</option>
-                  <option value="pta" id="optRolePta" {{ $ptaExists ? 'disabled style=color:#9ca3af;' : '' }}>Project Technical Assistant II{{ $ptaExists ? ' (Already Registered)' : '' }}</option>
+                  <option value="pta" id="optRolePta" disabled style="color:#9ca3af">Project Technical Assistant II (Disabled)</option>
                   <option value="cmi">CMI Representative</option>
                   <option value="executive">Executive</option>
-
                 </select>
               </div>
 
@@ -776,6 +772,6 @@
 
   </div><!-- end login-page -->
 
-  <script src="/assets/js/login.js?v=4"></script>
+  <script src="/assets/js/login.js?v={{ file_exists(public_path('assets/js/login.js')) ? filemtime(public_path('assets/js/login.js')) : time() }}"></script>
 </body>
 </html>

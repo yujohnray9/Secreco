@@ -1,7 +1,7 @@
 @extends('layouts.viewer')
 
 @section('styles')
-<link rel="stylesheet" href="/assets/css/pta/reports.css"/>
+<link rel="stylesheet" href="/assets/css/pta/reports.css?v=10"/>
 <style>
 /* ── Modern adjustments for Reports ── */
 .page-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
@@ -132,44 +132,44 @@
 @endsection
 
 @section('scripts') 
-<script src="/assets/js/pta/reports-helpers.js"></script>
-<script src="/assets/js/pta/reports-docs-lightbox.js"></script>
+<script src="/assets/js/pta/reports-helpers.js?v=9"></script>
+<script src="/assets/js/pta/reports-docs-lightbox.js?v=9"></script>
 
 <!-- ── Table renderers (must load before reports-tabledefs.js) ── -->
-<script src="/assets/js/pta/renderers/render-t1.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t2a.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t2b.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t3.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t4.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t5.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t6.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t7a.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t7b.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t8a.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t8b.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t9.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t10.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t11.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t12.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t13.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t14.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t15.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t16.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t17.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t18.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t19.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t20a.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-t20b.js?v=7"></script>
-<script src="/assets/js/pta/renderers/render-generic.js?v=7"></script>
+<script src="/assets/js/pta/renderers/render-t1.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t2a.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t2b.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t3.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t4.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t5.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t6.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t7a.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t7b.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t8a.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t8b.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t9.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t10.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t11.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t12.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t13.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t14.js?v=12"></script>
+<script src="/assets/js/pta/renderers/render-t15.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t16.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t17.js?v=12"></script>
+<script src="/assets/js/pta/renderers/render-t18.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t19.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t20a.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t20b.js?v=12"></script>
+<script src="/assets/js/pta/renderers/render-generic.js?v=11"></script>
 <!-- ── End renderers ── -->
 
-<script src="/assets/js/pta/reports-renderers.js?v=5"></script>
-<script src="/assets/js/pta/reports-tabledefs.js?v=5"></script>
-<script src="/assets/js/pta/reports-api.js?v=5"></script>
-<script src="/assets/js/pta/reports-view-table.js?v=5"></script>
-<script src="/assets/js/pta/reports-view-cmi.js?v=5"></script>
-<script src="/assets/js/pta/reports-export.js?v=5"></script>
-<script src="/assets/js/pta/reports-boot.js?v=5"></script>
+<script src="/assets/js/pta/reports-renderers.js?v=11"></script>
+<script src="/assets/js/pta/reports-tabledefs.js?v=9"></script>
+<script src="/assets/js/pta/reports-api.js?v=8"></script>
+<script src="/assets/js/pta/reports-view-table.js?v=8"></script>
+<script src="/assets/js/pta/reports-view-cmi.js?v=8"></script>
+<script src="/assets/js/pta/reports-export.js?v=8"></script>
+<script src="/assets/js/pta/reports-boot.js?v=8"></script>
 <script>
 // Ensure export buttons never display in Viewer View
 document.addEventListener('DOMContentLoaded', function() {

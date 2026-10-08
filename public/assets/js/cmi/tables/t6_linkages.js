@@ -1,8 +1,8 @@
 /**
  * t6_linkages.js — Table 6: Linkages Forged and Maintained.
  * Grouped structure:
- *   Developed/New → Local | National | International  (addable rows per scope)
- *   Maintained/Sustained → Local | National | International (addable rows per scope)
+ *   Developed/New → Local | Regional | National | International  (addable rows per scope)
+ *   Maintained/Sustained → Local | Regional | National | International (addable rows per scope)
  * Columns: Agency/Institution | Address | Year | Nature of Assistance/Linkages/Project
  */
 
@@ -21,6 +21,7 @@
       label: 'Developed / New',
       scopes: [
         { key: 'developed_local',         label: 'Local' },
+        { key: 'developed_regional',      label: 'Regional' },
         { key: 'developed_national',      label: 'National' },
         { key: 'developed_international', label: 'International' },
       ],
@@ -30,6 +31,7 @@
       label: 'Maintained / Sustained',
       scopes: [
         { key: 'maintained_local',         label: 'Local' },
+        { key: 'maintained_regional',      label: 'Regional' },
         { key: 'maintained_national',      label: 'National' },
         { key: 'maintained_international', label: 'International' },
       ],
@@ -177,6 +179,54 @@
     }));
   }
 
+  function normalizeScope(scopeStr) {
+    const s = String(scopeStr || '').toLowerCase().trim();
+    const isMaintained = s.includes('maintain') || s.includes('sustain');
+    const prefix = isMaintained ? 'maintained_' : 'developed_';
+
+    if (s.includes('inter')) return prefix + 'international';
+    if (s.includes('nat'))   return prefix + 'national';
+    if (s.includes('reg'))   return prefix + 'regional';
+    if (s.includes('loc'))   return prefix + 'local';
+
+    if (s.startsWith('developed_') || s.startsWith('maintained_')) return s;
+
+    return isMaintained ? 'maintained_local' : 'developed_local';
+  }
+
+  function setRows(rows) {
+    const tbody = document.getElementById('t6_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const saved = (rows && rows.length) ? rows : [];
+    const byScopeKey = {};
+    GROUPS.forEach(g => g.scopes.forEach(s => { byScopeKey[s.key] = []; }));
+
+    saved.forEach(row => {
+      const hasContent = ['agency', 'address', 'year', 'nature'].some(f => (row[f] || '').trim() !== '');
+      if (!hasContent) return;
+
+      const rawScope = row.scope || row.category || row['Scope / Category'] || row['Scope / Level'] || '';
+      const sk = normalizeScope(rawScope);
+      if (byScopeKey[sk]) {
+        byScopeKey[sk].push(row);
+      }
+    });
+
+    GROUPS.forEach(group => {
+      tbody.appendChild(makeGroupHeader(group));
+      group.scopes.forEach(scope => {
+        tbody.appendChild(makeScopeHeader(scope));
+        const list = byScopeKey[scope.key].length ? byScopeKey[scope.key] : [{}];
+        list.forEach((row, i) => tbody.appendChild(makeRow(scope.key, row, i > 0)));
+      });
+    });
+
+    const status = computeStatus(collectRows());
+    updateStatusBadge(status);
+  }
+
   /* ─── LOAD ─── */
   function loadData() {
     const tbody = document.getElementById('t6_rows');
@@ -184,22 +234,8 @@
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const saved = (data.rows && data.rows.length) ? data.rows : [];
-        const byScopeKey = {};
-        GROUPS.forEach(g => g.scopes.forEach(s => { byScopeKey[s.key] = []; }));
-        saved.forEach(row => {
-          if (byScopeKey[row.scope]) byScopeKey[row.scope].push(row);
-        });
-
-        GROUPS.forEach(group => {
-          tbody.appendChild(makeGroupHeader(group));
-          group.scopes.forEach(scope => {
-            tbody.appendChild(makeScopeHeader(scope));
-            const rows = byScopeKey[scope.key].length ? byScopeKey[scope.key] : [{}];
-            rows.forEach((row, i) => tbody.appendChild(makeRow(scope.key, row, i > 0)));
-          });
-        });
+        setRows(saved);
 
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
@@ -208,14 +244,7 @@
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        tbody.innerHTML = '';
-        GROUPS.forEach(group => {
-          tbody.appendChild(makeGroupHeader(group));
-          group.scopes.forEach(scope => {
-            tbody.appendChild(makeScopeHeader(scope));
-            tbody.appendChild(makeRow(scope.key, {}, false));
-          });
-        });
+        setRows([]);
         updateStatusBadge('not-started');
       });
   }
@@ -268,6 +297,7 @@
     addRow(scopeKey) { addRow(scopeKey, {}, true); },
     save,
     openDocs,
+    setRows,
   };
 
   (window.CMI = window.CMI || {});

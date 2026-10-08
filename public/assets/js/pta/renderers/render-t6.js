@@ -13,6 +13,7 @@
       key: 'developed', label: 'Developed / New',
       scopes: [
         { key: 'developed_local',         label: 'Local' },
+        { key: 'developed_regional',      label: 'Regional' },
         { key: 'developed_national',      label: 'National' },
         { key: 'developed_international', label: 'International' },
       ],
@@ -21,6 +22,7 @@
       key: 'maintained', label: 'Maintained / Sustained',
       scopes: [
         { key: 'maintained_local',         label: 'Local' },
+        { key: 'maintained_regional',      label: 'Regional' },
         { key: 'maintained_national',      label: 'National' },
         { key: 'maintained_international', label: 'International' },
       ],
@@ -34,21 +36,28 @@
       return;
     }
 
+    let docRows = '';
+    acceptedRows.forEach(inst => {
+      if (inst.docs) docRows += renderCMIDocsBlock(inst.institution, inst.docs);
+    });
+
     // ── Summary: count developed vs maintained per institution ──
     let html = `
       <table class="rpt-table merged">
         <thead>
           <tr>
             <th rowspan="2" style="width:200px">Institution</th>
-            <th colspan="3">Developed / New</th>
-            <th colspan="3">Maintained / Sustained</th>
+            <th colspan="4">Developed / New</th>
+            <th colspan="4">Maintained / Sustained</th>
             <th rowspan="2" style="width:80px">Total</th>
           </tr>
           <tr>
             <th style="font-size:10px">Local</th>
+            <th style="font-size:10px">Regional</th>
             <th style="font-size:10px">National</th>
             <th style="font-size:10px">Intl</th>
             <th style="font-size:10px">Local</th>
+            <th style="font-size:10px">Regional</th>
             <th style="font-size:10px">National</th>
             <th style="font-size:10px">Intl</th>
           </tr>
@@ -62,7 +71,16 @@
     acceptedRows.forEach(inst => {
       const rows  = (inst.rows || []).filter(r => r.agency?.trim());
       const byCat = Object.fromEntries(scopeKeys.map(k => [k, 0]));
-      rows.forEach(r => { if (byCat[r.scope] !== undefined) byCat[r.scope]++; });
+      rows.forEach(r => {
+        let sc = r.scope;
+        if (byCat[sc] !== undefined) {
+          byCat[sc]++;
+        } else if (sc) {
+          const norm = String(sc).toLowerCase();
+          const matched = scopeKeys.find(k => k === norm || k.endsWith('_' + norm));
+          if (matched) byCat[matched]++;
+        }
+      });
       const total = Object.values(byCat).reduce((a, b) => a + b, 0);
       grandAll += total;
       scopeKeys.forEach(k => { colTotals[k] += byCat[k]; });
@@ -86,46 +104,76 @@
         </tfoot>
       </table>`;
 
-    // ── Drill-down ──
-    html += '<div class="rpt-drilldown">';
-    acceptedRows.forEach(inst => {
-      const rows = (inst.rows || []).filter(r => r.agency?.trim());
-      if (!rows.length) return;
-      html += `<details class="rpt-detail-block">
-        <summary><strong>${esc(inst.institution || '—')}</strong> — ${rows.length} linkage(s)</summary>`;
+    // ── Consolidated Detail Tables by Category & Scope ──
+    GROUPS.forEach(group => {
+      let groupHasRows = false;
+      let groupHtml = `<div class="rpt-sec-title" style="font-size:13px;font-weight:700;color:#111827;margin:22px 0 8px 0;">${esc(group.label)}</div>`;
 
-      GROUPS.forEach(group => {
-        const groupRows = rows.filter(r => group.scopes.some(s => s.key === r.scope));
-        if (!groupRows.length) return;
-        html += `<div style="font-weight:700;margin:10px 0 4px;color:var(--text)">${esc(group.label)}</div>`;
-
-        group.scopes.forEach(scope => {
-          const scopeRows = groupRows.filter(r => r.scope === scope.key);
-          if (!scopeRows.length) return;
-          html += `<div style="font-style:italic;font-size:12px;margin:6px 0 2px 12px;color:var(--text-muted)">${esc(scope.label)}</div>
-            <table class="rpt-table merged" style="margin-left:12px;margin-bottom:6px">
-              <thead><tr>
-                <th>Agency / Institution</th>
-                <th style="width:150px">Address</th>
-                <th style="width:70px">Year</th>
-                <th>Nature of Assistance / Linkages / Project</th>
-              </tr></thead>
-              <tbody>`;
-          scopeRows.forEach(r => {
-            html += `<tr>
-              <td>${esc(r.agency || '—')}</td>
-              <td>${esc(r.address || '—')}</td>
-              <td style="text-align:center">${esc(r.year || '—')}</td>
-              <td>${esc(r.nature || '—')}</td>
-            </tr>`;
+      group.scopes.forEach(scope => {
+        const matchingRows = [];
+        acceptedRows.forEach(inst => {
+          (inst.rows || []).filter(r => (r.agency || '').trim() && (r.scope === scope.key || r.scope === scope.label.toLowerCase())).forEach(r => {
+            matchingRows.push({
+              agency: r.agency || '—',
+              address: r.address || '—',
+              year: r.year || '—',
+              nature: r.nature || '—',
+              institution: inst.institution
+            });
           });
-          html += '</tbody></table>';
         });
+
+        if (matchingRows.length > 0) {
+          groupHasRows = true;
+          groupHtml += `
+            <div style="font-size:12px;font-weight:600;color:#374151;margin:10px 0 6px 0;">${esc(scope.label)}</div>
+            <div class="tbl-wrap" style="overflow-x:auto;margin-bottom:14px;">
+              <table class="merged" style="width:100%;border-collapse:collapse;">
+                <thead>
+                  <tr style="background:#00875a;color:#ffffff;">
+                    <th style="width:40px;text-align:center;padding:8px 10px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;">#</th>
+                    <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Agency / Institution</th>
+                    <th style="width:180px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Address</th>
+                    <th style="width:80px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:center;">Year</th>
+                    <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Nature of Assistance / Linkages / Project</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${matchingRows.map((r, i) => `
+                    <tr>
+                      <td style="text-align:center;padding:7px 10px;">${i + 1}</td>
+                      <td style="padding:7px 12px;">${esc(r.agency)}</td>
+                      <td style="padding:7px 12px;">${esc(r.address)}</td>
+                      <td style="text-align:center;padding:7px 12px;">${esc(r.year)}</td>
+                      <td style="padding:7px 12px;">${esc(r.nature)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>`;
+        }
       });
 
-      html += '</details>';
+      if (groupHasRows) {
+        html += groupHtml;
+      }
     });
-    html += '</div>';
+
+    html += `
+      <div class="rpt-footnote" style="margin-top:12px;font-size:11px;color:#6b7280;font-style:italic;">
+        Note: The Regional Consortium may prepare other tables for ease in data presentation.
+      </div>
+    `;
+
+    if (docRows) {
+      html += `
+        <div class="rpt-docs-section" style="margin-top:30px;border-top:1px dashed #e5e7eb;padding-top:20px;">
+          <h4 style="font-size:14px;font-weight:700;color:#1e3a5f;margin-bottom:12px;">📁 Supporting Documents</h4>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            ${docRows}
+          </div>
+        </div>`;
+    }
 
     container.innerHTML = html;
   };

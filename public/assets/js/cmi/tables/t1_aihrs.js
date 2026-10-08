@@ -212,6 +212,26 @@
   /* ─────────────────────────────────────────
      LOAD DATA
   ───────────────────────────────────────── */
+  function setRows(rows) {
+    const tbody = document.getElementById('t1_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const savedRows = (rows && rows.length) ? rows : [];
+
+    CATEGORIES.forEach(cat => {
+      tbody.insertAdjacentHTML('beforeend', makeCatHeader(cat));
+      const catRows = savedRows.filter(r => (r.category === cat) || (cat === "AIHR's" && (!r.category || r.category === 'aihrs')));
+      if (catRows.length > 0) {
+        catRows.forEach(r => tbody.appendChild(makeRow(cat, r, true)));
+      } else {
+        tbody.appendChild(makeRow(cat, {}, true));
+      }
+    });
+    T1._recalcAll();
+    const status = computeStatus(collectRows());
+    updateStatusBadge(status);
+  }
+
   function loadData() {
     const tbody = document.getElementById('t1_rows');
     if (!tbody) return;
@@ -219,18 +239,8 @@
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const savedRows = (data.rows && data.rows.length) ? data.rows : [];
-
-        CATEGORIES.forEach(cat => {
-          tbody.insertAdjacentHTML('beforeend', makeCatHeader(cat));
-          const catRows = savedRows.filter(r => (r.category === cat) || (cat === "AIHR's" && (!r.category || r.category === 'aihrs')));
-          if (catRows.length > 0) {
-            catRows.forEach(r => tbody.appendChild(makeRow(cat, r, true)));
-          } else {
-            tbody.appendChild(makeRow(cat, {}, true));
-          }
-        });
+        setRows(savedRows);
 
         // documentation
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
@@ -243,11 +253,7 @@
         }
       })
       .catch(() => {
-        tbody.innerHTML = '';
-        CATEGORIES.forEach(cat => {
-          tbody.insertAdjacentHTML('beforeend', makeCatHeader(cat));
-          tbody.appendChild(makeRow(cat, {}, true));
-        });
+        setRows([]);
         updateStatusBadge('not-started');
       });
   }
@@ -339,9 +345,10 @@
      PUBLIC (window.T1)
   ───────────────────────────────────────── */
   window.T1 = {
-    addRow(cat = "AIHR's") {
-      addRow(cat);
+    addRow(cat = "AIHR's", data = {}, removable = true) {
+      addRow(cat, data, removable);
     },
+    setRows,
     save,
     openDocs,
     _recalcAll() {

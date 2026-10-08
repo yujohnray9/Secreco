@@ -39,3 +39,333 @@
 #fillupDocsModal input[type="file"] {
   font-size: 11px;
 }
+
+/* ══════════════════════════════════════════════
+   EXCEL IMPORT & TEMPLATE DOWNLOAD BUTTONS
+══════════════════════════════════════════════ */
+.t-hdr {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  margin-bottom: 14px !important;
+}
+
+.t-hdr .t-title {
+  flex: 1 !important;
+  min-width: 260px !important;
+  margin: 0 !important;
+}
+
+.table-excel-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-table-excel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  line-height: 1.2;
+  text-decoration: none;
+  font-family: inherit;
+  user-select: none;
+}
+
+.btn-download-template {
+  background: #ffffff;
+  color: #047857;
+  border: 1.5px solid #10b981;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.1);
+}
+
+.btn-download-template:hover {
+  background: #ecfdf5;
+  border-color: #059669;
+  color: #065f46;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+}
+
+.btn-download-template:active {
+  transform: translateY(0);
+}
+
+.btn-import-excel {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  border: 1.5px solid transparent;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.btn-import-excel:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(16, 185, 129, 0.45);
+}
+
+.btn-import-excel:active {
+  transform: translateY(0);
+}
+
+.btn-table-excel:disabled,
+.btn-table-excel[disabled] {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: grayscale(0.5);
+}
+
+/* Drag and Drop hover indicator */
+.tbl-wrap.excel-drag-over {
+  outline: 2px dashed #10b981;
+  outline-offset: -3px;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+/* ══════════════════════════════════════════════
+   ROOMY, INFINITE TEXT INPUTS & EXPANSION
+══════════════════════════════════════════════ */
+.tbl-wrap {
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+table.merged {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+}
+
+table.merged th {
+  white-space: nowrap;
+}
+
+table.merged td {
+  padding: 8px 10px;
+  vertical-align: middle;
+}
+
+/* Make all text inputs wide, visible, roomy, and expandable */
+.fill-body table input[type="text"],
+.fill-body table input:not([type]),
+.fill-body table select {
+  width: 100%;
+  min-width: 250px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #1f2937;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+/* Extra wide columns for projects, descriptions, titles, initiatives, findings */
+.fill-body table textarea,
+.fill-body table input[class*="project"],
+.fill-body table input[class*="description"],
+.fill-body table input[class*="finding"],
+.fill-body table input[class*="initiative"],
+.fill-body table input[class*="title"],
+.fill-body table input[class*="tech"],
+.fill-body table input[class*="activity"],
+.fill-body table input[class*="item"],
+.fill-body table input[class*="approach"],
+.fill-body table input[class*="commodity"],
+.fill-body table input[class*="recommendation"],
+.fill-body table input[class*="nature"] {
+  min-width: 320px !important;
+}
+
+.fill-body table textarea {
+  width: 100%;
+  min-width: 320px;
+  min-height: 52px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #1f2937;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  resize: both; /* Allow expanding both horizontally and vertically */
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Focus expansion so user can comfortably inspect long text */
+.fill-body table input[type="text"]:focus,
+.fill-body table input:not([type]):focus,
+.fill-body table select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  min-width: 380px;
+  outline: none;
+}
+
+.fill-body table textarea:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  min-width: 420px;
+  outline: none;
+}
+
+/* Specific compact inputs */
+.fill-body table input[type="number"] {
+  width: 85px;
+  min-width: 75px;
+  text-align: center;
+  padding: 8px 6px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.fill-body table input[type="date"] {
+  width: 145px;
+  min-width: 135px;
+  padding: 7px 8px;
+  font-size: 12.5px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* ══════════════════════════════════════════════
+   FIT-TO-SCREEN (laptop / desktop only)
+   All columns visible without horizontal scrolling.
+   Phones (≤ 768px) keep the roomy, scrollable layout above.
+══════════════════════════════════════════════ */
+@media (min-width: 769px) {
+  .fill-body .tbl-wrap {
+    overflow-x: auto; /* fallback only — table is sized to fit, so no scrollbar normally */
+  }
+
+  /* Override inline min-width:XXXpx set in each table JS file */
+  .fill-body .tbl-wrap table.merged {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto;
+  }
+
+  /* Let headers wrap instead of stretching the table */
+  .fill-body .tbl-wrap table.merged th {
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+    padding: 8px 6px;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  /* Drop fixed px widths on content columns; keep the narrow #/No./delete columns */
+  .fill-body .tbl-wrap table.merged th:not([style*="width:36px"]):not([style*="width:40px"]):not([style*="width:45px"]) {
+    width: auto !important;
+  }
+
+  .fill-body .tbl-wrap table.merged td {
+    padding: 6px 5px;
+    overflow-wrap: anywhere;
+  }
+
+  /* Inputs shrink to their cell */
+  .fill-body .tbl-wrap table.merged input[type="text"],
+  .fill-body .tbl-wrap table.merged input:not([type]),
+  .fill-body .tbl-wrap table.merged input[class]:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .fill-body .tbl-wrap table.merged select,
+  .fill-body .tbl-wrap table.merged textarea {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 6px 7px;
+    font-size: 12px;
+  }
+
+  /* No growing on focus */
+  .fill-body .tbl-wrap table.merged input:focus,
+  .fill-body .tbl-wrap table.merged select:focus,
+  .fill-body .tbl-wrap table.merged textarea:focus {
+    min-width: 0 !important;
+  }
+
+  /* Vertical-only resize so users can't drag a textarea wider than the screen */
+  .fill-body .tbl-wrap table.merged textarea {
+    resize: vertical;
+  }
+
+  .fill-body .tbl-wrap table.merged input[type="number"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 85px;
+    padding: 6px 4px;
+  }
+
+  .fill-body .tbl-wrap table.merged input[type="date"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 145px;
+    padding: 6px 4px;
+    font-size: 11.5px;
+  }
+
+  /* ── Delete column removed from layout (tagged by fillup.blade.php script) ── */
+  .fill-body .tbl-wrap table.merged th.rm-col {
+    display: none;
+  }
+  .fill-body .tbl-wrap table.merged tbody tr,
+  .fill-body .tbl-wrap table.merged tfoot tr {
+    position: relative;
+  }
+  .fill-body .tbl-wrap table.merged td.rm-cell {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    z-index: 2;
+  }
+  .fill-body .tbl-wrap table.merged td.rm-cell .row-remove-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #fecaca;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.18);
+    color: #dc2626;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    opacity: 0;
+    transition: opacity .15s ease, background .15s ease, color .15s ease;
+  }
+  .fill-body .tbl-wrap table.merged tr:hover td.rm-cell .row-remove-btn,
+  .fill-body .tbl-wrap table.merged tr:focus-within td.rm-cell .row-remove-btn {
+    opacity: 1;
+  }
+  .fill-body .tbl-wrap table.merged td.rm-cell .row-remove-btn:hover {
+    background: #dc2626;
+    color: #ffffff;
+  }
+}
+

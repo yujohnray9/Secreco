@@ -22,9 +22,8 @@ class InstitutionController extends Controller
         $cmiUsers = User::where('role', 'cmi')->where('status', 'active')->get();
         $cmiUsersByInst = $cmiUsers->groupBy('institution');
 
-        $doneRows = ReportTable::where('reporting_year', $year)
-            ->whereIn('status', ['done', 'submitted', 'accepted'])
-            ->select('user_id', 'table_no')
+        $allTables = ReportTable::where('reporting_year', $year)
+            ->select('user_id', 'table_no', 'status', 'rows_json', 'meta_json')
             ->get()
             ->groupBy('user_id');
 
@@ -34,15 +33,34 @@ class InstitutionController extends Controller
 
             $sub = ReportSubmission::where('reporting_year', $year)
                 ->whereIn('user_id', $uIds)
-                ->orderByDesc('submitted_at')
+                ->orderByDesc('id')
                 ->first();
 
             $distinctTables = [];
+            $hasAnyDraft = false;
             foreach ($uIds as $uid) {
-                $userTables = $doneRows->get($uid, collect());
+                $userTables = $allTables->get($uid, collect());
                 foreach ($userTables as $row) {
                     $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $row->table_no));
-                    $distinctTables[$cleanKey] = true;
+                    if (in_array($row->status, ['done', 'submitted', 'accepted'], true)) {
+                        $distinctTables[$cleanKey] = true;
+                    }
+                    $rowCount = is_array($row->rows_json) ? count($row->rows_json) : 0;
+                    if ($row->status === 'draft' || $rowCount > 0 || !empty($row->meta_json)) {
+                        $hasAnyDraft = true;
+                    }
+                }
+            }
+
+            if ($sub && is_array($sub->snapshot_json)) {
+                foreach ($sub->snapshot_json as $snapKey => $snapItem) {
+                    if (is_array($snapItem)) {
+                        $st = $snapItem['status'] ?? '';
+                        if (in_array($st, ['done', 'submitted', 'accepted'], true)) {
+                            $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $snapKey));
+                            $distinctTables[$cleanKey] = true;
+                        }
+                    }
                 }
             }
 
@@ -51,6 +69,7 @@ class InstitutionController extends Controller
             $byInst[$instName] = [
                 'encoder'      => $encoderNames ?: '—',
                 'tables_done'  => count($distinctTables),
+                'has_draft'    => $hasAnyDraft,
                 'sub_status'   => $sub?->status,
                 'submitted_at' => $sub?->submitted_at ? $sub->submitted_at->toDateTimeString() : null,
                 'has_cmi'      => true,
@@ -63,13 +82,14 @@ class InstitutionController extends Controller
             $db = $byInst[$instName] ?? null;
 
             $tablesDone = (int) ($db['tables_done'] ?? 0);
+            $hasDraft   = (bool) ($db['has_draft'] ?? false);
             $subStatus  = $db['sub_status'] ?? null;
 
             if ($subStatus === 'accepted' || $subStatus === 'submitted') {
                 $status = 'Submitted';
             } elseif ($subStatus === 'returned') {
                 $status = 'Returned';
-            } elseif ($tablesDone > 0 || $subStatus === 'in-progress') {
+            } elseif ($tablesDone > 0 || $hasDraft || $subStatus === 'in-progress') {
                 $status = 'In Progress';
             } else {
                 $status = 'Not Started';
@@ -249,11 +269,20 @@ class InstitutionController extends Controller
             }
         }
 
+        $snapMap = [];
+        if ($sub && is_array($sub->snapshot_json)) {
+            foreach ($sub->snapshot_json as $sKey => $sVal) {
+                $clean = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $sKey));
+                $snapMap[$clean] = $sVal;
+            }
+        }
+
         $hasActiveSub = $sub && in_array($sub->status, ['submitted', 'pending', 'accepted', 'returned'], true);
 
         foreach ($allTableKeys as $tNo) {
             $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $tNo));
             $tr = $userTables[$cleanKey] ?? null;
+            $snap = $snapMap[$cleanKey] ?? null;
 
             $status = 'Not Started';
             $rowCount = '—';
@@ -275,6 +304,28 @@ class InstitutionController extends Controller
                     $status = 'Submitted';
                     $submittedCount++;
                 } elseif ($st === 'draft' || $numRows > 0 || !empty($tr->meta_json)) {
+                    $status = 'In Progress';
+                    $inProgressCount++;
+                } else {
+                    $status = 'Not Started';
+                    $notStartedCount++;
+                }
+            } elseif ($snap && is_array($snap)) {
+                $numRows = is_array($snap['rows'] ?? null) ? count($snap['rows']) : 0;
+                if ($numRows > 0) {
+                    $rowCount = (string) $numRows;
+                }
+                if ($sub->submitted_at) {
+                    $m = date('M', strtotime((string)$sub->submitted_at));
+                    if ($m === 'Sep') $m = 'Sept';
+                    $updatedAt = $m . '. ' . date('j, Y', strtotime((string)$sub->submitted_at));
+                }
+
+                $st = $snap['status'] ?? 'not-started';
+                if ($st === 'done' || $st === 'submitted' || $st === 'accepted') {
+                    $status = 'Submitted';
+                    $submittedCount++;
+                } elseif ($st === 'draft' || $numRows > 0) {
                     $status = 'In Progress';
                     $inProgressCount++;
                 } else {

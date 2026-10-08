@@ -17,32 +17,45 @@
      COLUMN RESOLVER
   ───────────────────────────────────────── */
   function resolveColumns(tableDef, rows) {
-    if (tableDef?.columns?.length)
-      return tableDef.columns.filter(c => c.type !== 'computed');
+    const state         = window.SubEditState;
+    const tableNo       = state?.tableNo || '';
+    const normNo        = tableNo.toUpperCase().trim();
+    const isInternalCat = ['T1', 'T2A', 'T2', 'T7A', 'T7', 'T7B', 'T8A', 'T8', 'T10', 'T15', 'T16', 'T20B', 'T20b'].includes(normNo);
 
-    const state   = window.SubEditState;
-    const tableNo = state?.tableNo || '';
-    const canon   = tableNo.charAt(0).toUpperCase() + tableNo.slice(1).toLowerCase();
-    const tmpl    = (window.SubState?.templates || []).find(t =>
+    if (tableDef?.columns?.length) {
+      let cols = tableDef.columns.filter(c => c.type !== 'computed');
+      if (isInternalCat) {
+        cols = cols.filter(c => c.key !== 'category');
+      }
+      return cols;
+    }
+
+    const canon = tableNo.charAt(0).toUpperCase() + tableNo.slice(1).toLowerCase();
+    const tmpl  = (window.SubState?.templates || []).find(t =>
       t.table_no.toUpperCase() === tableNo.toUpperCase() ||
       t.table_no.toUpperCase() === canon.toUpperCase()
     );
     if (tmpl && tmpl.columns_json && Array.isArray(tmpl.columns_json) && tmpl.columns_json.length > 0) {
-      return tmpl.columns_json.map(c => ({
+      let cols = tmpl.columns_json.map(c => ({
         key: c.key || c.name || c.id,
         label: c.label || c.title || c.key || 'Column',
         type: 'text'
       }));
+      if (isInternalCat) {
+        cols = cols.filter(c => c.key !== 'category');
+      }
+      return cols;
     }
 
-    if (rows?.length)
+    if (rows?.length) {
       return Object.keys(rows[0])
-        .filter(k => !['_group', '_fixed', '_label'].includes(k))
+        .filter(k => !['_group', '_fixed', '_label'].includes(k) && !(isInternalCat && k === 'category'))
         .map(k => ({
           key  : k,
           label: k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' '),
           type : 'text',
         }));
+    }
 
     return [];
   }
@@ -167,15 +180,52 @@
   /* ─────────────────────────────────────────
      SINGLE DATA ROW
   ───────────────────────────────────────── */
+  const ALIAS_MAP = {
+    expenditures: ['expenditure', 'expense', 'amount', 'cost', 'budget'],
+    expenditure: ['expenditures', 'expense', 'amount', 'cost', 'budget'],
+    expense: ['expenditures', 'expenditure', 'amount', 'cost', 'budget'],
+    budget: ['amount', 'cost', 'expenditures', 'expense'],
+    funds: ['fundsource', 'source', 'fund', 'fund_source'],
+    fundsource: ['funds', 'source', 'fund', 'fund_source'],
+    title: ['activity', 'award', 'project', 'training', 'policy', 'name', 'item'],
+    policy: ['title', 'policy_title', 'list_of_policies', 'ordinance', 'resolution'],
+    award: ['title', 'activity', 'award_title'],
+    event: ['activity', 'title', 'event_activity'],
+    activity: ['title', 'event', 'project'],
+    venue: ['date_venue', 'place', 'location', 'date'],
+    date: ['date_awarded', 'published_date', 'award_date', 'venue'],
+    author: ['researcher', 'lead'],
+    description: ['desc', 'details', 'findings'],
+    findings: ['finding', 'results'],
+    precomm: ['pre_comm', 'precommercialization', 'activity', 'pre-commercialization'],
+    pre_comm: ['precomm', 'precommercialization', 'activity', 'pre-commercialization'],
+  };
+
+  function getCellVal(row, key) {
+    if (!row || typeof row !== 'object') return '';
+    let v = row[key] ?? row[key?.toLowerCase()] ?? row[key?.toUpperCase()];
+    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v);
+
+    const alts = ALIAS_MAP[key?.toLowerCase()] || [];
+    for (const a of alts) {
+      let av = row[a] ?? row[a?.toLowerCase()] ?? row[a?.toUpperCase()];
+      if (av !== undefined && av !== null && String(av).trim() !== '') return String(av);
+    }
+    return '';
+  }
+
   function buildEditRow(row, idx, columns) {
+    const state  = window.SubEditState;
+    const normNo = (state?.tableNo || '').toUpperCase().trim();
     let cells = '';
     columns.forEach(c => {
-      const isNum  = c.type === 'number';
-      const isDate = c.type === 'date' || /date/i.test(c.key) || /date/i.test(c.label || '');
+      const isNum  = c.type === 'number' && !['expenditures', 'expense', 'amount', 'budget', 'cost'].includes(c.key?.toLowerCase());
+      const isDate = (normNo !== 'T16' && normNo !== 'T19') && (c.type === 'date' || /date/i.test(c.key) || /date/i.test(c.label || ''));
       const inputType = isNum ? 'number' : (isDate ? 'date' : 'text');
+      const val = getCellVal(row, c.key);
       cells += `<td style="padding:4px 6px">
         <input type="${inputType}" class="edit-cell-input"
-          data-row="${idx}" data-key="${escapeHtml(c.key)}" value="${escapeHtml(String(row[c.key] ?? ''))}"
+          data-row="${idx}" data-key="${escapeHtml(c.key)}" value="${escapeHtml(val)}"
           style="${isNum ? 'width:60px;text-align:center;' : isDate ? 'min-width:130px;' : 'width:100%;'}border:1px solid var(--border,#ddd);
             border-radius:3px;padding:4px 6px;font-size:12px;font-family:inherit;box-sizing:border-box"/>
       </td>`;

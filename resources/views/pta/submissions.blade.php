@@ -392,12 +392,29 @@
             `;
           }
 
+          let dateCellHtml = '';
+          if (isReturnedFilter) {
+            dateCellHtml = `<div style="color:#dc2626;font-weight:600;font-size:12.5px">${formattedDate}</div>`;
+          } else if (r.resubmitted_at && r.resubmitted_at !== r.submitted_at) {
+            dateCellHtml = `
+              <div style="color:#059669;font-weight:600;font-size:12.5px">${formattedDate}</div>
+              <div style="font-size:11px;color:#0369a1;margin-top:2px;font-weight:600">
+                <span style="background:#e0f2fe;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:4px">
+                  <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                  Revised: ${formatPHDate(r.resubmitted_at)}
+                </span>
+              </div>
+            `;
+          } else {
+            dateCellHtml = `<div style="color:#059669;font-weight:600;font-size:12.5px">${formattedDate}</div>`;
+          }
+
           htmlParts.push(`
             <tr>
               <td><strong>${r.institution}</strong></td>
               <td>${r.encoder}</td>
               <td><span class="badge badge-blue">Table ${r.table_no}</span></td>
-              <td style="color:#059669;font-weight:600;font-size:12.5px">${formattedDate}</td>
+              <td>${dateCellHtml}</td>
               <td style="text-align:center">
                 ${actionBtnHtml}
               </td>
@@ -474,7 +491,7 @@
       'T3':  ['project', 'status', 'duration', 'fund'],
       'T4':  ['donor', 'activity', 'amount', 'remarks'],
       'T5':  ['donor', 'activity', 'amount', 'remarks'],
-      'T6':  ['agency', 'address', 'year', 'nature'],
+      'T6':  ['scope', 'agency', 'address', 'year', 'nature'],
       'T7A': ['type', 'date', 'purpose'],
       'T7B': ['type', 'date', 'purpose'],
       'T8A': ['title', 'researcher', 'agency', 'duration', 'funds', 'commodity'],
@@ -491,7 +508,7 @@
       'T18': ['cmi', 'amount'],
       'T19': ['initiative', 'date'],
       'T20A': ['project', 'agency', 'author', 'description', 'findings'],
-      'T20B': ['agency', 'description'],
+      'T20B': ['policy', 'agency', 'description'],
     };
     window._DEFAULT_TABLE_KEYS = DEFAULT_TABLE_KEYS;
 
@@ -506,7 +523,7 @@
       licensor: 'Licensor', startup: 'Startup', spinoff: 'Spinoff', venue: 'Venue', participants: 'Participants',
       expenditures: 'Expenditures', item: 'Item', location: 'Location', expense: 'Expense', award: 'Award',
       recipient: 'Recipient', sponsor: 'Sponsor', event: 'Event', host: 'Host', cmi: 'CMI', initiative: 'Initiative',
-      author: 'Author', description: 'Description', findings: 'Findings'
+      author: 'Author', description: 'Description', findings: 'Findings', scope: 'Scope / Level', policy: 'List of Policies'
     };
 
     function formatColumnHeader(k) {
@@ -518,19 +535,26 @@
     }
     window.formatColumnHeader = formatColumnHeader;
 
-    function getFieldInputType(k) {
+    function getFieldInputType(k, tNo = '') {
       const norm = (k || '').toLowerCase();
+      const tNoUpper = String(tNo || '').toUpperCase().trim();
       if (norm === 'category') {
         return 'category';
+      }
+      if ((tNoUpper === 'T19' || tNoUpper === 'T16') && (norm === 'date' || norm.endsWith('_date') || norm.startsWith('date_'))) {
+        return 'text';
       }
       if (norm === 'date' || norm.endsWith('_date') || norm.startsWith('date_') || norm === 'published_date') {
         return 'date';
       }
+      if (norm === 'amount' || norm === 'expenditures' || norm === 'expenditure' || norm === 'expense' || norm === 'budget' || norm === 'cost' || norm === 'funds_amount') {
+        return 'text';
+      }
       const numberFields = new Set([
         'new_', 'new', 'ongoing', 'completed', 'terminated',
-        'count', 'amount', 'budget', 'expense', 'expenditures',
+        'count',
         'participants', 'precomm', 'licensor', 'startup', 'spinoff',
-        'total', 'funds_amount', 'qty', 'quantity'
+        'total', 'qty', 'quantity'
       ]);
       if (numberFields.has(norm)) {
         return 'number';
@@ -563,21 +587,26 @@
     window._currentColDefs = [];
     window._currentEditKeys = [];
 
-    function renderCellInput(key, rawVal, isViewOnly = false, colDef = null) {
-      const type = colDef?.type || getFieldInputType(key);
+    function renderCellInput(key, rawVal, isViewOnly = false, colDef = null, tNo = '') {
+      const type = colDef?.type || getFieldInputType(key, tNo);
       const opts = colDef?.options || window._currentColOptionsMap[key] || null;
       let val = rawVal ?? '';
       const disAttr = isViewOnly ? 'disabled style="background:#f9fafb;cursor:not-allowed;' : 'style="';
 
       if (type === 'dropdown' && Array.isArray(opts) && opts.length > 0) {
+        const valStr = String(val).trim().toLowerCase();
         const optHtml = ['<option value="">-- Select --</option>'].concat(
           opts.map(o => {
             const sVal = String(o).trim();
-            const isSel = String(val).trim() === sVal ? 'selected' : '';
+            const sValLower = sVal.toLowerCase();
+            const isSel = (valStr === sValLower ||
+                           (valStr && sValLower.endsWith(valStr)) ||
+                           (valStr && valStr.endsWith(sValLower)) ||
+                           (valStr && sValLower.replace(/[^a-z0-9]/g, '') === valStr.replace(/[^a-z0-9]/g, ''))) ? 'selected' : '';
             return `<option value="${sVal.replace(/"/g, '&quot;')}" ${isSel}>${sVal}</option>`;
           })
         ).join('');
-        return `<select class="pta-cell-inp" data-key="${key}" ${disAttr}width:100%;min-width:120px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;">${optHtml}</select>`;
+        return `<select class="pta-cell-inp" data-key="${key}" ${disAttr}width:100%;min-width:140px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;">${optHtml}</select>`;
       }
 
       if (type === 'category') {
@@ -630,11 +659,11 @@
     if (templateCols && templateCols.length > 0) {
       return templateCols.map(c => {
         if (typeof c === 'string') {
-          return { key: c, label: c, type: getFieldInputType(c), options: [] };
+          return { key: c, label: c, type: (tNoUpper === 'T19' && (c === 'date' || c.endsWith('_date'))) ? 'text' : getFieldInputType(c, tNoUpper), options: [] };
         }
         const key = c.key || c.name || 'col';
         const label = c.label || c.name || c.title || formatColumnHeader(key);
-        const type = c.type || getFieldInputType(key);
+        let type = (tNoUpper === 'T19' && (key === 'date' || key.endsWith('_date'))) ? 'text' : (c.type || getFieldInputType(key, tNoUpper));
         let options = c.options || [];
         if (typeof options === 'string') {
           options = options.split(',').map(s => s.trim()).filter(Boolean);
@@ -645,12 +674,43 @@
 
     // 2. Standard table keys
     if (DEFAULT_TABLE_KEYS[tNoUpper] && DEFAULT_TABLE_KEYS[tNoUpper].length > 0) {
-      return DEFAULT_TABLE_KEYS[tNoUpper].map(k => ({
-        key: k,
-        label: COLUMN_LABELS[k] || formatColumnHeader(k),
-        type: getFieldInputType(k),
-        options: []
-      }));
+      return DEFAULT_TABLE_KEYS[tNoUpper].map(k => {
+        let lbl = COLUMN_LABELS[k] || formatColumnHeader(k);
+        if (tNoUpper === 'T16') {
+          if (k === 'date') lbl = 'Date of Award';
+          if (k === 'venue') lbl = 'Place of Award';
+          if (k === 'award') lbl = 'Title of Award';
+          if (k === 'recipient') lbl = 'Recipient / Agency';
+          if (k === 'event') lbl = 'Event / Activity';
+        }
+        if (tNoUpper === 'T6' && k === 'scope') {
+          return {
+            key: 'scope',
+            label: 'Scope / Level',
+            type: 'dropdown',
+            options: [
+              'Developed / New - Local',
+              'Developed / New - Regional',
+              'Developed / New - National',
+              'Developed / New - International',
+              'Maintained / Sustained - Local',
+              'Maintained / Sustained - Regional',
+              'Maintained / Sustained - National',
+              'Maintained / Sustained - International',
+              'Local',
+              'Regional',
+              'National',
+              'International'
+            ]
+          };
+        }
+        return {
+          key: k,
+          label: lbl,
+          type: getFieldInputType(k, tNoUpper),
+          options: []
+        };
+      });
     }
 
     // 3. Fallback: check actual keys in r.rows
@@ -666,22 +726,32 @@
         }
       });
       if (foundKeys.length > 0) {
-        return foundKeys.map(k => ({
+        let cols = foundKeys.map(k => ({
           key: k,
           label: COLUMN_LABELS[k] || formatColumnHeader(k),
-          type: getFieldInputType(k),
+          type: getFieldInputType(k, tNoUpper),
           options: []
         }));
+        const isInternalCat = ['T1', 'T2A', 'T2', 'T7A', 'T7', 'T7B', 'T8A', 'T8', 'T10', 'T15', 'T16', 'T20B', 'T20b'].includes(tNoUpper);
+        if (isInternalCat) {
+          cols = cols.filter(c => c.key !== 'category');
+        }
+        return cols;
       }
     }
 
     // 4. Fallback business columns
-    return [
+    let fallback = [
       { key: 'description', label: 'Item Description', type: 'text', options: [] },
       { key: 'agency', label: 'Agency / Institution', type: 'text', options: [] },
-      { key: 'amount', label: 'Amount / Budget', type: 'number', options: [] },
+      { key: 'amount', label: 'Amount / Budget', type: 'text', options: [] },
       { key: 'remarks', label: 'Remarks', type: 'text', options: [] }
     ];
+    const isInternalCat = ['T1', 'T2A', 'T2', 'T7A', 'T7', 'T7B', 'T8A', 'T8', 'T10', 'T15', 'T16', 'T20B', 'T20b'].includes(tNoUpper);
+    if (isInternalCat) {
+      fallback = fallback.filter(c => c.key !== 'category');
+    }
+    return fallback;
   }
 
   window.viewDataModal = function(idx, isViewOnly = false) {
@@ -696,7 +766,12 @@
     let html = '';
 
     let rows = (r.rows && r.rows.length > 0) ? JSON.parse(JSON.stringify(r.rows)) : [{}];
-    const colDefs = resolveTableColumns(r);
+    let colDefs = resolveTableColumns(r);
+    const tNoUpper = String(r.table_no || '').toUpperCase().trim();
+    const isInternalCat = ['T1', 'T2A', 'T2', 'T7A', 'T7', 'T7B', 'T8A', 'T8', 'T10', 'T15', 'T16', 'T20B', 'T20b'].includes(tNoUpper);
+    if (isInternalCat) {
+      colDefs = colDefs.filter(c => c.key !== 'category');
+    }
     const colOptionsMap = {};
     const colDefMap = {};
     colDefs.forEach(cd => {
@@ -716,13 +791,14 @@
     rows.forEach(row => {
       if (row && typeof row === 'object') {
         Object.keys(row).forEach(k => {
+          if (isInternalCat && k.toLowerCase() === 'category') return;
           const canonical = keyAliases[k] || k;
           if (k && !existingKeys.includes(canonical) && !existingKeys.includes(k) && !k.startsWith('_') && !k.startsWith('field')) {
             existingKeys.push(k);
             const extraDef = {
               key: k,
               label: COLUMN_LABELS[k] || formatColumnHeader(k),
-              type: getFieldInputType(k),
+              type: getFieldInputType(k, r.table_no),
               options: []
             };
             colDefs.push(extraDef);
@@ -748,6 +824,13 @@
       </div>`;
     }
 
+    if (r.resubmitted_at && r.resubmitted_at !== r.submitted_at) {
+      html += `<div style="font-size:12px;color:#0369a1;margin-bottom:12px;background:#f0f9ff;padding:8px 14px;border-radius:8px;border:1px solid #bae6fd;display:flex;gap:16px;flex-wrap:wrap">
+        <div><strong>Originally Submitted:</strong> ${formatPHDate(r.submitted_at)}</div>
+        <div><strong>Revised / Resubmitted:</strong> ${formatPHDate(r.resubmitted_at)}</div>
+      </div>`;
+    }
+
     html += `<table class="fc-table" id="ptaEditGrid" style="font-size:12.5px">
       <thead>
         <tr>
@@ -758,18 +841,47 @@
       </thead>
       <tbody id="ptaEditTbody">`;
 
+    const PTA_ALIAS_MAP = {
+      expenditures: ['expenditure', 'expense', 'amount', 'cost', 'budget'],
+      expenditure: ['expenditures', 'expense', 'amount', 'cost', 'budget'],
+      expense: ['expenditures', 'expenditure', 'amount', 'cost', 'budget'],
+      budget: ['amount', 'cost', 'expenditures', 'expense'],
+      funds: ['fundsource', 'source', 'fund', 'fund_source'],
+      fundsource: ['funds', 'source', 'fund', 'fund_source'],
+      title: ['activity', 'award', 'project', 'training', 'policy', 'name', 'item'],
+      policy: ['title', 'policy_title', 'list_of_policies', 'ordinance', 'resolution'],
+      award: ['title', 'activity', 'award_title'],
+      event: ['activity', 'title', 'event_activity'],
+      activity: ['title', 'event', 'project'],
+      venue: ['date_venue', 'place', 'location', 'date'],
+      date: ['date_awarded', 'published_date', 'award_date', 'venue'],
+      author: ['researcher', 'lead'],
+      description: ['desc', 'details', 'findings'],
+      findings: ['finding', 'results'],
+      new_: ['new', 'new_projects'],
+      new: ['new_', 'new_projects'],
+    };
+
+    function getPtaCellVal(row, key) {
+      if (!row || typeof row !== 'object') return '';
+      let v = row[key] ?? row[key?.toLowerCase()] ?? row[key?.toUpperCase()];
+      if (v !== undefined && v !== null && String(v).trim() !== '') return String(v);
+
+      const alts = PTA_ALIAS_MAP[key?.toLowerCase()] || [];
+      for (const a of alts) {
+        let av = row[a] ?? row[a?.toLowerCase()] ?? row[a?.toUpperCase()];
+        if (av !== undefined && av !== null && String(av).trim() !== '') return String(av);
+      }
+      return '';
+    }
+
     rows.forEach((row, rIdx) => {
       html += `<tr>
         <td style="text-align:center;font-weight:600;color:#6b7280">${rIdx + 1}</td>
         ${colDefs.map(cd => {
           const k = cd.key;
-          let cellVal = row[k];
-          if (cellVal === undefined || cellVal === null || cellVal === '') {
-            if (k === 'new_' || k === 'new') {
-              cellVal = row['new_'] ?? row['new'] ?? row['new_projects'] ?? '';
-            }
-          }
-          return `<td>${renderCellInput(k, cellVal, isViewOnly, cd)}</td>`;
+          let cellVal = getPtaCellVal(row, k);
+          return `<td>${renderCellInput(k, cellVal, isViewOnly, cd, r.table_no)}</td>`;
         }).join('')}
         ${!isViewOnly ? `<td style="text-align:center"><button type="button" onclick="this.closest('tr').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:bold;">×</button></td>` : ''}
       </tr>`;
@@ -963,14 +1075,14 @@
       colDefs = [
         { key: 'description', label: 'Item Description', type: 'text', options: [] },
         { key: 'agency', label: 'Agency / Institution', type: 'text', options: [] },
-        { key: 'amount', label: 'Amount / Budget', type: 'number', options: [] },
+        { key: 'amount', label: 'Amount / Budget', type: 'text', options: [] },
         { key: 'remarks', label: 'Remarks', type: 'text', options: [] }
       ];
     }
     const rowCount = tbody.rows.length + 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `<td style="text-align:center;font-weight:600;color:#6b7280">${rowCount}</td>
-      ${colDefs.map(cd => `<td>${renderCellInput(cd.key, '', false, cd)}</td>`).join('')}
+      ${colDefs.map(cd => `<td>${renderCellInput(cd.key, '', false, cd, (currentEditSubIdx >= 0 && cachedSubRows[currentEditSubIdx]) ? cachedSubRows[currentEditSubIdx].table_no : '')}</td>`).join('')}
       <td style="text-align:center"><button type="button" onclick="this.closest('tr').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:bold;">×</button></td>`;
     tbody.appendChild(tr);
   };
@@ -982,21 +1094,30 @@
     const tbody = document.getElementById('ptaEditTbody');
     
     const updatedRows = [];
+    const isT2a = (r.table_no === 'T2A' || r.table_no === 'T2a' || r.table_no === 'T2');
     if (tbody) {
-      tbody.querySelectorAll('tr').forEach(tr => {
+      tbody.querySelectorAll('tr').forEach((tr, rIdx) => {
         const inputs = tr.querySelectorAll('.pta-cell-inp');
         const rowObj = {};
         inputs.forEach(inp => {
           const key = inp.dataset.key;
           let v = inp.value;
-          if (getFieldInputType(key) === 'number' && v !== '') {
+          if (getFieldInputType(key, r.table_no) === 'number' && v !== '') {
             v = isNaN(Number(v)) ? v : Number(v);
           }
           rowObj[key] = v;
           if (key === 'new_') {
             rowObj['new'] = v;
           }
+          if (key === 'expenditures') {
+            rowObj['expenditure'] = v;
+          } else if (key === 'expenditure') {
+            rowObj['expenditures'] = v;
+          }
         });
+        if (r.rows && r.rows[rIdx] && r.rows[rIdx].category && !rowObj['category']) {
+          rowObj['category'] = r.rows[rIdx].category;
+        }
         updatedRows.push(rowObj);
       });
     }

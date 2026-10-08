@@ -73,7 +73,7 @@
       <td><input type="text" class="t12-tech"     placeholder="Name of Technology"                      value="${esc(data.tech||'')}"/></td>
       <td><input type="text" class="t12-owner"    placeholder="Technology Owner"                        value="${esc(data.owner||'')}"/></td>
       <td><textarea class="t12-precomm" placeholder="Pre-Commercialization Activity Undertaken"
-            rows="2" style="width:100%;resize:vertical">${esc(data.precomm||'')}</textarea></td>
+            rows="2" style="width:100%;resize:vertical">${esc(data.precomm ?? data.pre_comm ?? data.activity ?? '')}</textarea></td>
       <td><input type="text" class="t12-licensor" placeholder="Licensor (person / firm)"               value="${esc(data.licensor||'')}"/></td>
       <td><input type="text" class="t12-startup"  placeholder="Start-Up (person / firm)"               value="${esc(data.startup||'')}"/></td>
       <td><input type="text" class="t12-spinoff"  placeholder="Spin-off (person / firm)"               value="${esc(data.spinoff||'')}"/></td>
@@ -109,26 +109,31 @@
     }));
   }
 
+  function setRows(rows) {
+    const tbody = document.getElementById('t12_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const validRows = (rows && rows.length) ? rows : [{}];
+    validRows.forEach((r, i) => tbody.appendChild(makeRow(r, i > 0)));
+    renumber();
+    const status = computeStatus(validRows);
+    updateStatusBadge(status);
+  }
+
   function loadData() {
     const tbody = document.getElementById('t12_rows');
     if (!tbody) return;
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
         const rows = (data.rows && data.rows.length) ? data.rows : [{}];
-        rows.forEach((row, i) => tbody.appendChild(makeRow(row, i > 0)));
-        renumber();
+        setRows(rows);
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
-        const status = computeStatus(rows);
-        updateStatusBadge(status);
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        tbody.innerHTML = '';
-        [{}].forEach((r, i) => tbody.appendChild(makeRow(r, i > 0)));
-        renumber();
+        setRows([{}]);
       });
   }
 
@@ -203,6 +208,7 @@
 
   window.T12 = {
     addRow()   { addRow({}, true); },
+    setRows,
     save,
     openDocs,
     _renumber: renumber,

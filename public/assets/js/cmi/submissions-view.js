@@ -110,16 +110,26 @@
         const path  = img.file_path || '';
         const cap   = img.caption   || '';
         const isImg = /\.(png|jpe?g|gif|webp)$/i.test(path);
-        html += isImg
-          ? `<a href="#" data-lightbox-src="${escapeHtml(path)}" data-lightbox-cap="${escapeHtml(cap)}"
+        const isPdf = /\.pdf$/i.test(path);
+        if (isImg) {
+          html += `<a href="#" data-lightbox-src="${escapeHtml(path)}" data-lightbox-cap="${escapeHtml(cap)}"
                class="attachment-thumb" style="display:block;text-align:center">
               <img src="${escapeHtml(path)}" alt="${escapeHtml(cap)}"
                 style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border,#e0e0e0)"/>
               <div style="font-size:11px;color:var(--text-muted);margin-top:4px;max-width:90px;
                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(cap || 'View')}</div>
-            </a>`
-          : `<a href="${escapeHtml(path)}" target="_blank" rel="noopener"
+            </a>`;
+        } else if (isPdf) {
+          html += `<a href="${escapeHtml(path)}" target="_blank" rel="noopener noreferrer"
+               style="width:90px;height:90px;border-radius:8px;border:1px solid #fecaca;background:#fff5f5;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;padding:6px;box-sizing:border-box;text-align:center">
+               <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#dc2626" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+               <span style="font-size:10px;font-weight:700;color:#dc2626;margin-top:2px">PDF FILE</span>
+               <div style="font-size:9.5px;color:var(--text-muted);margin-top:2px;max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(cap || 'View PDF')}</div>
+             </a>`;
+        } else {
+          html += `<a href="${escapeHtml(path)}" target="_blank" rel="noopener"
                class="btn btn-sm btn-outline" style="font-size:12px">${escapeHtml(cap || 'Document')}</a>`;
+        }
       });
       html += '</div></div>';
     }
@@ -132,6 +142,8 @@
     }
 
     // Column definitions
+    const normNo = tableNo.toUpperCase().trim();
+    const isInternalCat = ['T1', 'T2A', 'T2', 'T7A', 'T7', 'T7B', 'T8A', 'T8', 'T10', 'T15', 'T16', 'T20B', 'T20b'].includes(normNo);
     let columns = [];
     if (tableDef?.columns?.length) {
       columns = tableDef.columns.filter(c => c.type !== 'computed');
@@ -147,13 +159,50 @@
         }));
       } else if (rows.length) {
         columns = Object.keys(rows[0] || {})
-          .filter(k => !['_group', '_fixed', '_label'].includes(k))
+          .filter(k => !['_group', '_fixed', '_label'].includes(k) && !(isInternalCat && k === 'category'))
           .map(k => ({ key: k, label: k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' ') }));
       }
+    }
+    if (isInternalCat) {
+      columns = columns.filter(c => c.key !== 'category');
     }
 
     if (!columns.length)
       return html + '<div class="view-empty">No column definitions available.</div>';
+
+    const ALIAS_MAP = {
+      expenditures: ['expenditure', 'expense', 'amount', 'cost', 'budget'],
+      expenditure: ['expenditures', 'expense', 'amount', 'cost', 'budget'],
+      expense: ['expenditures', 'expenditure', 'amount', 'cost', 'budget'],
+      budget: ['amount', 'cost', 'expenditures', 'expense'],
+      funds: ['fundsource', 'source', 'fund', 'fund_source'],
+      fundsource: ['funds', 'source', 'fund', 'fund_source'],
+      title: ['activity', 'award', 'project', 'training', 'policy', 'name', 'item'],
+      policy: ['title', 'policy_title', 'list_of_policies', 'ordinance', 'resolution'],
+      award: ['title', 'activity', 'award_title'],
+      event: ['activity', 'title', 'event_activity'],
+      activity: ['title', 'event', 'project'],
+      venue: ['date_venue', 'place', 'location', 'date'],
+      date: ['date_awarded', 'published_date', 'award_date', 'venue'],
+      author: ['researcher', 'lead'],
+      description: ['desc', 'details', 'findings'],
+      findings: ['finding', 'results'],
+      precomm: ['pre_comm', 'precommercialization', 'activity', 'pre-commercialization'],
+      pre_comm: ['precomm', 'precommercialization', 'activity', 'pre-commercialization'],
+    };
+
+    function getCellVal(row, key) {
+      if (!row || typeof row !== 'object') return '';
+      let v = row[key] ?? row[key?.toLowerCase()] ?? row[key?.toUpperCase()];
+      if (v !== undefined && v !== null && String(v).trim() !== '') return String(v);
+
+      const alts = ALIAS_MAP[key?.toLowerCase()] || [];
+      for (const a of alts) {
+        let av = row[a] ?? row[a?.toLowerCase()] ?? row[a?.toUpperCase()];
+        if (av !== undefined && av !== null && String(av).trim() !== '') return String(av);
+      }
+      return '';
+    }
 
     // Data table
     html += '<div class="tbl-wrap"><table class="dt view-tbl"><thead><tr>';
@@ -164,7 +213,7 @@
     rows.forEach((row, idx) => {
       html += `<tr${idx % 2 !== 0 ? ' style="background:var(--bg-soft,#f7faf7)"' : ''}>`;
       columns.forEach(c => {
-        const raw = row[c.key] ?? row[c.key?.toLowerCase()] ?? row[c.key?.toUpperCase()];
+        const raw = getCellVal(row, c.key);
         const val = (raw === null || raw === undefined || String(raw).trim() === '') ? '—' : String(raw);
         html += `<td style="font-size:12.5px;vertical-align:top;padding:8px 10px">${escapeHtml(val)}</td>`;
       });

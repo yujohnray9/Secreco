@@ -56,20 +56,20 @@ table.merged, table.rpt-table, .fc-table, table.dt {
 }
 table.merged th, table.rpt-table th, .fc-table th, table.dt th,
 table.merged th.group, table.rpt-table th.group, .fc-table th.group, table.dt th.group {
-  background: #10b981 !important;
+  background: #00875a !important;
   color: #ffffff !important;
   text-align: center;
-  border: 1px solid #059669 !important;
+  border: 1px solid #00734d !important;
   padding: 9px 12px;
   font-size: 12px;
   font-weight: 700;
   vertical-align: middle;
 }
 table.merged th.sub, table.rpt-table th.sub, .fc-table th.sub, table.dt th.sub {
-  background: #ecfdf5 !important;
-  color: #065f46 !important;
+  background: #00875a !important;
+  color: #ffffff !important;
   text-align: center;
-  border: 1px solid #a7f3d0 !important;
+  border: 1px solid #00734d !important;
   padding: 7px 10px;
   font-size: 11px;
   font-weight: 700;
@@ -90,8 +90,13 @@ table.merged tbody tr:nth-child(even), table.rpt-table tbody tr:nth-child(even),
 table.merged tbody tr:hover, table.rpt-table tbody tr:hover, .fc-table tbody tr:hover, table.dt tbody tr:hover {
   background: #f3f4f6;
 }
-table.merged td:nth-child(2), table.rpt-table td:nth-child(2), .fc-table td:nth-child(2), table.dt td:nth-child(2) {
+table.merged:not(.tbl-t2b-detail) td:nth-child(2), table.rpt-table:not(.tbl-t2b-detail) td:nth-child(2), .fc-table:not(.tbl-t2b-detail) td:nth-child(2), table.dt:not(.tbl-t2b-detail) td:nth-child(2) {
   text-align: left;
+}
+.tbl-t2b-detail th,
+.tbl-t2b-detail td {
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 table.merged td.not-submitted, table.rpt-table td.not-submitted, .fc-table td.not-submitted, table.dt td.not-submitted {
   color: var(--text-muted);
@@ -250,4 +255,32 @@ table.merged td.not-submitted, table.rpt-table td.not-submitted, .fc-table td.no
   .rpt-filter-row { flex-direction: column; align-items: stretch; }
   .toggle-group   { width: 100%; justify-content: center; }
   .word-preview   { padding: 24px 16px; }
+}
+
+/* ══════════════════════════════════════════════
+   FIT-TO-SCREEN — consolidated report tables
+   Laptop / desktop: all columns visible, no sideways scrolling.
+   Phones (≤ 768px) keep horizontal scrolling.
+══════════════════════════════════════════════ */
+@media (min-width: 769px) {
+  #tableContainer table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto;
+  }
+
+  #tableContainer th {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+
+  /* Drop fixed px widths from renderers; keep the narrow # / No. columns */
+  #tableContainer th:not([style*="width:36px"]):not([style*="width:40px"]):not([style*="width:45px"]) {
+    width: auto !important;
+  }
+
+  #tableContainer td {
+    overflow-wrap: anywhere;
+  }
 }

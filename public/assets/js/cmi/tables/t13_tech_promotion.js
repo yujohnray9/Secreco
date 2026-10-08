@@ -138,32 +138,56 @@
     }).filter(r => r.approach !== '' || r.remarks !== '');
   }
 
+  function matchCategory(catStr) {
+    const s = String(catStr || '').toLowerCase().trim();
+    if (s.includes('fiesta')) return CATEGORIES[0].title;
+    if (s.includes('print')) return CATEGORIES[1].title;
+    if (s.includes('radio') || s.includes('tv') || s.includes('broadcast')) return CATEGORIES[2].title;
+    if (s.includes('ict') || s.includes('web') || s.includes('media') || s.includes('online') || s.includes('reels') || s.includes('video')) return CATEGORIES[3].title;
+    if (s.includes('train')) return CATEGORIES[4].title;
+    if (s.includes('other') || s.includes('caravan') || s.includes('campaign') || s.includes('nstw')) return CATEGORIES[5].title;
+    return CATEGORIES[0].title;
+  }
+
+  function setRows(rows) {
+    const tbody = document.getElementById('t13_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const savedRows = (rows && Array.isArray(rows)) ? rows : [];
+    const byCat = {};
+    CATEGORIES.forEach(c => { byCat[c.title] = []; });
+
+    savedRows.forEach(r => {
+      const approach = (r.approach || '').trim();
+      const remarks  = (r.remarks  || '').trim();
+      if (!approach && !remarks) return;
+      const targetCat = matchCategory(r.category);
+      byCat[targetCat].push({ approach, remarks });
+    });
+
+    CATEGORIES.forEach(c => {
+      tbody.insertAdjacentHTML('beforeend', makeCatHeader(c.title));
+      const list = byCat[c.title];
+      if (list && list.length > 0) {
+        list.forEach(r => {
+          tbody.appendChild(createRowHTML(c.title, r.approach, r.remarks));
+        });
+      } else {
+        tbody.appendChild(createRowHTML(c.title, '', ''));
+      }
+    });
+
+    const status = computeStatus(collectRows());
+    updateStatusBadge(status);
+  }
+
   function loadData() {
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        const tbody = document.getElementById('t13_rows');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
         const savedRows = (data.rows && Array.isArray(data.rows)) ? data.rows : [];
-
-        CATEGORIES.forEach(c => {
-          tbody.insertAdjacentHTML('beforeend', makeCatHeader(c.title));
-          const catRows = savedRows.filter(r => {
-            const rCat = r.category || '';
-            return rCat === c.title || rCat === c.btnLabel || (r.approach && r.approach === c.title);
-          });
-          if (catRows.length > 0) {
-            catRows.forEach(r => {
-              const appr = (r.approach === c.title) ? '' : (r.approach || '');
-              tbody.appendChild(createRowHTML(c.title, appr, r.remarks || ''));
-            });
-          } else {
-            // Render 1 default row under each category
-            tbody.appendChild(createRowHTML(c.title, '', ''));
-          }
-        });
+        setRows(savedRows);
 
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
@@ -172,14 +196,7 @@
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        const tbody = document.getElementById('t13_rows');
-        if (tbody) {
-          tbody.innerHTML = '';
-          CATEGORIES.forEach(c => {
-            tbody.insertAdjacentHTML('beforeend', makeCatHeader(c.title));
-            tbody.appendChild(createRowHTML(c.title, '', ''));
-          });
-        }
+        setRows([]);
       });
   }
 
@@ -251,6 +268,7 @@
     addRow,
     removeRow,
     openDocs,
+    setRows,
   };
 
   (window.CMI = window.CMI || {});

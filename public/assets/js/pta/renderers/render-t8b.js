@@ -14,6 +14,11 @@
       return;
     }
 
+    let docRows = '';
+    acceptedRows.forEach(inst => {
+      if (inst.docs) docRows += renderCMIDocsBlock(inst.institution, inst.docs);
+    });
+
     // ── Summary ──
     let html = `
       <table class="rpt-table merged">
@@ -53,46 +58,81 @@
         </tfoot>
       </table>`;
 
-    // ── Drill-down ──
-    html += '<div class="rpt-drilldown">';
+    // ── Consolidated Detail Table ──
+    const allDetailRows = [];
     acceptedRows.forEach(inst => {
-      const rows = (inst.rows || []).filter(r => r.program?.trim() || r.project?.trim());
-      if (!rows.length) return;
-      let instBudget = rows.reduce((sum, r) => sum + (parseFloat(r.budget) || 0), 0);
-      html += `<details class="rpt-detail-block">
-        <summary><strong>${esc(inst.institution || '—')}</strong> — ${rows.length} project(s), budget: ${fmtAmt(instBudget)}</summary>
-        <table class="rpt-table merged" style="margin-top:8px">
-          <thead><tr>
-            <th style="width:36px">#</th>
-            <th>Program Title</th>
-            <th>Project Title</th>
-            <th style="width:160px">Implementing Agency</th>
-            <th style="width:120px">Duration</th>
-            <th style="width:120px">Budget</th>
-            <th style="width:130px">Source of Fund</th>
-            <th style="width:150px">Role of Consortium</th>
-          </tr></thead>
-          <tbody>`;
-      rows.forEach((r, i) => {
-        html += `<tr>
-          <td style="text-align:center">${i + 1}.</td>
-          <td>${esc(r.program || '—')}</td>
-          <td>${esc(r.project || '—')}</td>
-          <td>${esc(r.agency || '—')}</td>
-          <td>${esc(r.duration || '—')}</td>
-          <td style="text-align:right">${r.budget ? fmtAmt(parseFloat(r.budget)) : '—'}</td>
-          <td>${esc(r.source || '—')}</td>
-          <td>${esc(r.role || '—')}</td>
-        </tr>`;
+      (inst.rows || []).filter(r => (r.program || '').trim() || (r.project || '').trim()).forEach(r => {
+        allDetailRows.push({
+          program: r.program || '—',
+          project: r.project || '—',
+          agency: r.agency || inst.institution || '—',
+          duration: r.duration || '—',
+          budget: parseFloat(r.budget) || 0,
+          source: r.source || '—',
+          role: r.role || '—',
+          institution: inst.institution
+        });
       });
-      html += `<tr style="font-weight:700;background:var(--bg-soft)">
-        <td colspan="5" style="text-align:right;padding-right:12px">TOTAL</td>
-        <td style="text-align:right;color:var(--green)">${fmtAmt(instBudget)}</td>
-        <td colspan="2"></td>
-      </tr>`;
-      html += '</tbody></table></details>';
     });
-    html += '</div>';
+
+    if (allDetailRows.length > 0) {
+      const sumBudget = allDetailRows.reduce((acc, r) => acc + r.budget, 0);
+      html += `
+        <div class="rpt-sec-title" style="font-size:13px;font-weight:700;color:#111827;margin:22px 0 8px 0;">Collaborative R&amp;D Programs / Projects</div>
+        <div class="tbl-wrap" style="overflow-x:auto;margin-bottom:14px;">
+          <table class="merged" style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="background:#00875a;color:#ffffff;">
+                <th style="width:40px;text-align:center;padding:8px 10px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;">#</th>
+                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Program Title</th>
+                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Project Title</th>
+                <th style="width:160px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Implementing Agency</th>
+                <th style="width:110px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:center;">Duration</th>
+                <th style="width:120px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:right;">Budget</th>
+                <th style="width:130px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Source of Fund</th>
+                <th style="width:140px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Role of Consortium</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allDetailRows.map((r, i) => `
+                <tr>
+                  <td style="text-align:center;padding:7px 10px;">${i + 1}</td>
+                  <td style="padding:7px 12px;">${esc(r.program)}</td>
+                  <td style="padding:7px 12px;">${esc(r.project)}</td>
+                  <td style="padding:7px 12px;">${esc(r.agency)}</td>
+                  <td style="text-align:center;padding:7px 12px;">${esc(r.duration)}</td>
+                  <td style="text-align:right;padding:7px 12px;">${r.budget > 0 ? fmtAmt(r.budget) : '—'}</td>
+                  <td style="padding:7px 12px;">${esc(r.source)}</td>
+                  <td style="padding:7px 12px;">${esc(r.role)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr style="background:#f9fafb;font-weight:700;border-top:2px solid #e5e7eb;">
+                <td colspan="5" style="text-align:right;padding:8px 12px;font-weight:800;">TOTAL</td>
+                <td style="text-align:right;padding:8px 12px;font-weight:800;">${sumBudget > 0 ? fmtAmt(sumBudget) : '—'}</td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>`;
+    }
+
+    html += `
+      <div class="rpt-footnote" style="margin-top:12px;font-size:11px;color:#6b7280;font-style:italic;">
+        Note: The Regional Consortium may prepare other tables for ease in data presentation.
+      </div>
+    `;
+
+    if (docRows) {
+      html += `
+        <div class="rpt-docs-section" style="margin-top:30px;border-top:1px dashed #e5e7eb;padding-top:20px;">
+          <h4 style="font-size:14px;font-weight:700;color:#1e3a5f;margin-bottom:12px;">📁 Supporting Documents</h4>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            ${docRows}
+          </div>
+        </div>`;
+    }
 
     container.innerHTML = html;
   };

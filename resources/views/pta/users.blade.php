@@ -106,7 +106,7 @@
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="pendingSearchInput" placeholder="Filter pending by ID, name..."
+        <input type="text" id="pendingSearchInput" placeholder="Filter pending by name, email..."
           style="width:100%;box-sizing:border-box;padding:7px 10px 7px 32px;border:1px solid #d1d5db;border-radius:9px;font-size:12.5px;outline:none;background:#f9fafb;transition:all .15s;"
           onfocus="this.style.borderColor='#d97706';this.style.background='#fff';"
           onblur="this.style.borderColor='#d1d5db';this.style.background='#f9fafb';"
@@ -118,11 +118,11 @@
         <table class="fc-table">
           <thead>
             <tr>
-              <th style="width:70px">ID</th><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Date Created</th><th style="text-align:center">Action</th>
+              <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th style="text-align:center">Action</th>
             </tr>
           </thead>
           <tbody id="pendingTbody">
-            <tr><td colspan="8" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading pending users...</td></tr>
+            <tr><td colspan="6" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading pending users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -145,7 +145,7 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-          <input type="text" id="userSearchInput" placeholder="Filter by ID, name, email..."
+          <input type="text" id="userSearchInput" placeholder="Filter by name, email..."
             style="width:100%;box-sizing:border-box;padding:7px 10px 7px 32px;border:1px solid #d1d5db;border-radius:9px;font-size:12.5px;outline:none;background:#f9fafb;transition:all .15s;"
             onfocus="this.style.borderColor='#10b981';this.style.background='#fff';"
             onblur="this.style.borderColor='#d1d5db';this.style.background='#f9fafb';"
@@ -165,11 +165,11 @@
         <table class="fc-table">
           <thead>
             <tr>
-              <th style="width:70px">ID</th><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Date Created</th><th>Approve Date</th><th>Status</th><th style="text-align:center">Action</th>
+              <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Status</th><th style="text-align:center">Action</th>
             </tr>
           </thead>
           <tbody id="activeTbody">
-            <tr><td colspan="10" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading active users...</td></tr>
+            <tr><td colspan="7" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading active users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -392,7 +392,7 @@ function renderPendingUsers(pending) {
   document.getElementById('pendingCount').textContent = pending.length + ' pending';
 
   if (pending.length === 0) {
-    pTbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:36px 24px;color:#9ca3af">
+    pTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px 24px;color:#9ca3af">
       <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 10px">
         <circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/>
       </svg>No pending accounts matching filter.
@@ -404,9 +404,6 @@ function renderPendingUsers(pending) {
     const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).trim();
     return `
       <tr>
-        <td style="font-weight:600;font-family:monospace;color:#4b5563">
-          <span style="font-size:11.5px;padding:2px 7px;border-radius:6px;background:#f3f4f6;border:1px solid #e5e7eb">#${u.id}</span>
-        </td>
         <td>
           <div style="display:flex;align-items:center;gap:10px">
             <div class="user-avatar">${initials(fullName)}</div>
@@ -417,7 +414,6 @@ function renderPendingUsers(pending) {
         <td><span class="badge badge-purple">${formatRoleLabel(u.role)}</span></td>
         <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
         <td>${u.designation || u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
-        <td style="color:#4b5563;font-size:12.5px;white-space:nowrap">${formatDisplayDate(u.created_at)}</td>
         <td style="display:flex;gap:6px;justify-content:center">
           <button class="btn-sm-fc btn-sm-view" onclick="approveUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', 'approve')">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Approve
@@ -443,7 +439,7 @@ function renderActiveUsers(users) {
   document.getElementById('activeCount').textContent = users.length + ' users';
 
   if (users.length === 0) {
-    aTbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:36px 24px;color:#9ca3af">No registered users matching filter.</td></tr>';
+    aTbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px 24px;color:#9ca3af">No registered users matching filter.</td></tr>';
     return;
   }
 
@@ -451,9 +447,6 @@ function renderActiveUsers(users) {
     const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).trim();
     return `
       <tr>
-        <td style="font-weight:600;font-family:monospace;color:#4b5563">
-          <span style="font-size:11.5px;padding:2px 7px;border-radius:6px;background:#f3f4f6;border:1px solid #e5e7eb">#${u.id}</span>
-        </td>
         <td>
           <div style="display:flex;align-items:center;gap:10px">
             <div class="user-avatar">${initials(fullName)}</div>
@@ -464,8 +457,6 @@ function renderActiveUsers(users) {
         <td><span class="badge badge-blue">${formatRoleLabel(u.role)}</span></td>
         <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
         <td>${u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
-        <td style="color:#4b5563;font-size:12.5px;white-space:nowrap">${formatDisplayDate(u.created_at)}</td>
-        <td style="color:#4b5563;font-size:12.5px;white-space:nowrap">${formatDisplayDate(u.approved_at)}</td>
         <td><span class="badge ${u.status==='Active' ? 'badge-green' : 'badge-red'}">${u.status}</span></td>
         <td style="text-align:center">
           <button class="btn-sm-fc ${u.status==='Active' ? 'btn-sm-danger' : 'btn-sm-toggle'}"

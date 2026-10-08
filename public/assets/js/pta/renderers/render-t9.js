@@ -14,6 +14,11 @@
       return;
     }
 
+    let docRows = '';
+    acceptedRows.forEach(inst => {
+      if (inst.docs) docRows += renderCMIDocsBlock(inst.institution, inst.docs);
+    });
+
     // ── Summary ──
     let html = `
       <table class="rpt-table merged">
@@ -47,36 +52,67 @@
         </tfoot>
       </table>`;
 
-    // ── Drill-down ──
-    html += '<div class="rpt-drilldown">';
+    // ── Consolidated Detail Table ──
+    const allDetailRows = [];
     acceptedRows.forEach(inst => {
-      const rows = (inst.rows || []).filter(r => r.title?.trim());
-      if (!rows.length) return;
-      html += `<details class="rpt-detail-block">
-        <summary><strong>${esc(inst.institution || '—')}</strong> — ${rows.length} technology(ies)</summary>
-        <table class="rpt-table merged" style="margin-top:8px">
-          <thead><tr>
-            <th style="width:36px">#</th>
-            <th>Title / Brief Description</th>
-            <th style="width:160px">Project / Program Source</th>
-            <th style="width:140px">Agency</th>
-            <th style="width:150px">Researcher(s)</th>
-            <th>Potential Impact or Contribution</th>
-          </tr></thead>
-          <tbody>`;
-      rows.forEach((r, i) => {
-        html += `<tr>
-          <td style="text-align:center">${i + 1}.</td>
-          <td>${esc(r.title || '—')}</td>
-          <td>${esc(r.source || '—')}</td>
-          <td>${esc(r.agency || '—')}</td>
-          <td>${esc(r.researcher || '—')}</td>
-          <td>${esc(r.impact || '—')}</td>
-        </tr>`;
+      (inst.rows || []).filter(r => (r.title || '').trim()).forEach(r => {
+        allDetailRows.push({
+          title: r.title || '—',
+          source: r.source || '—',
+          agency: r.agency || inst.institution || '—',
+          researcher: r.researcher || '—',
+          impact: r.impact || '—',
+          institution: inst.institution
+        });
       });
-      html += '</tbody></table></details>';
     });
-    html += '</div>';
+
+    if (allDetailRows.length > 0) {
+      html += `
+        <div class="rpt-sec-title" style="font-size:13px;font-weight:700;color:#111827;margin:22px 0 8px 0;">Technologies Generated from R&amp;D Activities</div>
+        <div class="tbl-wrap" style="overflow-x:auto;margin-bottom:14px;">
+          <table class="merged" style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="background:#00875a;color:#ffffff;">
+                <th style="width:40px;text-align:center;padding:8px 10px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;">#</th>
+                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Title / Brief Description</th>
+                <th style="width:180px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Project / Program Source</th>
+                <th style="width:150px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Agency</th>
+                <th style="width:160px;padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Researcher(s)</th>
+                <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#ffffff;border:1px solid #00734d;text-align:left;">Potential Impact or Contribution</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allDetailRows.map((r, i) => `
+                <tr>
+                  <td style="text-align:center;padding:7px 10px;">${i + 1}</td>
+                  <td style="padding:7px 12px;">${esc(r.title)}</td>
+                  <td style="padding:7px 12px;">${esc(r.source)}</td>
+                  <td style="padding:7px 12px;">${esc(r.agency)}</td>
+                  <td style="padding:7px 12px;">${esc(r.researcher)}</td>
+                  <td style="padding:7px 12px;">${esc(r.impact)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    html += `
+      <div class="rpt-footnote" style="margin-top:12px;font-size:11px;color:#6b7280;font-style:italic;">
+        Note: The Regional Consortium may prepare other tables for ease in data presentation.
+      </div>
+    `;
+
+    if (docRows) {
+      html += `
+        <div class="rpt-docs-section" style="margin-top:30px;border-top:1px dashed #e5e7eb;padding-top:20px;">
+          <h4 style="font-size:14px;font-weight:700;color:#1e3a5f;margin-bottom:12px;">📁 Supporting Documents</h4>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            ${docRows}
+          </div>
+        </div>`;
+    }
 
     container.innerHTML = html;
   };

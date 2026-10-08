@@ -1,9 +1,12 @@
 /**
- * t20b_policies.js — Table 20b: Policies formulated, advocated, implemented,
- * and institutionalized.
- * Fixed category rows: Policy formulated | Policy advocated |
- *                      Policy implemented or institutionalized
- * Columns: List of Policies | Agency | Description
+ * t20b_policies.js — Table 20b: Policies Formulated, Advocated, Implemented, and Institutionalized
+ * Subtitle categories:
+ *   1. Policy Formulated
+ *   2. Policy Advocated
+ *   3. Policy Implemented or Institutionalized
+ *
+ * Each category starts row numbering at 1 (1, 2, 3...)
+ * Columns: No. | List of Policies | Agency | Description
  */
 
 (function () {
@@ -16,10 +19,17 @@
   let _images = [];
 
   const CATEGORIES = [
-    'Policy formulated',
-    'Policy advocated',
-    'Policy implemented or institutionalized',
+    { key: 'formulated',  label: 'Policy Formulated' },
+    { key: 'advocated',   label: 'Policy Advocated' },
+    { key: 'implemented', label: 'Policy Implemented or Institutionalized' },
   ];
+
+  function normalizeCat(catStr) {
+    const s = String(catStr || '').toLowerCase().trim();
+    if (s.includes('advo')) return 'advocated';
+    if (s.includes('impl') || s.includes('inst')) return 'implemented';
+    return 'formulated';
+  }
 
   function render(container) {
     container.innerHTML = buildShell();
@@ -30,16 +40,16 @@
     return `
     <div class="t-page" id="t20b_wrap">
       <div class="t-hdr">
-        <div class="t-title">Table 20b. Policies formulated, advocated, implemented, and institutionalized.</div>
+        <div class="t-title">Table 20b. Policies Formulated, Advocated, Implemented, and Institutionalized.</div>
       </div>
 
       <div class="tbl-wrap" style="margin:14px 0">
-        <table class="merged" style="width:100%;min-width:680px">
+        <table class="merged" style="width:100%;min-width:820px">
           <thead>
             <tr>
-              <th class="group" style="width:36px">#</th>
-              <th class="group" style="width:240px">List of Policies</th>
-              <th class="group" style="width:160px">Agency</th>
+              <th class="group" style="width:45px">No.</th>
+              <th class="group" style="width:280px">List of Policies</th>
+              <th class="group" style="width:200px">Agency</th>
               <th class="group">Description</th>
               <th class="group" style="width:36px"></th>
             </tr>
@@ -48,8 +58,10 @@
         </table>
       </div>
 
-      <div style="margin-bottom:14px">
-        <button class="btn btn-sm" onclick="T20B.addRow()">+ Add Row</button>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+        <button type="button" class="btn btn-sm" onclick="T20B.addRow('formulated')">+ Add Policy Formulated</button>
+        <button type="button" class="btn btn-sm" onclick="T20B.addRow('advocated')">+ Add Policy Advocated</button>
+        <button type="button" class="btn btn-sm" onclick="T20B.addRow('implemented')">+ Add Policy Implemented / Institutionalized</button>
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -63,64 +75,140 @@
     </div>`;
   }
 
-  function makeRow(data = {}, removable = false) {
+  function makeCatHeader(cat) {
     const tr = document.createElement('tr');
-    let categoryCell;
-    if (removable) {
-      const catOptions = CATEGORIES.map(c =>
-        `<option value="${esc(c)}" ${(data.category || CATEGORIES[0]) === c ? 'selected' : ''}>${c}</option>`
-      ).join('');
-      categoryCell = `<select class="t20b-category" style="width:100%;min-width:220px;box-sizing:border-box;padding:6px 4px;font-size:13px">${catOptions}</select>`;
-    } else {
-      categoryCell = `
-        <div style="font-weight:600;line-height:1.4">${esc(data.category || '')}</div>
-        <input type="hidden" class="t20b-category" value="${esc(data.category || '')}"/>
-      `;
-    }
+    tr.className = 't20b-cat-row';
+    tr.dataset.cat = cat.key;
     tr.innerHTML = `
-      <td class="t20b-num" style="text-align:center;font-weight:600"></td>
-      <td>${categoryCell}</td>
-      <td><input type="text" class="t20b-agency"      placeholder="Agency"       value="${esc(data.agency||'')}"/></td>
-      <td><textarea class="t20b-description" rows="2" style="width:100%;resize:vertical"
-            placeholder="Description">${esc(data.description||'')}</textarea></td>
-      <td style="text-align:center">
-        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T20B._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
+      <td colspan="5" style="background:var(--bg-soft,#f3f6f4);font-weight:700;color:var(--forest,#075b42);padding:9px 12px;font-size:13px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span>${esc(cat.label)}</span>
+          <button type="button" class="btn btn-sm" onclick="T20B.addRow('${cat.key}')" style="background:#00875a;color:#fff;border:none;padding:3px 10px;font-size:11px;font-weight:600;border-radius:4px;cursor:pointer">+ Add Row</button>
+        </div>
       </td>
     `;
     return tr;
   }
 
-  function renumber() {
-    document.querySelectorAll('#t20b_rows tr').forEach((tr, i) => {
+  function makeRow(catKey, data = {}, removable = true) {
+    const tr = document.createElement('tr');
+    tr.className = 't20b-data-row';
+    tr.dataset.cat = catKey;
+    const policyVal = data.policy || data.title || data['List of Policies'] || data['list of policies'] || '';
+    const agencyVal = data.agency || data['Agency'] || '';
+    const descVal   = data.description || data['Description'] || '';
+
+    tr.innerHTML = `
+      <td class="t20b-num" style="text-align:center;font-weight:600"></td>
+      <td>
+        <input type="text" class="t20b-policy" placeholder="e.g. Ordinance / Resolution No." value="${esc(policyVal)}"/>
+      </td>
+      <td>
+        <input type="text" class="t20b-agency" placeholder="e.g. LGU-San Mateo" value="${esc(agencyVal)}"/>
+      </td>
+      <td>
+        <textarea class="t20b-description" rows="2" style="width:100%;resize:vertical" placeholder="Description of policy">${esc(descVal)}</textarea>
+      </td>
+      <td style="text-align:center">
+        ${removable ? `<button type="button" class="row-remove-btn" onclick="this.closest('tr').remove();T20B._renumber('${catKey}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
+      </td>
+    `;
+    return tr;
+  }
+
+  function renumber(catKey) {
+    const rows = document.querySelectorAll(`#t20b_rows tr.t20b-data-row[data-cat="${catKey}"]`);
+    rows.forEach((tr, i) => {
       const c = tr.querySelector('.t20b-num');
       if (c) c.textContent = (i + 1) + '.';
     });
   }
 
-  function addRow(data = {}, removable = true) {
+  function renumberAll() {
+    CATEGORIES.forEach(cat => renumber(cat.key));
+  }
+
+  function addRow(catArg, data = {}, removable = true) {
     const tbody = document.getElementById('t20b_rows');
     if (!tbody) return;
-    tbody.appendChild(makeRow(data, removable));
-    renumber();
+
+    let catKey = 'formulated';
+    if (typeof catArg === 'string' && catArg.trim()) {
+      catKey = normalizeCat(catArg);
+    } else if (catArg && typeof catArg === 'object') {
+      data = catArg;
+      catKey = normalizeCat(data.category);
+    }
+
+    const rowsInCat = tbody.querySelectorAll(`tr[data-cat="${catKey}"]`);
+    const lastInCat = rowsInCat[rowsInCat.length - 1];
+    const newRow = makeRow(catKey, data, removable);
+
+    if (lastInCat) {
+      lastInCat.insertAdjacentElement('afterend', newRow);
+    } else {
+      tbody.appendChild(newRow);
+    }
+    renumber(catKey);
+  }
+
+  function setRows(rows) {
+    const tbody = document.getElementById('t20b_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const saved = (rows && rows.length) ? rows : [];
+    const byCat = {
+      formulated: [],
+      advocated: [],
+      implemented: []
+    };
+
+    saved.forEach(row => {
+      const hasContent = ['policy', 'agency', 'description'].some(f => (row[f] || '').trim() !== '');
+      if (!hasContent) return;
+
+      const rawCat = row.category || row.cat || '';
+      const key = normalizeCat(rawCat);
+      byCat[key].push(row);
+    });
+
+    CATEGORIES.forEach(cat => {
+      tbody.appendChild(makeCatHeader(cat));
+      const catRows = byCat[cat.key].length ? byCat[cat.key] : [{}];
+      catRows.forEach(row => {
+        tbody.appendChild(makeRow(cat.key, row, true));
+      });
+    });
+
+    renumberAll();
+    const status = computeStatus(saved);
+    updateStatusBadge(status);
   }
 
   function collectRows() {
-    return [...document.querySelectorAll('#t20b_rows tr')].map(tr => ({
-      category:    tr.querySelector('.t20b-category')?.value    || '',
-      agency:      tr.querySelector('.t20b-agency')?.value      || '',
-      description: tr.querySelector('.t20b-description')?.value || '',
-    }));
+    return [...document.querySelectorAll('#t20b_rows tr.t20b-data-row')].map(tr => {
+      const catKey = tr.dataset.cat;
+      const catObj = CATEGORIES.find(c => c.key === catKey) || CATEGORIES[0];
+      const policyVal = tr.querySelector('.t20b-policy')?.value?.trim() || '';
+      const agencyVal = tr.querySelector('.t20b-agency')?.value?.trim() || '';
+      const descVal   = tr.querySelector('.t20b-description')?.value?.trim() || '';
+      return {
+        category:    catObj.label,
+        policy:      policyVal,
+        title:       policyVal,
+        agency:      agencyVal,
+        description: descVal,
+      };
+    });
   }
 
-  /* ─── STATUS (auto-derived) ───
-     A row is "touched" if agency or description has a value
-     (category is always pre-filled for fixed rows, so it's excluded).
-     "complete" if both agency and description are filled. */
+  /* ─── STATUS (auto-derived) ─── */
   function isRowTouched(r) {
-    return [r.agency, r.description].some(v => (v || '').trim() !== '');
+    return [r.policy, r.title, r.agency, r.description].some(v => (v || '').trim() !== '');
   }
   function isRowComplete(r) {
-    return [r.agency, r.description].every(v => (v || '').trim() !== '');
+    return [r.policy || r.title, r.agency, r.description].every(v => (v || '').trim() !== '');
   }
   function computeStatus(rows) {
     const touched = rows.filter(isRowTouched);
@@ -153,31 +241,26 @@
     fetch(`${API_LOAD}?table_no=${TABLE_NO}`)
       .then(r => r.json())
       .then(data => {
-        tbody.innerHTML = '';
-        const defaultRows = CATEGORIES.map(c => ({ category: c }));
-        const rows = (data.rows && data.rows.length) ? data.rows : defaultRows;
-        rows.forEach((row, i) => tbody.appendChild(makeRow(row, i >= CATEGORIES.length)));
-        renumber();
+        const rows = (data.rows && data.rows.length) ? data.rows : [];
+        setRows(rows);
         _images = (data.docs && data.docs.length) ? data.docs : ((data.meta && data.meta.images) ? data.meta.images : []);
         updateBadge();
-        const status = computeStatus(rows);
+        const status = data.status || computeStatus(rows);
         updateStatusBadge(status);
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
-        tbody.innerHTML = '';
-        CATEGORIES.forEach(c => tbody.appendChild(makeRow({ category: c }, false)));
-        renumber();
+        setRows([]);
         updateStatusBadge('not-started');
       });
   }
 
   function save(requestedStatus) {
     const rows = collectRows();
-    const fields = ['agency', 'description'];
+    const fields = ['policy', 'agency', 'description'];
     if (!CMIUtils.guardEmptySave(rows, fields)) return;
 
-    const status = (requestedStatus === 'draft') ? 'draft' : 'done';
+    const status = (requestedStatus === 'draft') ? 'draft' : computeStatus(rows);
 
     setMsg('Saving…');
     fetch(API_SAVE, {
@@ -212,11 +295,12 @@
     DocsModal.open(TABLE_NO, _images, saved => { _images = saved; updateBadge(); });
   }
 
-  function esc(s) { return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function esc(s) { return String(s ?? '').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function setMsg(m) { const e = document.getElementById('t20b_status_msg'); if (e) e.textContent = m; }
 
   window.T20B = {
-    addRow() { addRow({}, true); },
+    addRow(catKey, data = {}, removable = true) { addRow(catKey, data, removable); },
+    setRows,
     save,
     openDocs,
     _renumber: renumber,
@@ -230,4 +314,3 @@
   }
   register();
 })();
-

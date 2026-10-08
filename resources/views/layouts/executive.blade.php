@@ -7,7 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/assets/css/pta/base.css?v=20260903"/>
 <link rel="stylesheet" href="/assets/css/pta/header.css?v=20260903"/>
-<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=20260914c"/>
+<link rel="stylesheet" href="/assets/css/pta/sidebar.css?v=20261008b"/>
+<script src="/assets/js/sidebar-collapse.js?v=2"></script>
 <link rel="stylesheet" href="/assets/css/pta/modals.css?v=20260903"/>
 <link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=20260903"/>
 @yield('styles')
@@ -148,7 +149,7 @@ function confirmSignOut() {
     <div class="sb-header-wrap">
       <div class="sidebar-brand" onclick="window.location.href='/dashboard/executive/dashboard'" style="cursor:pointer">
         <div class="brand-mark">
-          <img src="/assets/img/logo26.png" alt="CVAARRD Logo" onerror="this.src='/assets/img/cvaarrd.png'"/>
+          <img src="/assets/img/cvaarrd.png" alt="CVAARRD Logo" onerror="this.src='/assets/img/cvaarrd.png'"/>
         </div>
         <div>
           <strong>SecReCo</strong>
