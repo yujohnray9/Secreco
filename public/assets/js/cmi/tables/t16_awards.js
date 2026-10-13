@@ -33,7 +33,7 @@
         <table class="merged" style="width:100%;min-width:1050px">
           <thead>
             <tr>
-              <th class="group" style="width:150px">Category</th>
+              <th class="group" style="width:40px">#</th>
               <th class="group">Title of Award</th>
               <th class="group" style="width:160px">Recipient / Agency</th>
               <th class="group" style="width:140px">Sponsor</th>
@@ -48,7 +48,7 @@
       </div>
 
       <div style="margin-bottom:14px">
-        <button class="btn btn-sm" onclick="T16.addRow()">+ Add Row</button>
+        ${CATEGORIES.map(cat => `<button class="btn btn-sm" onclick="T16.addRow('${cat}')">+ Add ${cat} award</button>`).join('')}
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -63,36 +63,45 @@
   }
 
   function makeRow(data = {}, removable = false) {
-    const catOptions = CATEGORIES.map(c =>
-      `<option value="${c}" ${(data.category||'Local') === c ? 'selected' : ''}>${c}</option>`
-    ).join('');
     const tr = document.createElement('tr');
+    tr.className = 't16-data-row';
+    tr.dataset.cat = data.category || 'Local';
     tr.innerHTML = `
-      <td>
-        <select class="t16-category" style="width:100%;min-width:130px;box-sizing:border-box;padding:6px 4px;font-size:13px">${catOptions}</select>
-      </td>
-      <td><input type="text" class="t16-award"     placeholder="Title of Award"        value="${esc(data.award||'')}"/></td>
-      <td><input type="text" class="t16-recipient" placeholder="Recipient / Agency"    value="${esc(data.recipient||'')}"/></td>
-      <td><input type="text" class="t16-sponsor"   placeholder="Sponsor"               value="${esc(data.sponsor||'')}"/></td>
-      <td><input type="text" class="t16-event"     placeholder="Event / Activity"      value="${esc(data.event||'')}"/></td>
-      <td><input type="text" class="t16-venue"     placeholder="Place of Award"         value="${esc(data.venue||'')}"/></td>
-      <td><input type="text" class="t16-date"      placeholder="Date of Award"         value="${esc(data.date||'')}"/></td>
+      <td class="t16-num"></td>
+      <td><textarea rows="2" class="t16-award"     placeholder="Title of Award"       >${esc(data.award||'')}</textarea></td>
+      <td><textarea rows="2" class="t16-recipient" placeholder="Recipient / Agency"   >${esc(data.recipient||'')}</textarea></td>
+      <td><textarea rows="2" class="t16-sponsor"   placeholder="Sponsor"              >${esc(data.sponsor||'')}</textarea></td>
+      <td><textarea rows="2" class="t16-event"     placeholder="Event / Activity"     >${esc(data.event||'')}</textarea></td>
+      <td><textarea rows="2" class="t16-venue"     placeholder="Place of Award"        >${esc(data.venue||'')}</textarea></td>
+      <td><textarea rows="2" class="t16-date"      placeholder="Date of Award"        >${esc(data.date||'')}</textarea></td>
       <td style="text-align:center">
-        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
+        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T16._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
     `;
     return tr;
   }
 
-  function addRow(data = {}, removable = true) {
+  function addRow(category = 'Local', data = {}, removable = true) {
+    if (typeof category === 'object') { data = category; category = data.category || 'Local'; }
     const tbody = document.getElementById('t16_rows');
     if (!tbody) return;
-    tbody.appendChild(makeRow(data, removable));
+    const rows = [...tbody.querySelectorAll('tr[data-cat]')].filter(row => row.dataset.cat === category);
+    const row = makeRow({ ...data, category }, removable);
+    if (rows.length) rows[rows.length - 1].after(row);
+    else tbody.appendChild(row);
+    renumber();
+  }
+
+  function renumber() {
+    CATEGORIES.forEach(cat => {
+      [...document.querySelectorAll('#t16_rows tr.t16-data-row')].filter(row => row.dataset.cat === cat)
+        .forEach((row, i) => { row.querySelector('.t16-num').textContent = i + 1; });
+    });
   }
 
   function collectRows() {
-    return [...document.querySelectorAll('#t16_rows tr')].map(tr => ({
-      category:  tr.querySelector('.t16-category')?.value  || '',
+    return [...document.querySelectorAll('#t16_rows tr.t16-data-row')].map(tr => ({
+      category:  tr.dataset.cat || 'Local',
       award:     tr.querySelector('.t16-award')?.value     || '',
       recipient: tr.querySelector('.t16-recipient')?.value || '',
       sponsor:   tr.querySelector('.t16-sponsor')?.value   || '',
@@ -144,7 +153,16 @@
     tbody.innerHTML = '';
     const defaultRows = CATEGORIES.map(c => ({ category: c }));
     const list = (rows && rows.length) ? rows : defaultRows;
-    list.forEach((row, i) => tbody.appendChild(makeRow(row, i >= CATEGORIES.length)));
+    CATEGORIES.forEach(cat => {
+      const header = document.createElement('tr');
+      header.className = 'cat-row';
+      header.dataset.cat = cat;
+      header.innerHTML = '<td colspan="8" class="category-heading">' + esc(cat) + '</td>';
+      tbody.appendChild(header);
+      const categoryRows = list.filter(row => (row.category || 'Local').toLowerCase() === cat.toLowerCase());
+      (categoryRows.length ? categoryRows : [{ category: cat }]).forEach(row => tbody.appendChild(makeRow({ ...row, category: cat }, true)));
+    });
+    renumber();
     const status = computeStatus(list);
     updateStatusBadge(status);
   }
@@ -214,7 +232,8 @@
   function setMsg(m) { const e = document.getElementById('t16_status_msg'); if (e) e.textContent = m; }
 
   window.T16 = {
-    addRow(data = {}, removable = true) { addRow(data, removable); },
+    addRow,
+    _renumber: renumber,
     setRows,
     save,
     openDocs,

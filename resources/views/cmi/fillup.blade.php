@@ -26,7 +26,7 @@
     border-radius: 16px;
     border: 1px solid #f0f0f0;
     box-shadow: 0 2px 12px rgba(16,185,129,.05);
-    padding: 18px;
+    padding: 18px 18px 64px;
     max-height: calc(100vh - 160px);
     overflow-y: auto;
     scroll-behavior: smooth;
@@ -441,44 +441,45 @@
     window.TARGET_CMI_USER_ID = {{ (int) request('cmi_user_id', 0) }};
   </script>
 
+  <script src="/assets/js/cmi/category-actions.js?v=1"></script>
   <!-- Core engine first, then per-table scripts -->
   <script src="/assets/js/xlsx.full.min.js"></script>
   <script src="/assets/js/cmi/table-utils.js?v=10"></script>
-  <script src="/assets/js/cmi/cmi-excel.js?v=11"></script>
-  <script src="/assets/js/cmi/fillup-core.js?v=16"></script>
-  <script src="/assets/js/cmi/fillup-docs-modal.js?v=9"></script>
+  <script src="/assets/js/cmi/cmi-excel.js?v=20261012"></script>
+  <script src="/assets/js/cmi/fillup-core.js?v=20261012"></script>
+  <script src="/assets/js/cmi/fillup-docs-modal.js?v=20261012"></script>
 
   <!-- Section 1: R&D Mgt. & Coord. -->
-  <script src="/assets/js/cmi/tables/t1_aihrs.js?v=15"></script>
-  <script src="/assets/js/cmi/tables/t2a_rsrdh_summary.js?v=15"></script>
-  <script src="/assets/js/cmi/tables/t2b_rsrdh_participants.js?v=15"></script>
-  <script src="/assets/js/cmi/tables/t3_projects_monitored.js?v=15"></script>
-  <script src="/assets/js/cmi/tables/t4_resources_shared.js?v=15"></script>
-  <script src="/assets/js/cmi/tables/t5_resources_generated.js?v=15"></script>
-  <script src="/assets/js/cmi/tables/t6_linkages.js?v=16"></script>
-  <script src="/assets/js/cmi/tables/t7a_databases.js?v=16"></script>
-  <script src="/assets/js/cmi/tables/t7b_infosystems.js?v=16"></script>
+  <script src="/assets/js/cmi/tables/t1_aihrs.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t2a_rsrdh_summary.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t2b_rsrdh_participants.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t3_projects_monitored.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t4_resources_shared.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t5_resources_generated.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t6_linkages.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t7a_databases.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t7b_infosystems.js?v=20261012"></script>
 
   <!-- Section 2: Strategic R&D -->
-  <script src="/assets/js/cmi/tables/t8a_rd_projects.js?v=16"></script>
-  <script src="/assets/js/cmi/tables/t8b_collaborative_rd.js?v=15"></script>
-  <script src="/assets/js/cmi/tables/t9_technologies_generated.js?v=15"></script>
+  <script src="/assets/js/cmi/tables/t8a_rd_projects.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t8b_collaborative_rd.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t9_technologies_generated.js?v=20261012"></script>
 
   <!-- Section 3: Results Utilization -->
-  <script src="/assets/js/cmi/tables/t10_tt_projects.js?v=17"></script>
-  <script src="/assets/js/cmi/tables/t11_technologies_extended.js?v=16"></script>
-  <script src="/assets/js/cmi/tables/t12_commercialized.js?v=16"></script>
-  <script src="/assets/js/cmi/tables/t13_tech_promotion.js?v=16"></script>
+  <script src="/assets/js/cmi/tables/t10_tt_projects.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t11_technologies_extended.js?v=20261012b"></script>
+  <script src="/assets/js/cmi/tables/t12_commercialized.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t13_tech_promotion.js?v=20261012"></script>
 
   <!-- Section 4: Capability & Gov. -->
-  <script src="/assets/js/cmi/tables/t14_trainings.js?v=16"></script>
-  <script src="/assets/js/cmi/tables/t15_equipment_facilities.js?v=16"></script>
-  <script src="/assets/js/cmi/tables/t16_awards.js?v=16"></script>
-  <script src="/assets/js/cmi/tables/t17_meetings.js?v=16"></script>
-  <script src="/assets/js/cmi/tables/t18_cmi_contributions.js?v=15"></script>
-  <script src="/assets/js/cmi/tables/t19_governance.js?v=15"></script>
+  <script src="/assets/js/cmi/tables/t14_trainings.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t15_equipment_facilities.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t16_awards.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t17_meetings.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t18_cmi_contributions.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t19_governance.js?v=20261012"></script>
 
   <!-- Section 5: Policy Analysis -->
-  <script src="/assets/js/cmi/tables/t20a_policy_researches.js?v=15"></script>
-  <script src="/assets/js/cmi/tables/t20b_policies.js?v=18"></script>
+  <script src="/assets/js/cmi/tables/t20a_policy_researches.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t20b_policies.js?v=20261012"></script>
   @endsection

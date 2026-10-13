@@ -96,7 +96,7 @@
     tr.dataset.cat = catTitle;
     tr.innerHTML = `
       <td style="padding:6px 8px">
-        <input type="text" class="t13-approach" value="${esc(approach)}" placeholder="Enter specific approach / title / activity..." style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #d1d5db;border-radius:4px;font-size:13px" />
+        <textarea rows="2" class="t13-approach" placeholder="Enter specific approach / title / activity..." style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #d1d5db;border-radius:4px;font-size:13px" >${esc(approach)}</textarea>
       </td>
       <td style="padding:6px 8px">
         <textarea class="t13-remarks" rows="2" style="width:100%;box-sizing:border-box;resize:vertical;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px" placeholder="Remarks">${esc(remarks)}</textarea>

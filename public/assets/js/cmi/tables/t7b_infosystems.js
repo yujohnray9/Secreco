@@ -105,7 +105,7 @@
     tr.dataset.cat = catKey;
     tr.innerHTML = `
       <td class="t7b-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t7b-type"    placeholder="Type of Information System" value="${esc(data.type||'')}"/></td>
+      <td><textarea rows="2" class="t7b-type"    placeholder="Type of Information System">${esc(data.type||'')}</textarea></td>
       <td><input type="date" class="t7b-date" value="${esc(data.date||'')}"/></td>
       <td><textarea class="t7b-purpose" placeholder="Purpose / Use"
             rows="2" style="width:100%;resize:vertical">${esc(data.purpose||'')}</textarea></td>

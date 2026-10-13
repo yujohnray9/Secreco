@@ -366,13 +366,16 @@
         padding: 20px 16px;
       }
     }
+      /* Show the transparent CVAARRD emblem without a white disc. */
+    .logo-box,.badge-emblem{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;overflow:visible;}
+    .logo-box img,.badge-emblem img{object-fit:contain;border-radius:0;}
   </style>
   </head>
   <body>
 
   <header>
     <div class="header-left">
-      <div class="logo-box"><img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD" onerror="this.src='/assets/img/cvaarrd.png'"/></div>
+      <div class="logo-box"><img src="/assets/logo/cvaarrd-emblem.png" alt="CVAARRD"/></div>
       <div class="brand-info">
         <h1>CVAARRD Consortium</h1>
         <p>Cagayan Valley Agriculture Aquatic and Natural Resources Research and Development Consortium</p>
@@ -422,7 +425,7 @@
         <div class="orbit-ring" id="orbitRing"></div>
 
         <div class="badge-emblem">
-          <img src="/assets/logo/cvaard2.jpeg" alt="CVAARRD" onerror="this.src='/assets/img/cvaarrd.png'"/>
+          <img src="/assets/logo/cvaarrd-emblem.png" alt="CVAARRD"/>
         </div>
       </div>
     </section>
@@ -468,7 +471,7 @@
       { name:'BFAR - Regional Office 2', sub:'Tuguegarao City', logo:'13. BFAR.png', tag:'Fisheries R2', category:'agency', desc:'Promoting sustainable aquaculture, marine sanctuary protection, and fisherfolk livelihood.' },
       { name:'DENR - Regional Office II', sub:'Tuguegarao City', logo:'16. DENR.png', tag:'DENR Regional', category:'agency', desc:'Safeguarding forest lands, protected areas, biodiversity, and clean environmental policies.' },
       { name:'DA - ATI Region II', sub:'San Mateo, Isabela', logo:'7. DA-ATI.png', tag:'Training Inst.', category:'agency', desc:'The apex extension arm cultivating modern agricultural training and advisory services.' },
-      { name:'DA - PhilRice Isabela', sub:'San Mateo, Isabela', logo:'11. PHILRICE.png', tag:'PhilRice', category:'agency', desc:'National institute pioneering climate-smart rice varieties and sustainable grain technologies.' },
+      { name:'DA - PhilRice Isabela', sub:'San Mateo, Isabela', logo:'philrice.png', tag:'PhilRice', category:'agency', desc:'National institute pioneering climate-smart rice varieties and sustainable grain technologies.' },
       { name:'PCAARRD - DOST', sub:'Apex National Council', logo:'PCAARRD.png', tag:'Apex Council', category:'agency', desc:'Apex national council formulating policies and funding strategic R&D consortia.' },
       { name:'DA - Bureau of Agricultural Research', sub:'National Bureau', logo:'15. DA-BAR.png', tag:'BAR Bureau', category:'agency', desc:'Consolidating and funding strategic agricultural and fisheries research programs nationwide.' },
       { name:'DTI - Regional Office II', sub:'Tuguegarao City', logo:'2. DTI.png', tag:'Trade & Industry', category:'agency', desc:'Empowering MSMEs, agro-enterprise incubation, and value chain market linkages.' },

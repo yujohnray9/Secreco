@@ -106,14 +106,14 @@
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="t8b-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text"   class="t8b-program"  placeholder="Program Title"               value="${esc(data.program||'')}"/></td>
-      <td><input type="text"   class="t8b-project"  placeholder="Project Title"               value="${esc(data.project||'')}"/></td>
-      <td><input type="text"   class="t8b-agency"   placeholder="Implementing Agency"         value="${esc(data.agency||'')}"/></td>
-      <td><input type="text"   class="t8b-duration" placeholder="e.g. Jan 2025 – Dec 2026"   value="${esc(data.duration||'')}"/></td>
+      <td><textarea rows="2"   class="t8b-program"  placeholder="Program Title"              >${esc(data.program||'')}</textarea></td>
+      <td><textarea rows="2"   class="t8b-project"  placeholder="Project Title"              >${esc(data.project||'')}</textarea></td>
+      <td><textarea rows="2"   class="t8b-agency"   placeholder="Implementing Agency"        >${esc(data.agency||'')}</textarea></td>
+      <td><textarea rows="2"   class="t8b-duration" placeholder="e.g. Jan 2025 – Dec 2026"  >${esc(data.duration||'')}</textarea></td>
       <td><input type="number" class="t8b-budget"   placeholder="0" min="0" step="0.01"
             style="text-align:right;width:100%" value="${esc(data.budget||'')}"/></td>
-      <td><input type="text"   class="t8b-source"   placeholder="Source of Fund"              value="${esc(data.source||'')}"/></td>
-      <td><input type="text"   class="t8b-role"     placeholder="Role of Consortium"          value="${esc(data.role||'')}"/></td>
+      <td><textarea rows="2"   class="t8b-source"   placeholder="Source of Fund"             >${esc(data.source||'')}</textarea></td>
+      <td><textarea rows="2"   class="t8b-role"     placeholder="Role of Consortium"         >${esc(data.role||'')}</textarea></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T8b._renumber();T8b._recalc()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>

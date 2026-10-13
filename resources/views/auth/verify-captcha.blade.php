@@ -119,7 +119,7 @@
     <div class="left-content">
       <div class="logo-wrap">
         <div class="logo-circle">
-          <img src="/assets/img/logo26.png" alt="CVAARRD Logo"
+          <img src="/assets/logo/cvaard2.jpeg" alt="CVAARRD Logo"
             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"/>
           <div class="logo-svg" style="display:none; width:100%; height:100%; align-items:center; justify-content:center; background:var(--green-light); flex-direction:column; gap:2px;">
             <svg viewBox="0 0 48 36" width="52" height="40" fill="none">

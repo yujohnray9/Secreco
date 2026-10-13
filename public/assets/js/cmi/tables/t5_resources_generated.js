@@ -95,10 +95,10 @@
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="t5-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t5-donor"    placeholder="Donor / Source"       value="${esc(data.donor||'')}"/></td>
-      <td><input type="text" class="t5-activity" placeholder="Activity / Project"    value="${esc(data.activity||'')}"/></td>
-      <td><input type="text" class="t5-amount"   placeholder="e.g. ₱ 100,000"       value="${esc(data.amount||'')}"/></td>
-      <td><input type="text" class="t5-remarks"  placeholder="Remarks"               value="${esc(data.remarks||'')}"/></td>
+      <td><textarea rows="2" class="t5-donor"    placeholder="Donor / Source"      >${esc(data.donor||'')}</textarea></td>
+      <td><textarea rows="2" class="t5-activity" placeholder="Activity / Project"   >${esc(data.activity||'')}</textarea></td>
+      <td><textarea rows="2" class="t5-amount"   placeholder="e.g. ₱ 100,000"      >${esc(data.amount||'')}</textarea></td>
+      <td><textarea rows="2" class="t5-remarks"  placeholder="Remarks"              >${esc(data.remarks||'')}</textarea></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T5._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>

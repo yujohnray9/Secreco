@@ -80,7 +80,7 @@
     <div class="pg-banner">
       <div class="pg-banner-left">
         <div class="pg-banner-title">Submissions</div>
-        <div class="pg-banner-sub">CY {{ date('Y') }} CMI submissions — review, accept, or request corrections</div>
+        <div class="pg-banner-sub" id="subYearHeading">CY {{ date('Y') }} CMI submissions — review, accept, or request corrections</div>
       </div>
     </div>
 
@@ -470,6 +470,8 @@
   };
 
   async function loadSubs() {
+    const selectedYear = document.getElementById('subYearSel').value;
+    document.getElementById('subYearHeading').textContent = `CY ${selectedYear} CMI submissions — review, accept, or request corrections`;
     const year   = document.getElementById('subYearSel').value;
     const status = document.getElementById('subStatusSel').value;
     const tbody  = document.getElementById('subsTbody');
@@ -498,7 +500,7 @@
       'T8B': ['program', 'project', 'agency', 'duration', 'budget', 'source', 'role'],
       'T9':  ['title', 'source', 'agency', 'researcher', 'impact'],
       'T10': ['title', 'agency', 'priority', 'duration', 'budget', 'fund'],
-      'T11': ['tech', 'project', 'agency'],
+      'T11': ['tech', 'project', 'stcbf', 'stc4id', 'safe', 'food_value_chain', 'others'],
       'T12': ['tech', 'owner', 'precomm', 'licensor', 'startup', 'spinoff'],
       'T13': ['remarks'],
       'T14': ['title', 'venue', 'participants', 'expenditures', 'funds'],
@@ -538,6 +540,7 @@
     function getFieldInputType(k, tNo = '') {
       const norm = (k || '').toLowerCase();
       const tNoUpper = String(tNo || '').toUpperCase().trim();
+      if (tNoUpper === 'T11' && ['stcbf', 'stc4id', 'safe', 'food_value_chain'].includes(norm)) return 'checkbox';
       if (norm === 'category') {
         return 'category';
       }
@@ -553,7 +556,6 @@
       const numberFields = new Set([
         'new_', 'new', 'ongoing', 'completed', 'terminated',
         'count',
-        'participants', 'precomm', 'licensor', 'startup', 'spinoff',
         'total', 'qty', 'quantity'
       ]);
       if (numberFields.has(norm)) {
@@ -619,6 +621,10 @@
         </select>`;
       }
 
+      if (type === 'checkbox') {
+        const checked = val === true || ['1', 'true', 'yes', '✓', 'x'].includes(String(val).toLowerCase());
+        return `<input type="checkbox" class="pta-cell-inp" data-key="${key}" ${checked ? 'checked' : ''} ${isViewOnly ? 'disabled' : ''}>`;
+      }
       if (type === 'date') {
         const dateVal = formatForDateInput(val);
         return `<input type="date" class="pta-cell-inp" data-key="${key}" value="${String(dateVal).replace(/"/g, '&quot;')}" ${disAttr}width:100%;min-width:130px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`;
@@ -630,7 +636,7 @@
       }
 
       const ph = colDef?.label || COLUMN_LABELS[key] || formatColumnHeader(key);
-      return `<input type="text" class="pta-cell-inp" data-key="${key}" value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph.replace(/"/g, '&quot;')}" ${disAttr}width:100%;min-width:90px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;" />`;
+      return `<textarea rows="2" class="pta-cell-inp" data-key="${key}" ${disAttr}width:100%;min-width:130px;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font-size:12.5px;outline:none;">${String(val).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`;
     }
     window._renderCellInput = renderCellInput;
 
@@ -671,6 +677,13 @@
         return { key, label, type, options };
       });
     }
+
+    const builtIn = window.REPORT_SCHEMAS?.[tNoUpper];
+    if (builtIn) return builtIn.columns.map(c => ({
+      key: c.key, label: c.header,
+      type: tNoUpper === 'T10' && c.key === 'status' ? 'dropdown' : (c.key === 'category' && tNoUpper !== 'T2B' ? 'dropdown' : getFieldInputType(c.key, tNoUpper)),
+      options: tNoUpper === 'T10' && c.key === 'status' ? ['Approved', 'For Revision', 'Disapproved'] : (c.key === 'category' || c.key === 'scope' ? (builtIn.categories || []) : [])
+    }));
 
     // 2. Standard table keys
     if (DEFAULT_TABLE_KEYS[tNoUpper] && DEFAULT_TABLE_KEYS[tNoUpper].length > 0) {
@@ -769,9 +782,23 @@
     let colDefs = resolveTableColumns(r);
     const tNoUpper = String(r.table_no || '').toUpperCase().trim();
     const isInternalCat = ['T1', 'T2A', 'T2', 'T7A', 'T7', 'T7B', 'T8A', 'T8', 'T10', 'T15', 'T16', 'T20B', 'T20b'].includes(tNoUpper);
-    if (isInternalCat) {
-      colDefs = colDefs.filter(c => c.key !== 'category');
-    }
+    const schema = window.REPORT_SCHEMAS?.[tNoUpper];
+    const groupKey = tNoUpper === 'T6' ? 'scope' : 'category';
+    const grouped = Boolean(schema?.categories?.length);
+    if (grouped) colDefs = colDefs.filter(c => c.key !== groupKey);
+    const escapeCell = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const groupLabel = value => {
+      const raw = String(value || schema?.categories?.[0] || '');
+      const aliases = { go: 'GO', ngo: 'NGO', private: 'Private Sector', lgu: 'LGU', packaged: 'Proposals Packaged', implemented: 'Projects Approved and Implemented' };
+      if (aliases[raw]) return aliases[raw];
+      if (tNoUpper === 'T6' && /^(developed|maintained)_/.test(raw)) {
+        const [kind, level] = raw.split('_');
+        return (kind === 'developed' ? 'Developed / New - ' : 'Maintained / Sustained - ') + level[0].toUpperCase() + level.slice(1);
+      }
+      return raw;
+    };
+    window._ptaGrouping = { grouped, key: groupKey };
+
     const colOptionsMap = {};
     const colDefMap = {};
     colDefs.forEach(cd => {
@@ -789,7 +816,7 @@
     // If rows have extra keys not defined in colDefs, append them
     const existingKeys = colDefs.map(c => c.key);
     rows.forEach(row => {
-      if (row && typeof row === 'object') {
+      if (!DEFAULT_TABLE_KEYS[(r.table_no || '').toUpperCase()] && row && typeof row === 'object') {
         Object.keys(row).forEach(k => {
           if (isInternalCat && k.toLowerCase() === 'category') return;
           const canonical = keyAliases[k] || k;
@@ -864,7 +891,7 @@
 
     function getPtaCellVal(row, key) {
       if (!row || typeof row !== 'object') return '';
-      let v = row[key] ?? row[key?.toLowerCase()] ?? row[key?.toUpperCase()];
+      let v = row[key] ?? row.modalities?.[key] ?? row[key?.toLowerCase()] ?? row[key?.toUpperCase()];
       if (v !== undefined && v !== null && String(v).trim() !== '') return String(v);
 
       const alts = PTA_ALIAS_MAP[key?.toLowerCase()] || [];
@@ -875,8 +902,20 @@
       return '';
     }
 
+    const groups = [];
     rows.forEach((row, rIdx) => {
-      html += `<tr>
+      const value = grouped ? (row[groupKey] || schema.categories[0]) : '';
+      let group = groups.find(g => groupLabel(g.value) === groupLabel(value));
+      if (!group) { group = { value, rows: [] }; groups.push(group); }
+      group.rows.push({ row, rIdx });
+    });
+    if (grouped) schema.categories.forEach(value => {
+      if (!groups.some(g => groupLabel(g.value).toLowerCase() === value.toLowerCase())) groups.push({value, rows: []});
+    });
+    groups.forEach(group => {
+      if (grouped) html += `<tr class="category-heading"><td colspan="${colDefs.length + (isViewOnly ? 1 : 2)}">${escapeCell(groupLabel(group.value))}</td></tr>`;
+      group.rows.forEach(({row, rIdx}) => {
+      html += `<tr data-row-index="${rIdx}" data-group="${escapeCell(group.value)}">
         <td style="text-align:center;font-weight:600;color:#6b7280">${rIdx + 1}</td>
         ${colDefs.map(cd => {
           const k = cd.key;
@@ -887,8 +926,11 @@
       </tr>`;
     });
 
+      if (grouped && !isViewOnly) html += `<tr class="category-actions"><td colspan="${colDefs.length + 2}"><button type="button" class="btn-sm-fc" data-group="${escapeCell(group.value)}" onclick="addPtaEditRow(this.dataset.group, this.closest('tr'))">+ Add Row</button></td></tr>`;
+    });
+
     html += `</tbody></table>`;
-    if (!isViewOnly) {
+    if (!isViewOnly && !grouped) {
       html += `<div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
         <button type="button" class="btn-sm-fc" onclick="addPtaEditRow()" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;">+ Add Row</button>
       </div>`;
@@ -920,7 +962,7 @@
               return `
                 <div id="pta-doc-card-${dId}" style="border:1px solid #fecaca;border-radius:10px;overflow:hidden;background:#fff5f5;width:130px;height:120px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;text-align:center">
                   ${!isViewOnly ? `<button type="button" onclick="deletePtaModalDoc(${dId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>` : ''}
-                  <a href="${src}" target="_blank" rel="noopener noreferrer" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;width:100%;text-decoration:none">
+                  <a data-attachment="true" href="${src}" target="_blank" rel="noopener noreferrer" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;width:100%;text-decoration:none">
                     <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#dc2626" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
                     <span style="font-size:11px;font-weight:700;color:#dc2626;margin-top:4px">PDF FILE</span>
                     <div style="font-size:10px;color:#6b7280;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;margin-top:2px">${d.caption || 'Document'}</div>
@@ -930,7 +972,7 @@
             return `
               <div id="pta-doc-card-${dId}" style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative">
                 ${!isViewOnly ? `<button type="button" onclick="deletePtaModalDoc(${dId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>` : ''}
-                <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${d.caption||'View photo'}"/>
+                <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" data-attachment="true" onclick="window.open('${src}','_blank')" title="${d.caption||'View photo'}"/>
                 <div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.caption || 'Attached photo'}</div>
               </div>`;
           }).join('')}
@@ -960,6 +1002,7 @@
     const r = cachedSubRows[currentEditSubIdx];
     const year = document.getElementById('subYearSel')?.value || new Date().getFullYear();
 
+    if (!await AppDialog.confirm(`Upload ${input.files.length} attachment(s)?`, { title: 'Upload documentation', confirmText: 'Upload' })) { input.value = ''; return; }
     const formData = new FormData();
     for (let i = 0; i < input.files.length; i++) {
       formData.append('images[]', input.files[i]);
@@ -996,7 +1039,7 @@
             card.style.cssText = 'border:1px solid #fecaca;border-radius:10px;overflow:hidden;background:#fff5f5;width:130px;height:120px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;text-align:center';
             card.innerHTML = `
               <button type="button" onclick="deletePtaModalDoc(${fId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
-              <div onclick="window.open('${src}','_blank')" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;width:100%">
+              <div data-attachment="true" onclick="window.open('${src}','_blank')" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;width:100%">
                 <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#dc2626" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
                 <span style="font-size:11px;font-weight:700;color:#dc2626;margin-top:4px">PDF FILE</span>
                 <div style="font-size:10px;color:#6b7280;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;margin-top:2px">${f.caption || 'Document'}</div>
@@ -1005,7 +1048,7 @@
             card.style.cssText = 'border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fafafa;width:130px;position:relative';
             card.innerHTML = `
               <button type="button" onclick="deletePtaModalDoc(${fId})" style="position:absolute;top:4px;right:4px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete Attachment">×</button>
-              <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" onclick="window.open('${src}','_blank')" title="${f.caption||'View photo'}"/>
+              <img src="${src}" style="width:130px;height:90px;object-fit:cover;cursor:pointer;display:block" data-attachment="true" onclick="window.open('${src}','_blank')" title="${f.caption||'View photo'}"/>
               <div style="padding:6px;font-size:11px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.caption || 'Attached photo'}</div>`;
           }
           gallery.appendChild(card);
@@ -1024,7 +1067,7 @@
   };
 
   window.deletePtaModalDoc = async function(docId) {
-    if (!confirm('Are you sure you want to delete this attachment?')) return;
+    if (!await AppDialog.confirm('Delete this attachment?', { title: 'Delete attachment', confirmText: 'Delete', destructive: true })) return;
     if (currentEditSubIdx < 0) return;
     const r = cachedSubRows[currentEditSubIdx];
 
@@ -1056,7 +1099,7 @@
     }
   };
 
-  window.addPtaEditRow = function() {
+  window.addPtaEditRow = function(category = '', beforeRow = null) {
     const tbody = document.getElementById('ptaEditTbody');
     if (!tbody) return;
     let colDefs = (window._currentColDefs && window._currentColDefs.length > 0) ? window._currentColDefs : [];
@@ -1084,7 +1127,8 @@
     tr.innerHTML = `<td style="text-align:center;font-weight:600;color:#6b7280">${rowCount}</td>
       ${colDefs.map(cd => `<td>${renderCellInput(cd.key, '', false, cd, (currentEditSubIdx >= 0 && cachedSubRows[currentEditSubIdx]) ? cachedSubRows[currentEditSubIdx].table_no : '')}</td>`).join('')}
       <td style="text-align:center"><button type="button" onclick="this.closest('tr').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:bold;">×</button></td>`;
-    tbody.appendChild(tr);
+    if (window._ptaGrouping?.grouped) tr.dataset.group = category;
+    if (beforeRow) tbody.insertBefore(tr, beforeRow); else tbody.appendChild(tr);
   };
 
   window.savePtaModalEdit = async function() {
@@ -1093,15 +1137,19 @@
     const year = document.getElementById('subYearSel').value;
     const tbody = document.getElementById('ptaEditTbody');
     
+    if (!await AppDialog.confirm('Save the changes to this submission?', { title: 'Save submission', confirmText: 'Save' })) return;
     const updatedRows = [];
     const isT2a = (r.table_no === 'T2A' || r.table_no === 'T2a' || r.table_no === 'T2');
     if (tbody) {
       tbody.querySelectorAll('tr').forEach((tr, rIdx) => {
         const inputs = tr.querySelectorAll('.pta-cell-inp');
-        const rowObj = {};
+        if (!inputs.length) return;
+        const originalIndex = tr.dataset.rowIndex;
+        const rowObj = originalIndex !== undefined ? { ...(r.rows?.[Number(originalIndex)] || {}) } : {};
+        if (window._ptaGrouping?.grouped) rowObj[window._ptaGrouping.key] = tr.dataset.group;
         inputs.forEach(inp => {
           const key = inp.dataset.key;
-          let v = inp.value;
+          let v = inp.type === 'checkbox' ? inp.checked : inp.value;
           if (getFieldInputType(key, r.table_no) === 'number' && v !== '') {
             v = isNaN(Number(v)) ? v : Number(v);
           }
@@ -1115,8 +1163,15 @@
             rowObj['expenditures'] = v;
           }
         });
-        if (r.rows && r.rows[rIdx] && r.rows[rIdx].category && !rowObj['category']) {
-          rowObj['category'] = r.rows[rIdx].category;
+
+        if (String(r.table_no).toUpperCase() === 'T10') {
+          rowObj.approved = rowObj.status === 'Approved';
+          rowObj.for_revision = rowObj.status === 'For Revision';
+          rowObj.disapproved = rowObj.status === 'Disapproved';
+        }
+        if (String(r.table_no).toUpperCase() === 'T11') {
+          rowObj.modalities = { ...(rowObj.modalities || {}) };
+          ['stcbf','stc4id','safe','food_value_chain','others'].forEach(key => { rowObj.modalities[key] = rowObj[key]; });
         }
         updatedRows.push(rowObj);
       });

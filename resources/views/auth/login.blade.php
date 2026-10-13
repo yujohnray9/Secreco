@@ -104,38 +104,8 @@
 
   <div class="login-page">
 
-    <!-- ══════════ COLLAGE BACKGROUND ══════════ -->
-    <div class="collage-bg">
-      <!-- Column 1: Citrus (Left panel full-height) -->
-      <div class="collage-col col-left">
-        <img src="/assets/login/commodities/citrus.jpg" alt="Citrus" class="collage-img" />
-        <div class="collage-overlay left-tint"></div>
-      </div>
-
-      <!-- Column 2: Mungbean & Small Ruminants (Center) -->
-      <div class="collage-col col-grid">
-        <div class="collage-cell">
-          <img src="/assets/login/commodities/mungbean.jpg" alt="Mungbean" class="collage-img" />
-          <div class="collage-overlay"></div>
-        </div>
-        <div class="collage-cell">
-          <img src="/assets/login/commodities/small-ruminants.jpg" alt="Small Ruminants" class="collage-img" />
-          <div class="collage-overlay"></div>
-        </div>
-      </div>
-
-      <!-- Column 3: Red Tilapia & Timber (Right) -->
-      <div class="collage-col col-grid">
-        <div class="collage-cell">
-          <img src="/assets/login/commodities/red-tilapia.jpg" alt="Red Tilapia" class="collage-img" />
-          <div class="collage-overlay"></div>
-        </div>
-        <div class="collage-cell">
-          <img src="/assets/login/commodities/timber.jpg" alt="Timber" class="collage-img" />
-          <div class="collage-overlay"></div>
-        </div>
-      </div>
-    </div>
+    <!-- Decorative background with a dark green overlay for readability. -->
+    <div class="login-background" aria-hidden="true"></div>
 
     <!-- ══════════ MAIN CONTENT LAYOUT ══════════ -->
     <div class="main-layout">
@@ -144,8 +114,7 @@
       <div class="left-panel">
         <div class="left-content">
           <div class="logo-badge">
-            <img src="/assets/logo/cvaarrd.png" alt="SecReCo Logo"
-                 onerror="this.src='/assets/logo/cvaarrd.jpeg'"/>
+            <img src="/assets/logo/cvaarrd-emblem.png" alt="CVAARRD Logo"/>
           </div>
           <p class="hero-label">WELCOME TO</p>
           <h1 class="hero-brand">SecReCo</h1>
@@ -166,8 +135,7 @@
 
             <div class="avatar-wrap">
               <div class="avatar">
-                <img src="/assets/logo/cvaard2.jpeg" alt="CVAARRD Logo"
-                     onerror="this.src='/assets/img/cvaarrd.png'"/>
+                <img src="/assets/logo/cvaarrd-emblem.png" alt="CVAARRD Logo"/>
               </div>
             </div>
 
@@ -279,8 +247,7 @@
 
             <div class="avatar-wrap">
               <div class="avatar">
-                <img src="/assets/logo/cvaarrd.jpeg" alt="CVAARRD Logo"
-                     onerror="this.src='/assets/img/cvaarrd.png'"/>
+                <img src="/assets/logo/cvaarrd-emblem.png" alt="CVAARRD Logo"/>
               </div>
             </div>
 
@@ -772,6 +739,6 @@
 
   </div><!-- end login-page -->
 
-  <script src="/assets/js/login.js?v={{ file_exists(public_path('assets/js/login.js')) ? filemtime(public_path('assets/js/login.js')) : time() }}"></script>
+  <script src="/assets/js/login.js?v=20261012?v={{ file_exists(public_path('assets/js/login.js')) ? filemtime(public_path('assets/js/login.js')) : time() }}"></script>
 </body>
 </html>

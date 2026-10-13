@@ -176,6 +176,7 @@
 
     CMI.setFormatTemplates = function (templates) {
         _templateDefs = {};
+        window._templateDefs = _templateDefs;
 
         if (Array.isArray(templates) && templates.length > 0) {
             const sections = [];
@@ -362,7 +363,7 @@
                 try { parsedCols = JSON.parse(parsedCols); } catch (e) { parsedCols = null; }
             }
             if (parsedCols && typeof parsedCols === 'object') {
-                if (Array.isArray(parsedCols.titles) && parsedCols.titles.length > 0) {
+                if (Array.isArray(parsedCols.titles) && parsedCols.titles.some(t => Array.isArray(t.columns) && t.columns.length > 0)) {
                     hasCustomCols = true;
                 } else if (Array.isArray(parsedCols.columns) && parsedCols.columns.length > 0) {
                     hasCustomCols = true;
@@ -572,7 +573,7 @@
                 } else if (colType === "date") {
                     return `<td><input type="date" class="dyn-col-val" data-key="${escHtml(colKey)}" value="${val}"${disAttr}/></td>`;
                 } else {
-                    return `<td><input type="text" class="dyn-col-val" data-key="${escHtml(colKey)}" placeholder="${escHtml(c.name || colKey)}" value="${val}"${disAttr}/></td>`;
+                    return `<td><textarea rows="2" class="dyn-col-val" data-key="${escHtml(colKey)}" placeholder="${escHtml(c.name || colKey)}"${disAttr}>${val}</textarea></td>`;
                 }
             }).join("");
 

@@ -240,16 +240,9 @@
             opt.dataset.origText = opt.text;
           }
 
-          const isOccupied = occupiedInstitutions.includes(opt.value);
-          if (isOccupied) {
-            opt.disabled = true;
-            opt.text = opt.dataset.origText + ' (Already Registered)';
-            opt.style.color = '#9ca3af';
-          } else {
-            opt.disabled = false;
-            opt.text = opt.dataset.origText;
-            opt.style.color = '';
-          }
+          opt.disabled = false;
+          opt.text = opt.dataset.origText;
+          opt.style.color = "";
         }
       }
 
@@ -390,10 +383,7 @@
             showAlert('Please select your institution.', () => document.getElementById('regInstSelect').focus());
             return;
           }
-          if (occupiedInstitutions.includes(inst)) {
-            showAlert('This institution already has a CMI Representative account. Only 1 CMI account is allowed per institution.', () => document.getElementById('regInstSelect').focus());
-            return;
-          }
+
         }
         // Designation: required para sa CMI at Guest/Viewer lang, hindi para sa PTA o Executive
         if (selectedRole !== 'pta' && selectedRole !== 'executive') {

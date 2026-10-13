@@ -521,10 +521,13 @@
     }
 
     // ── Load Formats for a Year ───────────────────────────────────────
+    let formatLoadSequence = 0;
     async function loadFormats(year) {
+      const sequence = ++formatLoadSequence;
       const url = year ? `/api/pta/formats?year=${year}` : `/api/pta/formats`;
       const res  = await fetch(url);
       const json = await res.json();
+      if (sequence !== formatLoadSequence) return;
       const templates = json.templates || [];
       cachedTemplates = templates;
       const actualYear = json.year || json.active_year || year || 2025;
@@ -1055,6 +1058,8 @@
       openEditModal(t.id, t.table_no, t.title, t.section, t.is_required, t.is_locked, t.columns_json);
     }
 
+    let originalEditFormat = null;
+    const editFormatSnapshot = () => JSON.stringify([...document.querySelectorAll('#editTitlesContainer input, #editTitlesContainer select')].map(el => [el.className, el.value]));
     function openEditModal(id, tableNo, title, section, required, locked, colsJson) {
       document.getElementById('editTableId').value         = id;
       document.getElementById('editTableNo').value         = tableNo;
@@ -1095,6 +1100,7 @@
         }
       }
 
+      originalEditFormat = { title, columns: colsJson, snapshot: editFormatSnapshot(), year: fmtCurrentYear };
       openModal('modalEditTable');
     }
 
@@ -1161,8 +1167,15 @@
         });
       }
 
+      if (originalEditFormat && originalEditFormat.snapshot === editFormatSnapshot()) {
+        mainTitle = originalEditFormat.title;
+        colsData = originalEditFormat.columns;
+      } else if (!titlesData.some(t => t.columns.length)) {
+        colsData = null;
+      }
       const payload = {
         action: 'edit',
+        year: originalEditFormat?.year || fmtCurrentYear,
         id: parseInt(document.getElementById('editTableId').value),
         table_no: tableNo,
         title: mainTitle,
@@ -1184,7 +1197,7 @@
         const res  = await fetch(API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'toggle_lock', id })
+          body: JSON.stringify({ action: 'toggle_lock', id, year: fmtCurrentYear })
         });
         const json = await res.json();
         if (json.ok) {
@@ -1200,7 +1213,7 @@
 
     // ── Delete Table ──────────────────────────────────────────────────
     async function deleteTable(id, tableNo) {
-      if (!confirm(`Remove ${tableNo} from this year's format? This cannot be undone.`)) return;
+      if (!await AppDialog.confirm(`Remove ${tableNo} from this year's format? This cannot be undone.`, { title: 'Remove table', confirmText: 'Remove', destructive: true })) return;
       const res  = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'delete',id}) });
       const json = await res.json();
       showToast(json.message);

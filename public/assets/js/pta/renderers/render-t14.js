@@ -24,24 +24,25 @@ function renderT14(data) {
     let instExpenditures = 0;
 
     items.forEach(r => {
-      const pCount = parseInt(String(r.participants || '0').replace(/[^0-9]/g, '')) || 0;
+      const participantText = String(r.participants ?? '').trim();
+      const pCount = /^\d+$/.test(participantText) ? Number(participantText) : (participantText ? null : 0);
       const rawExp = r.expenditures ?? r.expenditure ?? r.amount ?? r.expense ?? r.cost ?? '0';
       const expAmt = parseFloat(String(rawExp).replace(/[^0-9.]/g, '')) || 0;
 
-      instParticipants += pCount;
+      instParticipants = instParticipants === null || pCount === null ? null : instParticipants + pCount;
       instExpenditures += expAmt;
 
       allDetailRows.push({
         title: r.title || '—',
         venue: r.venue || '—',
-        participants: pCount,
+        participants: participantText,
         expenditures: expAmt,
         funds: r.funds || r.source || r.fundsource || r.fund || '—',
         institution: cmi.institution
       });
     });
 
-    grandParticipants += instParticipants;
+    grandParticipants = grandParticipants === null || instParticipants === null ? null : grandParticipants + instParticipants;
     grandExpenditures += instExpenditures;
 
     if (cmi.docs) {
@@ -75,7 +76,7 @@ function renderT14(data) {
             <tr>
               <td style="padding:9px 12px;font-weight:500;">${esc(s.institution)}</td>
               <td style="padding:9px 12px;text-align:center;font-weight:600;">${s.count > 0 ? s.count : '—'}</td>
-              <td style="padding:9px 12px;text-align:center;font-weight:600;">${s.participants > 0 ? s.participants : '—'}</td>
+              <td style="padding:9px 12px;text-align:center;font-weight:600;">${s.participants === null ? 'See details' : (s.participants || '—')}</td>
               <td style="padding:9px 12px;text-align:right;font-weight:600;">${s.expenditures > 0 ? fmtAmt(s.expenditures) : '—'}</td>
             </tr>
           `).join('')}
@@ -84,7 +85,7 @@ function renderT14(data) {
           <tr style="background:#f9fafb;font-weight:700;border-top:2px solid #e5e7eb;">
             <td style="padding:9px 12px;text-align:right;font-weight:800;">TOTAL</td>
             <td style="padding:9px 12px;text-align:center;font-weight:800;">${sumTotalCount > 0 ? sumTotalCount : '—'}</td>
-            <td style="padding:9px 12px;text-align:center;font-weight:800;">${grandParticipants > 0 ? grandParticipants : '—'}</td>
+            <td style="padding:9px 12px;text-align:center;font-weight:800;">${grandParticipants === null ? 'See details' : (grandParticipants || '—')}</td>
             <td style="padding:9px 12px;text-align:right;font-weight:800;">${grandExpenditures > 0 ? fmtAmt(grandExpenditures) : '—'}</td>
           </tr>
         </tfoot>
@@ -117,7 +118,7 @@ function renderT14(data) {
                 <td style="padding:7px 12px;">${esc(r.title)}</td>
                 <td style="padding:7px 12px;">${esc(r.institution)}</td>
                 <td style="padding:7px 12px;">${esc(r.venue)}</td>
-                <td style="text-align:center;padding:7px 12px;">${r.participants > 0 ? r.participants : '—'}</td>
+                <td style="text-align:center;padding:7px 12px;">${esc(r.participants || '—')}</td>
                 <td style="text-align:right;padding:7px 12px;">${r.expenditures > 0 ? fmtAmt(r.expenditures) : '—'}</td>
                 <td style="padding:7px 12px;">${esc(r.funds)}</td>
               </tr>
@@ -126,7 +127,7 @@ function renderT14(data) {
           <tfoot>
             <tr style="background:#f9fafb;font-weight:700;border-top:2px solid #e5e7eb;">
               <td colspan="4" style="text-align:right;padding:8px 12px;font-weight:800;">TOTAL</td>
-              <td style="text-align:center;padding:8px 12px;font-weight:800;">${grandParticipants > 0 ? grandParticipants : '—'}</td>
+              <td style="text-align:center;padding:8px 12px;font-weight:800;">${grandParticipants === null ? 'See details' : (grandParticipants || '—')}</td>
               <td style="text-align:right;padding:8px 12px;font-weight:800;">${grandExpenditures > 0 ? fmtAmt(grandExpenditures) : '—'}</td>
               <td></td>
             </tr>

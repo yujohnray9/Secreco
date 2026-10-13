@@ -128,7 +128,7 @@
 
 @section('scripts')
 <script src="/assets/js/cmi/sections-data.js?v=10"></script>
-<script src="/assets/js/cmi/tables-config.js?v=11"></script>
+<script src="/assets/js/cmi/tables-config.js?v=20261012"></script>
 <script src="/assets/js/cmi/submissions-helpers.js?v=10"></script>
 <script src="/assets/js/cmi/submissions-state.js?v=10"></script>
 <script src="/assets/js/cmi/submissions-load.js?v=10"></script>

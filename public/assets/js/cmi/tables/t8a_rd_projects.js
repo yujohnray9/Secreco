@@ -116,12 +116,12 @@
     tr.dataset.cat = catKey;
     tr.innerHTML = `
       <td class="t8a-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t8a-title"      placeholder="Program / Project Title"     value="${esc(data.title||'')}"/></td>
-      <td><input type="text" class="t8a-researcher"  placeholder="Researcher"                  value="${esc(data.researcher||'')}"/></td>
-      <td><input type="text" class="t8a-agency"      placeholder="Implementing Agency"         value="${esc(data.agency||'')}"/></td>
-      <td><input type="text" class="t8a-duration"    placeholder="e.g. Jan 2025 – Dec 2027"   value="${esc(data.duration||'')}"/></td>
-      <td><input type="text" class="t8a-funds"       placeholder="Source / Budget"             value="${esc(data.funds||'')}"/></td>
-      <td><input type="text" class="t8a-commodity"   placeholder="Priority Commodity"          value="${esc(data.commodity||'')}"/></td>
+      <td><textarea rows="2" class="t8a-title"      placeholder="Program / Project Title"    >${esc(data.title||'')}</textarea></td>
+      <td><textarea rows="2" class="t8a-researcher"  placeholder="Researcher"                 >${esc(data.researcher||'')}</textarea></td>
+      <td><textarea rows="2" class="t8a-agency"      placeholder="Implementing Agency"        >${esc(data.agency||'')}</textarea></td>
+      <td><textarea rows="2" class="t8a-duration"    placeholder="e.g. Jan 2025 – Dec 2027"  >${esc(data.duration||'')}</textarea></td>
+      <td><textarea rows="2" class="t8a-funds"       placeholder="Source / Budget"            >${esc(data.funds||'')}</textarea></td>
+      <td><textarea rows="2" class="t8a-commodity"   placeholder="Priority Commodity"         >${esc(data.commodity||'')}</textarea></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T8a._renumber('${catKey}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>

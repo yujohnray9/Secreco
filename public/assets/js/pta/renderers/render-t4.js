@@ -34,6 +34,7 @@
           amount: amt,
           rawAmount: r.amount,
           remarks: r.remarks || '—',
+          duration: r.duration || '—',
         });
       });
 
@@ -89,12 +90,13 @@
             <th>Activity / Project</th>
             <th style="width:160px;text-align:right">Amount Shared</th>
             <th style="width:170px">Remarks</th>
+            <th>Duration</th>
           </tr>
         </thead>
         <tbody>`;
 
     if (detailRows.length === 0) {
-      html += `<tr><td colspan="5" style="text-align:center;padding:30px;color:#9ca3af">No entries recorded.</td></tr>`;
+      html += `<tr><td colspan="6" style="text-align:center;padding:30px;color:#9ca3af">No entries recorded.</td></tr>`;
     } else {
       detailRows.forEach((r, idx) => {
         html += `
@@ -104,6 +106,7 @@
             <td>${esc(r.activity)}</td>
             <td style="text-align:right">${r.amount > 0 ? fmtAmt(r.amount) : esc(r.rawAmount || '—')}</td>
             <td>${esc(r.remarks)}</td>
+            <td>${esc(r.duration)}</td>
           </tr>`;
       });
     }

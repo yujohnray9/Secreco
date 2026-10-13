@@ -658,7 +658,7 @@
         <button type="button" class="btn-back-notif" id="btnBackToNotif" onclick="closeDetailDrawer()">
           ‹ Back to notifications
         </button>
-        <span class="cmi-badge action" id="detailBadge">ACTION REQUIRED</span>
+        <span class="cmi-badge" id="detailBadge" hidden></span>
       </div>
       <h2 class="cmi-detail-title" id="detailTitle">Notification Details</h2>
       <p class="cmi-detail-intro" id="detailIntro">Review comments and take appropriate action.</p>
@@ -872,6 +872,8 @@ function openNotificationDetail(id) {
 
   const cat = getCmiCategory(item);
   const badgeEl = document.getElementById('detailBadge');
+  badgeEl.hidden = cat === 'action';
+  badgeEl.style.display = cat === 'action' ? 'none' : '';
   const titleEl = document.getElementById('detailTitle');
   const introEl = document.getElementById('detailIntro');
   const refEl = document.getElementById('detailRef');
@@ -929,8 +931,8 @@ function openNotificationDetail(id) {
     if (reviewerRowEl) reviewerRowEl.style.display = 'flex';
     if (reasonRowEl) reasonRowEl.style.display = 'flex';
     badgeEl.className = 'cmi-badge action';
-    badgeEl.textContent = 'ACTION REQUIRED';
-    titleEl.textContent = item.msg || 'Action required on report';
+    badgeEl.textContent = '';
+    titleEl.textContent = item.msg || 'Report returned for correction';
     introEl.innerHTML = 'PTA Admin requested an update.<br>Please review the comments and resubmit the form.';
     reasonEl.textContent = item.reason || item.msg || 'Please update the highlighted items.';
     statusEl.innerHTML = '<i class="status-dot red"></i>Needs Action';
@@ -1066,7 +1068,7 @@ function renderCmiList() {
       btnText = 'Start filling up →';
       btnClass = 'btn-outline-green';
     } else if (cat === 'action') {
-      badgeHtml = '<span class="cmi-badge action">ACTION REQUIRED</span>';
+      badgeHtml = '';
       subHtml = 'PTA Admin requested an update. Please review the comments and resubmit the form.';
       btnText = 'Review and correct →';
       btnClass = 'btn-solid-green';

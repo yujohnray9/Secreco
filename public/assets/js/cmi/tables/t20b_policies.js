@@ -83,7 +83,6 @@
       <td colspan="5" style="background:var(--bg-soft,#f3f6f4);font-weight:700;color:var(--forest,#075b42);padding:9px 12px;font-size:13px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span>${esc(cat.label)}</span>
-          <button type="button" class="btn btn-sm" onclick="T20B.addRow('${cat.key}')" style="background:#00875a;color:#fff;border:none;padding:3px 10px;font-size:11px;font-weight:600;border-radius:4px;cursor:pointer">+ Add Row</button>
         </div>
       </td>
     `;
@@ -101,10 +100,10 @@
     tr.innerHTML = `
       <td class="t20b-num" style="text-align:center;font-weight:600"></td>
       <td>
-        <input type="text" class="t20b-policy" placeholder="e.g. Ordinance / Resolution No." value="${esc(policyVal)}"/>
+        <textarea rows="2" class="t20b-policy" placeholder="e.g. Ordinance / Resolution No.">${esc(policyVal)}</textarea>
       </td>
       <td>
-        <input type="text" class="t20b-agency" placeholder="e.g. LGU-San Mateo" value="${esc(agencyVal)}"/>
+        <textarea rows="2" class="t20b-agency" placeholder="e.g. LGU-San Mateo">${esc(agencyVal)}</textarea>
       </td>
       <td>
         <textarea class="t20b-description" rows="2" style="width:100%;resize:vertical" placeholder="Description of policy">${esc(descVal)}</textarea>

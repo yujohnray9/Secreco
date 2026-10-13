@@ -28,8 +28,8 @@ async function fetchLogosAsBase64() {
   };
 
   const [secreco, cvaarrd] = await Promise.all([
-    toBase64('/assets/img/logo26.png'),
-    toBase64('/assets/img/cvaarrd.png'),
+    toBase64('/assets/logo/cvaard2.jpeg'),
+    toBase64('/assets/logo/cvaard2.jpeg'),
   ]);
 
   return { secreco, cvaarrd };
@@ -43,7 +43,7 @@ function logoImgs({ secreco, cvaarrd }, size = 52) {
   const img = (src, alt) => src
     ? `<img src="${src}" alt="${alt}" width="${size}" height="${size}" style="width:${size}px;height:${size}px;object-fit:contain;vertical-align:middle;display:block;"/>`
     : `<span style="display:inline-block;width:${size}px;height:${size}px;"></span>`;
-  return { secreco: img(secreco, 'SecReCo'), cvaarrd: img(cvaarrd, 'CVAARRD') };
+  return { secreco: img(secreco, 'CVAARRD'), cvaarrd: img(cvaarrd, 'CVAARRD') };
 }
 
 // ── EXPORT BUTTONS ────────────────────────────────────────────
@@ -345,7 +345,7 @@ async function exportToDOCX(logos = {}) {
   const fetchBuf = async (src) => {
     try { return await (await fetch(src)).arrayBuffer(); } catch { return null; }
   };
-  const logoBuf = await fetchBuf('/assets/img/cvaarrd.png');
+  const logoBuf = await fetchBuf('/assets/logo/cvaard2.jpeg');
 
   // ── colours ──
   const GREEN  = '1b4d2e';
@@ -368,6 +368,8 @@ async function exportToDOCX(logos = {}) {
     right:  { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
   };
 
+  const textLines = (text, options) => String(text).split(/\r?\n/).map((line, index) => new TextRun({ ...options, text: line, ...(index ? { break: 1 } : {}) }));
+
   const cellText = (node) => {
     if (!node) return '';
     return (node.innerText || node.textContent || '').trim();
@@ -389,7 +391,7 @@ async function exportToDOCX(logos = {}) {
     const docxHead = headRows.map(tr => {
       const cells = [...tr.querySelectorAll('th, td')].map(cell => new TableCell({
         children: [new Paragraph({
-          children: [new TextRun({ text: cellText(cell), bold: true, color: GREEN, size: 18, font: { name: 'Calibri' } })],
+          children: textLines(cellText(cell), { bold: true, color: GREEN, size: 18, font: { name: 'Calibri' } }),
           alignment: AlignmentType.CENTER,
         })],
         shading: { type: ShadingType.SOLID, color: LGREEN },
@@ -405,7 +407,7 @@ async function exportToDOCX(logos = {}) {
         const isBold = cell.tagName === 'TH' || cell.style.fontWeight === 'bold' || cell.style.fontWeight >= '600';
         return new TableCell({
           children: [new Paragraph({
-            children: [new TextRun({ text: cellText(cell), bold: isBold, size: 18, color: BLACK, font: { name: 'Calibri' } })],
+            children: textLines(cellText(cell), { bold: isBold, size: 18, color: BLACK, font: { name: 'Calibri' } }),
             alignment: cell.style.textAlign === 'center' ? AlignmentType.CENTER : (cell.style.textAlign === 'right' ? AlignmentType.RIGHT : AlignmentType.LEFT),
           })],
           borders: cellBorder(),
@@ -419,7 +421,7 @@ async function exportToDOCX(logos = {}) {
     const docxFoot = footRows.map(tr => {
       const cells = [...tr.querySelectorAll('td, th')].map(cell => new TableCell({
         children: [new Paragraph({
-          children: [new TextRun({ text: cellText(cell), bold: true, size: 18, color: GREEN, font: { name: 'Calibri' } })],
+          children: textLines(cellText(cell), { bold: true, size: 18, color: GREEN, font: { name: 'Calibri' } }),
           alignment: cell.style.textAlign === 'center' ? AlignmentType.CENTER : (cell.style.textAlign === 'right' ? AlignmentType.RIGHT : AlignmentType.LEFT),
         })],
         shading: { type: ShadingType.SOLID, color: 'f1f8f1' },
@@ -580,7 +582,7 @@ async function exportToDOCX(logos = {}) {
   // Header: logo cell + divider + text cell in a borderless table
   const headerLogoCell = new TableCell({
     children: logoBuf ? [new Paragraph({
-      children: [new ImageRun({ data: new Uint8Array(logoBuf), transformation: { width: 56, height: 56 }, type: 'png' })],
+      children: [new ImageRun({ data: new Uint8Array(logoBuf), transformation: { width: 56, height: 56 }, type: 'jpg' })],
       alignment: AlignmentType.CENTER,
     })] : [new Paragraph({ children: [] })],
     borders: noBorder,

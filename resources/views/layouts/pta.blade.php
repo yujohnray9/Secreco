@@ -12,6 +12,9 @@
 <link rel="stylesheet" href="/assets/css/pta/modals.css?v=20260903"/>
 <link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=20260903"/>
 @yield('styles')
+<link rel="stylesheet" href="/assets/css/app-dialog.css?v=20261012b"/>
+<script src="/assets/js/app-dialog.js?v=1" defer></script>
+  <script src="/assets/js/report-schemas.js?v=1"></script>
 </head>
 <body>
 
@@ -165,7 +168,7 @@ function confirmSignOut() {
     type: 'red',
     onConfirm: function() {
       fetch('/api/auth/logout', { method: 'POST' }).then(() => {
-        window.location.href = '/login';
+        window.location.href = '/';
       });
     }
   });
@@ -203,7 +206,7 @@ function confirmSignOut() {
       <!-- Brand Header -->
       <div class="sidebar-brand" onclick="window.location.href='/dashboard/pta/dashboard'" style="cursor:pointer">
         <div class="brand-mark">
-          <img src="/assets/img/cvaarrd.png" alt="CVAARRD Logo" onerror="this.src='/assets/img/cvaarrd.png'"/>
+          <img src="/assets/logo/cvaard2.jpeg" alt="CVAARRD Logo" onerror="this.src='/assets/logo/cvaard2.jpeg'"/>
         </div>
         <div>
           <strong>SecReCo</strong>
@@ -228,7 +231,7 @@ function confirmSignOut() {
       </a>
       <a href="/dashboard/pta/reports" class="nav-item {{ $currentPage === 'reports' ? 'active' : '' }}">
         <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
-        Reports & Analytics
+        Consolidated Reports
       </a>
       <a href="/dashboard/pta/institutions" class="nav-item {{ $currentPage === 'institutions' ? 'active' : '' }}">
         <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
@@ -313,9 +316,7 @@ function confirmSignOut() {
         </div>
 
         <!-- Sign Out Button -->
-        <button class="signout-btn" onclick="confirmSignOut()" title="Sign Out">
-          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </button>
+        <button class="signout-btn" onclick="confirmSignOut()" title="Close and sign out" aria-label="Close and sign out"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
     </header>
 

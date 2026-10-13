@@ -70,13 +70,13 @@
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="t12-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t12-tech"     placeholder="Name of Technology"                      value="${esc(data.tech||'')}"/></td>
-      <td><input type="text" class="t12-owner"    placeholder="Technology Owner"                        value="${esc(data.owner||'')}"/></td>
+      <td><textarea rows="2" class="t12-tech"     placeholder="Name of Technology"                     >${esc(data.tech||'')}</textarea></td>
+      <td><textarea rows="2" class="t12-owner"    placeholder="Technology Owner"                       >${esc(data.owner||'')}</textarea></td>
       <td><textarea class="t12-precomm" placeholder="Pre-Commercialization Activity Undertaken"
             rows="2" style="width:100%;resize:vertical">${esc(data.precomm ?? data.pre_comm ?? data.activity ?? '')}</textarea></td>
-      <td><input type="text" class="t12-licensor" placeholder="Licensor (person / firm)"               value="${esc(data.licensor||'')}"/></td>
-      <td><input type="text" class="t12-startup"  placeholder="Start-Up (person / firm)"               value="${esc(data.startup||'')}"/></td>
-      <td><input type="text" class="t12-spinoff"  placeholder="Spin-off (person / firm)"               value="${esc(data.spinoff||'')}"/></td>
+      <td><textarea rows="2" class="t12-licensor" placeholder="Licensor (person / firm)"              >${esc(data.licensor||'')}</textarea></td>
+      <td><textarea rows="2" class="t12-startup"  placeholder="Start-Up (person / firm)"              >${esc(data.startup||'')}</textarea></td>
+      <td><textarea rows="2" class="t12-spinoff"  placeholder="Spin-off (person / firm)"              >${esc(data.spinoff||'')}</textarea></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T12._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>

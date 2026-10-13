@@ -1,7 +1,7 @@
 /**
  * t11_technologies_extended.js — Table 11: List of Technologies Extended/Deployed
  * through Various Technology Transfer Extension Modalities.
- * Columns: Name of Technology | Project Title | Implementing Agency |
+ * Columns: Name of Technology | Project Title |
  *          TT Modality → [STCBF | STC4iD | SAFE | Food Value Chain | Other extension initiatives]
  */
 
@@ -39,7 +39,6 @@
               <th class="group" rowspan="2" style="width:36px">#</th>
               <th class="group" rowspan="2">Name of Technology</th>
               <th class="group" rowspan="2">Project Title</th>
-              <th class="group" rowspan="2" style="width:170px">Implementing Agency</th>
               <th class="group" colspan="${MODALITIES.length}">Technology Transfer Modality</th>
               <th class="group" rowspan="2" style="width:36px"></th>
             </tr>
@@ -103,7 +102,7 @@
       if (key === 'others' || key === 'other_extension_initiatives') {
         const val = typeof modalities.others === 'string' ? modalities.others : (typeof modalities.other_extension_initiatives === 'string' ? modalities.other_extension_initiatives : (modalities.others || modalities.other_extension_initiatives ? '/' : ''));
         return `<td style="text-align:center">
-          <input type="text" class="t11-mod-other" data-mod="others" placeholder="Specify /" value="${esc(val)}" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:12px;"/>
+          <textarea rows="2" class="t11-mod-other" data-mod="others" placeholder="Specify /" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:12px;">${esc(val)}</textarea>
         </td>`;
       }
       return `<td style="text-align:center">
@@ -112,11 +111,11 @@
     }).join('');
 
     const tr = document.createElement('tr');
+    tr.dataset.legacyAgency = data.agency || '';
     tr.innerHTML = `
       <td class="t11-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t11-tech"    placeholder="Name of Technology"    value="${esc(data.tech||'')}"/></td>
-      <td><input type="text" class="t11-project" placeholder="Project Title"         value="${esc(data.project||'')}"/></td>
-      <td><input type="text" class="t11-agency"  placeholder="Implementing Agency"   value="${esc(data.agency||'')}"/></td>
+      <td><textarea rows="2" class="t11-tech"    placeholder="Name of Technology"   >${esc(data.tech||'')}</textarea></td>
+      <td><textarea rows="2" class="t11-project" placeholder="Project Title"        >${esc(data.project||'')}</textarea></td>
       ${modalityCells}
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T11._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
@@ -159,7 +158,7 @@
       return {
         tech:       tr.querySelector('.t11-tech')?.value    || '',
         project:    tr.querySelector('.t11-project')?.value || '',
-        agency:     tr.querySelector('.t11-agency')?.value  || '',
+        agency:     tr.dataset.legacyAgency || '',
         modalities: mods,
         modality:   activeMods.join(', '),
         stcbf:      Boolean(mods.stcbf),
@@ -203,13 +202,13 @@
      STATUS (auto-derived)
   ───────────────────────────────────────── */
   function isRowTouched(r) {
-    const hasText = ['tech', 'project', 'agency'].some(k => (r[k] || '').trim() !== '');
+    const hasText = ['tech', 'project'].some(k => (r[k] || '').trim() !== '');
     const hasMod  = r.modalities && Object.values(r.modalities).some(Boolean);
     return hasText || hasMod;
   }
 
   function isRowComplete(r) {
-    const hasText = ['tech', 'project', 'agency'].every(k => (r[k] || '').trim() !== '');
+    const hasText = ['tech', 'project'].every(k => (r[k] || '').trim() !== '');
     const hasMod  = r.modalities && Object.values(r.modalities).some(Boolean);
     return hasText && hasMod;
   }
@@ -244,7 +243,7 @@
   function save(requestedStatus) {
     const rows = collectRows();
 
-    const textFields = ['tech', 'project', 'agency'];
+    const textFields = ['tech', 'project'];
     const hasTextContent = CMIUtils.filterEmptyRows(rows, textFields).length > 0;
     const hasCheckedMod  = rows.some(r => r.modalities && Object.values(r.modalities).some(Boolean));
     if (!hasTextContent && !hasCheckedMod) {

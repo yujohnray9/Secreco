@@ -148,15 +148,15 @@
 
     tr.innerHTML = `
       <td class="t10-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t10-title"    placeholder="Program / Project Title"   value="${esc(data.title||'')}"/></td>
-      <td><input type="text" class="t10-agency"   placeholder="Agency Proponent"          value="${esc(data.agency||'')}"/></td>
-      <td><input type="text" class="t10-priority" placeholder="Regional Priority"         value="${esc(data.priority||'')}"/></td>
+      <td><textarea rows="2" class="t10-title"    placeholder="Program / Project Title"  >${esc(data.title||'')}</textarea></td>
+      <td><textarea rows="2" class="t10-agency"   placeholder="Agency Proponent"         >${esc(data.agency||'')}</textarea></td>
+      <td><textarea rows="2" class="t10-priority" placeholder="Regional Priority"        >${esc(data.priority||'')}</textarea></td>
       <td style="text-align:center">${mkChk('approved', isApp)}</td>
       <td style="text-align:center">${mkChk('for_revision', isRev)}</td>
       <td style="text-align:center">${mkChk('disapproved', isDis)}</td>
-      <td><input type="text" class="t10-duration" placeholder="Duration (if approved)"    value="${esc(data.duration||'')}"/></td>
-      <td><input type="text" class="t10-budget"   placeholder="Budget (if approved)"      value="${esc(data.budget||'')}"/></td>
-      <td><input type="text" class="t10-fund"     placeholder="Funding Source"            value="${esc(data.fund||'')}"/></td>
+      <td><textarea rows="2" class="t10-duration" placeholder="Duration (if approved)"   >${esc(data.duration||'')}</textarea></td>
+      <td><textarea rows="2" class="t10-budget"   placeholder="Budget (if approved)"     >${esc(data.budget||'')}</textarea></td>
+      <td><textarea rows="2" class="t10-fund"     placeholder="Funding Source"           >${esc(data.fund||'')}</textarea></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T10._renumber('${catKey}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>

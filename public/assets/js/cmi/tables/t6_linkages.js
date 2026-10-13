@@ -145,9 +145,9 @@
     tr.className = 'data-row';
     tr.dataset.scope = scopeKey;
     tr.innerHTML = `
-      <td><input type="text" class="t6-agency"  placeholder="Agency / Institution" value="${esc(data.agency||'')}"/></td>
-      <td><input type="text" class="t6-address" placeholder="Address"              value="${esc(data.address||'')}"/></td>
-      <td><input type="text" class="t6-year"    placeholder="Year"    style="text-align:center" value="${esc(data.year||'')}"/></td>
+      <td><textarea rows="2" class="t6-agency"  placeholder="Agency / Institution">${esc(data.agency||'')}</textarea></td>
+      <td><textarea rows="2" class="t6-address" placeholder="Address"             >${esc(data.address||'')}</textarea></td>
+      <td><textarea rows="2" class="t6-year"    placeholder="Year"    style="text-align:center">${esc(data.year||'')}</textarea></td>
       <td><textarea class="t6-nature" placeholder="Nature of Assistance / Linkages / Project"
             rows="2" style="width:100%;resize:vertical">${esc(data.nature||'')}</textarea></td>
       <td style="text-align:center">

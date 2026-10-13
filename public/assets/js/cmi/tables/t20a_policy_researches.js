@@ -61,9 +61,9 @@
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="t20a-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t20a-project"     placeholder="Policy Analysis / Advocacy Project" value="${esc(data.project||'')}"/></td>
-      <td><input type="text" class="t20a-agency"      placeholder="Agency"                              value="${esc(data.agency||'')}"/></td>
-      <td><input type="text" class="t20a-author"      placeholder="Author"                              value="${esc(data.author||'')}"/></td>
+      <td><textarea rows="2" class="t20a-project"     placeholder="Policy Analysis / Advocacy Project">${esc(data.project||'')}</textarea></td>
+      <td><textarea rows="2" class="t20a-agency"      placeholder="Agency"                             >${esc(data.agency||'')}</textarea></td>
+      <td><textarea rows="2" class="t20a-author"      placeholder="Author"                             >${esc(data.author||'')}</textarea></td>
       <td><textarea class="t20a-description" rows="2" style="width:100%;resize:vertical"
             placeholder="Description of the Project">${esc(data.description||'')}</textarea></td>
       <td><textarea class="t20a-findings" rows="2" style="width:100%;resize:vertical"

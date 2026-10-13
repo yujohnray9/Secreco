@@ -90,7 +90,7 @@
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="t3-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t3-project" placeholder="Project / Activity title" value="${esc(valProject)}"/></td>
+      <td><textarea rows="2" class="t3-project" placeholder="Project / Activity title">${esc(valProject)}</textarea></td>
       <td>
         <select class="t3-status" style="width:100%">
           <option value="">— select —</option>
@@ -98,8 +98,8 @@
           <option value="Completed"  ${valStatus==='Completed'  ?'selected':''}>Completed</option>
         </select>
       </td>
-      <td><input type="text" class="t3-duration" placeholder="e.g. Jan–Dec 2025" value="${esc(valDuration)}"/></td>
-      <td><input type="text" class="t3-fund" placeholder="e.g. DOST, PCAARRD" value="${esc(valFund)}"/></td>
+      <td><textarea rows="2" class="t3-duration" placeholder="e.g. Jan–Dec 2025">${esc(valDuration)}</textarea></td>
+      <td><textarea rows="2" class="t3-fund" placeholder="e.g. DOST, PCAARRD">${esc(valFund)}</textarea></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T3._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>

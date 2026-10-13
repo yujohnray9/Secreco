@@ -398,6 +398,18 @@ window.CMI_TABLES = (function () {
 
   };
 
+  // Use the same fields as Excel and the encoding forms.
+  Object.entries(window.REPORT_SCHEMAS || {}).forEach(([no, schema]) => {
+    if (no !== no.toUpperCase() || !TABLES[no]) return;
+    const previous = TABLES[no];
+    previous.columns = schema.columns.filter(c => c.key !== 'category').map(c => {
+      const old = previous.columns.find(x => x.key === c.key) || {};
+      return { ...old, key: c.key, label: c.header, type: c.key === 'participants' ? 'textarea' : (old.type && old.type !== 'text' ? old.type : 'textarea') };
+    });
+    if (schema.categories && !previous.categories) previous.categories = schema.categories;
+    if (no === 'T2B') { delete previous.fixedRows; previous.categories = schema.categories; }
+  });
+
   // Add lowercase/canonical key aliases for TABLES
   ['T2A', 'T2B', 'T7A', 'T7B', 'T8A', 'T8B', 'T20A', 'T20B'].forEach(k => {
     const canon = k.charAt(0) + k.slice(1).toLowerCase();

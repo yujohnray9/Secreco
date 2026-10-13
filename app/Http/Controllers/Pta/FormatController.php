@@ -228,6 +228,9 @@ class FormatController extends Controller
                 }
 
                 $ft = FormatTemplate::find($id);
+                if ($ft && isset($input['year']) && (int) $input['year'] !== (int) $ft->year) {
+                    return response()->json(['ok' => false, 'message' => 'The selected year does not match this template. Refresh and try again.'], 422);
+                }
                 if (!$ft) {
                     return response()->json(['ok' => false, 'message' => 'Template not found.']);
                 }
@@ -256,6 +259,9 @@ class FormatController extends Controller
             case 'toggle_lock':
                 $id = (int) ($input['id'] ?? 0);
                 $ft = FormatTemplate::find($id);
+                if ($ft && isset($input['year']) && (int) $input['year'] !== (int) $ft->year) {
+                    return response()->json(['ok' => false, 'message' => 'The selected year does not match this template. Refresh and try again.'], 422);
+                }
                 if (!$ft) {
                     return response()->json(['ok' => false, 'message' => 'Template not found.']);
                 }
@@ -265,7 +271,7 @@ class FormatController extends Controller
                 return response()->json([
                     'ok'        => true,
                     'is_locked' => (bool) $ft->is_locked,
-                    'message'   => "Table {$ft->table_no} is now {$stateText}."
+                    'message'   => "Table {$ft->table_no} for {$ft->year} is now {$stateText}."
                 ]);
 
             case 'delete':
@@ -275,6 +281,9 @@ class FormatController extends Controller
                 }
 
                 $ft = FormatTemplate::find($id);
+                if ($ft && isset($input['year']) && (int) $input['year'] !== (int) $ft->year) {
+                    return response()->json(['ok' => false, 'message' => 'The selected year does not match this template. Refresh and try again.'], 422);
+                }
                 if (!$ft) {
                     return response()->json(['ok' => false, 'message' => 'Template not found.']);
                 }

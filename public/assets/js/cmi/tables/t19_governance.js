@@ -59,7 +59,7 @@
       <td class="t19-num" style="text-align:center;font-weight:600"></td>
       <td><textarea class="t19-initiative" rows="2" style="width:100%;resize:vertical"
             placeholder="New Initiative">${esc(data.initiative||'')}</textarea></td>
-      <td><input type="text" class="t19-date" value="${esc(data.date||'')}" placeholder="e.g. October 2025 or Date" style="width:100%"/></td>
+      <td><textarea rows="2" class="t19-date" placeholder="e.g. October 2025 or Date" style="width:100%">${esc(data.date||'')}</textarea></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T19._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>

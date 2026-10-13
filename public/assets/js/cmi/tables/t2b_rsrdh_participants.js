@@ -71,7 +71,7 @@
         <table class="merged" style="width:100%;min-width:600px">
           <thead>
             <tr>
-              <th class="group" style="width:150px">Participants</th>
+
               <th class="group">Agency / Association</th>
               <th class="group" style="width:140px">No. of Participants</th>
               <th class="group">Remarks</th>
@@ -81,7 +81,7 @@
           <tbody id="t2b_rows"></tbody>
           <tfoot>
             <tr id="t2b_grand_total_row" style="font-weight:700;background:var(--bg-soft,#f3f6f4)">
-              <td colspan="2" style="text-align:right;padding-right:12px">Grand Total</td>
+              <td style="text-align:right;padding-right:12px">Grand Total</td>
               <td id="t2b_grand_total" style="text-align:center;color:var(--green)">—</td>
               <td colspan="2"></td>
             </tr>
@@ -121,13 +121,7 @@
     const tr = document.createElement('tr');
     tr.className = 'cat-row';
     tr.dataset.cat = cat.key;
-    tr.innerHTML = `
-      <td style="font-weight:700;background:var(--bg-soft,#f3f6f4)">${esc(cat.label)}</td>
-      <td style="background:var(--bg-soft,#f3f6f4)"></td>
-      <td id="t2b_subtotal_${cat.key}" style="text-align:center;font-weight:700;background:var(--bg-soft,#f3f6f4);color:var(--green)">—</td>
-      <td style="background:var(--bg-soft,#f3f6f4);font-size:11px;color:var(--text-muted);font-style:italic">subtotal</td>
-      <td style="background:var(--bg-soft,#f3f6f4)"></td>
-    `;
+    tr.innerHTML = `<td colspan="4" class="category-heading">${esc(cat.label)} <span style="float:right">Subtotal: <span id="t2b_subtotal_${cat.key}">—</span></span></td>`;
     return tr;
   }
 
@@ -139,13 +133,12 @@
     tr.className = 'data-row';
     tr.dataset.cat = catKey;
     tr.innerHTML = `
-      <td></td>
-      <td><input type="text" class="t2b-agency" placeholder="Agency / Association" value="${esc(data.agency||'')}"/></td>
+      <td><textarea rows="2" class="t2b-agency" placeholder="Agency / Association">${esc(data.agency||'')}</textarea></td>
       <td>
         <input type="number" class="t2b-count" min="0" placeholder="0" value="${esc(data.count||'')}"
           style="text-align:center;width:100%"/>
       </td>
-      <td><input type="text" class="t2b-remarks" placeholder="Remarks" value="${esc(data.remarks||'')}"/></td>
+      <td><textarea rows="2" class="t2b-remarks" placeholder="Remarks">${esc(data.remarks||'')}</textarea></td>
       <td style="text-align:center">
         ${removable
           ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T2b._recalc('${catKey}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`
@@ -222,6 +215,21 @@
   /* ─────────────────────────────────────────
      LOAD DATA
   ───────────────────────────────────────── */
+  function setRows(saved = []) {
+    const tbody = document.getElementById('t2b_rows');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    CATEGORIES.forEach(cat => {
+      tbody.appendChild(makeCatHeader(cat));
+      const rows = saved.filter(row => {
+        const key = String(row.category || 'go').trim().toLowerCase();
+        return key === cat.key || key === cat.label.toLowerCase();
+      });
+      (rows.length ? rows : [{}]).forEach((row, i) => tbody.appendChild(makeRow(cat.key, row, i > 0)));
+    });
+    recalcAll();
+  }
+
   function loadData() {
     const tbody = document.getElementById('t2b_rows');
     if (!tbody) return;
@@ -233,23 +241,7 @@
 
         // Group saved rows by category
         const saved = (data.rows && data.rows.length) ? data.rows : [];
-        const byCat = {};
-        CATEGORIES.forEach(cat => { byCat[cat.key] = []; });
-        saved.forEach(row => {
-          const key = row.category || CATEGORIES[0].key;
-          if (!byCat[key]) byCat[key] = [];
-          byCat[key].push(row);
-        });
-
-        // Build: header + rows for each category (min 1 row per category)
-        CATEGORIES.forEach(cat => {
-          tbody.appendChild(makeCatHeader(cat));
-          const rows = byCat[cat.key].length ? byCat[cat.key] : [{}];
-          rows.forEach((row, i) => {
-            tbody.appendChild(makeRow(cat.key, row, i > 0));
-          });
-        });
-        recalcAll();
+        setRows(saved);
 
         // documentation
         const meta = data.meta || {};
@@ -356,7 +348,9 @@
      PUBLIC (window.T2b)
   ───────────────────────────────────────── */
   window.T2b = {
-    addRow(catKey)   { addRow(catKey, {}, true); },
+    addRow(catKey, data = {}) { addRow(catKey, data, true); },
+    setRows,
+    collectRows,
     save,
     openDocs,
     _recalc(catKey)  { recalcCategory(catKey); },
@@ -369,7 +363,7 @@
   (window.CMI = window.CMI || {});
   function register() {
     if (window.CMI && CMI.registerTable) {
-      CMI.registerTable({ no: TABLE_NO, render });
+      CMI.registerTable({ no: TABLE_NO, render, setRows, collectRows });
     } else {
       setTimeout(register, 50);
     }

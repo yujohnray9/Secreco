@@ -94,9 +94,9 @@
       <td class="t9-num" style="text-align:center;font-weight:600"></td>
       <td><textarea class="t9-title"  placeholder="Title / Brief Description"
             rows="2" style="width:100%;resize:vertical">${esc(data.title||'')}</textarea></td>
-      <td><input type="text" class="t9-source"     placeholder="Project / Program Source" value="${esc(data.source||'')}"/></td>
-      <td><input type="text" class="t9-agency"     placeholder="Agency"                   value="${esc(data.agency||'')}"/></td>
-      <td><input type="text" class="t9-researcher" placeholder="Researcher(s)"            value="${esc(data.researcher||'')}"/></td>
+      <td><textarea rows="2" class="t9-source"     placeholder="Project / Program Source">${esc(data.source||'')}</textarea></td>
+      <td><textarea rows="2" class="t9-agency"     placeholder="Agency"                  >${esc(data.agency||'')}</textarea></td>
+      <td><textarea rows="2" class="t9-researcher" placeholder="Researcher(s)"           >${esc(data.researcher||'')}</textarea></td>
       <td><textarea class="t9-impact" placeholder="Potential Impact or Contribution"
             rows="2" style="width:100%;resize:vertical">${esc(data.impact||'')}</textarea></td>
       <td style="text-align:center">

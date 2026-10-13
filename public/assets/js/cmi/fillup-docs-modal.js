@@ -171,7 +171,7 @@
         return `
           <div class="dm-item" data-idx="${idx}">
             <div class="dm-thumb-wrap" style="background:#fef2f2;border:1px solid #fecaca;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:6px;width:100px;height:100px;box-sizing:border-box"
-              onclick="window.open('${esc(img.file_path)}','_blank')" title="Click to open PDF">
+              data-attachment="true" onclick="window.open('${esc(img.file_path)}','_blank')" title="Click to open PDF">
               <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#dc2626" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
               <span style="font-size:10px;font-weight:700;color:#b91c1c;margin-top:4px">PDF FILE</span>
               <span style="font-size:9.5px;color:#6b7280;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(img.caption || 'Document')}</span>
@@ -183,7 +183,7 @@
         <div class="dm-item" data-idx="${idx}">
           <div class="dm-thumb-wrap">
             <img src="${esc(img.file_path)}" class="dm-thumb"
-              onclick="window.open('${esc(img.file_path)}','_blank')"
+              data-attachment="true" onclick="window.open('${esc(img.file_path)}','_blank')"
               title="Click to view full size"/>
             ${imgDelBtn}
           </div>
@@ -215,7 +215,7 @@
   /* ─────────────────────────────────────────
      UPLOAD
   ───────────────────────────────────────── */
-  function upload(input) {
+  async function upload(input) {
     if (_isReadOnly) return;
     const files = [...input.files];
     if (!files.length) return;
@@ -229,6 +229,7 @@
       }
     }
 
+    if (!await AppDialog.confirm(`Upload ${files.length} attachment(s)?`, { title: 'Upload documentation', confirmText: 'Upload' })) { input.value = ''; return; }
     setStatus('Uploading…');
     const fd = new FormData();
     files.forEach(f => fd.append('images[]', f));
@@ -296,11 +297,12 @@
   /* ─────────────────────────────────────────
      DELETE
   ───────────────────────────────────────── */
-  function deleteImg(idx) {
+  async function deleteImg(idx) {
     if (_isReadOnly) return;
     const img = _images[idx];
     if (!img) return;
 
+    if (!await AppDialog.confirm('Delete this attachment?', { title: 'Delete attachment', confirmText: 'Delete', destructive: true })) return;
     const docId = img.id || img.doc_id;
     if (docId) {
       fetch(API_IMG_DEL, {

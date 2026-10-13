@@ -66,14 +66,14 @@
 
     tr.innerHTML = `
       <td class="t14-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t14-title"   placeholder="Title of Activity"       value="${esc(titleVal)}"/></td>
+      <td><textarea rows="2" class="t14-title"   placeholder="Title of Activity"      >${esc(titleVal)}</textarea></td>
       <td><textarea class="t14-venue" rows="2" style="width:100%;resize:vertical"
             placeholder="Date / Venue">${esc(venueVal)}</textarea></td>
-      <td><input type="number" class="t14-participants" placeholder="No. of Participants"
-            style="width:100%" value="${esc(participantsVal)}"/></td>
-      <td><input type="text" class="t14-expenditures" placeholder="Amount / Expenditures"
-            value="${esc(expendituresVal)}"/></td>
-      <td><input type="text" class="t14-funds"   placeholder="Source of Funds"         value="${esc(fundsVal)}"/></td>
+      <td><textarea rows="2" class="t14-participants" placeholder="No. of Participants"
+            style="width:100%">${esc(participantsVal)}</textarea></td>
+      <td><textarea rows="2" class="t14-expenditures" placeholder="Amount / Expenditures"
+           >${esc(expendituresVal)}</textarea></td>
+      <td><textarea rows="2" class="t14-funds"   placeholder="Source of Funds"        >${esc(fundsVal)}</textarea></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T14._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>

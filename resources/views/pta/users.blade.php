@@ -312,16 +312,9 @@ function updateAddUserInstOptions() {
       opt.dataset.origText = opt.text;
     }
 
-    const isOccupied = role === 'cmi' && ptaOccupiedInstitutions.includes(opt.value);
-    if (isOccupied) {
-      opt.disabled = true;
-      opt.text = opt.dataset.origText + ' (Occupied)';
-      opt.style.color = '#9ca3af';
-    } else {
-      opt.disabled = false;
-      opt.text = opt.dataset.origText;
-      opt.style.color = '';
-    }
+    opt.disabled = false;
+    opt.text = opt.dataset.origText;
+    opt.style.color = "";
   }
 }
 

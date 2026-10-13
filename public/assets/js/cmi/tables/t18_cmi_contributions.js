@@ -60,9 +60,9 @@
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="t18-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t18-cmi"    placeholder="Name of CMI"              value="${esc(data.cmi||'')}"/></td>
-      <td><input type="text" class="t18-amount" placeholder="Amount / In-kind / Services"
-                                                value="${esc(data.amount||'')}"/></td>
+      <td><textarea rows="2" class="t18-cmi"    placeholder="Name of CMI"             >${esc(data.cmi||'')}</textarea></td>
+      <td><textarea rows="2" class="t18-amount" placeholder="Amount / In-kind / Services"
+                                               >${esc(data.amount||'')}</textarea></td>
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T18._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>

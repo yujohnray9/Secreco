@@ -1,0 +1,4 @@
+Source: cvaard2.jpeg
+Edited with the built-in imagegen tool.
+Prompt: Remove the white exterior background and CVAARRD lettering. Preserve the green-and-yellow hexagonal agricultural emblem, its proportions, colors, outlines and interior details. Keep the yellow interior opaque. Use transparent padding; no text, shadow or added elements.
+Used on login and welcome pages. Original source retained.

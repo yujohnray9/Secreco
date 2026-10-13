@@ -6,25 +6,15 @@
 
 // ── PER CMI ───────────────────────────────────────────────────
 async function loadCMIView() {
-  // Populate dropdown — use cache or fetch from active table or /api/pta/institutions
-  if (!_cmiList || _cmiList.length === 0) {
-    try {
-      const activeTable = getTableKey();
-      if (activeTable) {
-        const json = await fetchConsolidated(activeTable);
-        _cmiList = json.data || [];
-      }
-      if (!_cmiList || !_cmiList.length) {
-        const instRes = await fetch('/api/pta/institutions');
-        const instJson = await instRes.json();
-        const instList = instJson.institutions || instJson.data || [];
-        _cmiList = instList.map(i => ({
-          institution: typeof i === 'string' ? i : (i.institution || i.name || '')
-        })).filter(c => c.institution);
-      }
-    } catch (e) {
-      console.error('[reports] loadCMIView error:', e);
-    }
+  // The master institution list includes CMIs without accounts or submissions.
+  try {
+    const response = await fetch('/api/pta/institutions?year=' + encodeURIComponent(getYear()));
+    if (!response.ok) throw new Error('Could not load institutions.');
+    const json = await response.json();
+    const names = (json.institutions || json.data || []).map(i => typeof i === 'string' ? i : (i.institution || i.name || '')).filter(Boolean);
+    _cmiList = [...new Set(names)].sort((a, b) => a.localeCompare(b)).map(institution => ({ institution }));
+  } catch (e) {
+    console.error('[reports] loadCMIView error:', e);
   }
   populateCMIDropdown();
 

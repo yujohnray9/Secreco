@@ -12,6 +12,9 @@
 <link rel="stylesheet" href="/assets/css/pta/modals.css?v=20260903"/>
 <link rel="stylesheet" href="/assets/css/pta/upload_photo.css?v=20260903"/>
 @yield('styles')
+<link rel="stylesheet" href="/assets/css/app-dialog.css?v=20261012b"/>
+<script src="/assets/js/app-dialog.js?v=1" defer></script>
+  <script src="/assets/js/report-schemas.js?v=1"></script>
 </head>
 <body>
 
@@ -133,7 +136,7 @@ function confirmSignOut() {
     type: 'red',
     onConfirm: function() {
       fetch('/api/auth/logout', { method: 'POST' }).then(() => {
-        window.location.href = '/login';
+        window.location.href = '/';
       });
     }
   });
@@ -164,7 +167,7 @@ function confirmSignOut() {
     <div class="sb-header-wrap">
       <div class="sidebar-brand">
         <div class="brand-mark">
-          <img src="/assets/img/cvaarrd.png" alt="CVAARRD Logo" onerror="this.src='/assets/img/cvaarrd.png'"/>
+          <img src="/assets/logo/cvaard2.jpeg" alt="CVAARRD Logo" onerror="this.src='/assets/logo/cvaard2.jpeg'"/>
         </div>
         <div>
           <strong>SecReCo</strong>
@@ -239,9 +242,7 @@ function confirmSignOut() {
           </div>
         </div>
 
-        <button class="signout-btn" onclick="confirmSignOut()" title="Sign Out">
-          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </button>
+        <button class="signout-btn" onclick="confirmSignOut()" title="Close and sign out" aria-label="Close and sign out"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
     </header>
 

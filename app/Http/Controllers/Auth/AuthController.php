@@ -169,14 +169,6 @@ class AuthController extends Controller
         if ($role === 'cmi') {
             if (empty($institution)) {
                 $errors[] = 'Institution is required.';
-            } else {
-                $cmiExists = User::where('role', 'cmi')
-                    ->whereRaw('LOWER(TRIM(institution)) = ?', [mb_strtolower(trim($institution))])
-                    ->whereIn('status', ['active', 'pending'])
-                    ->exists();
-                if ($cmiExists) {
-                    $errors[] = 'This institution already has a CMI Representative account (active or pending approval). Only 1 CMI account is allowed per institution.';
-                }
             }
         }
         if (!in_array($role, ['pta', 'executive']) && empty($designation)) $errors[] = 'Designation / Position is required.';
@@ -327,19 +319,6 @@ class AuthController extends Controller
         $desgValue = !empty($pending->designation) ? $pending->designation : ($role === 'executive' ? 'Executive Director' : ($role === 'pta' ? 'Project Technical Assistant II' : null));
         $status    = ($role === 'pta') ? 'active' : 'pending';
 
-        if ($role === 'cmi') {
-            $cmiExists = User::where('role', 'cmi')
-                ->whereRaw('LOWER(TRIM(institution)) = ?', [mb_strtolower(trim((string)$instValue))])
-                ->whereIn('status', ['active', 'pending'])
-                ->exists();
-            if ($cmiExists) {
-                $pending->delete();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This institution already has a CMI Representative account (active or pending approval). Only 1 CMI account is allowed per institution.'
-                ]);
-            }
-        }
 
         try {
             DB::transaction(function () use ($firstName, $lastName, $email, $hashed, $role, $instValue, $desgValue, $status, $pending) {

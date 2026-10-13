@@ -57,6 +57,30 @@ class NotificationController extends Controller
 
         $stored = $storedQuery->orderByDesc('created_at')->take(50)->get();
 
+        if ($userRole === 'cmi') {
+            // Retain notification history, but hide completed correction notices from the inbox.
+            $history = CorrectionRequest::where('cmi_user_id', $userId)
+                ->orderByDesc('created_at')->orderByDesc('id')->get();
+            $stored = $stored->reject(function ($notification) use ($history) {
+                if ($notification->type !== 'correction' || !$notification->created_at) {
+                    return false;
+                }
+                parse_str(parse_url($notification->action_url ?? '', PHP_URL_QUERY) ?? '', $target);
+                if (empty($target['table']) || empty($target['year'])) {
+                    return false;
+                }
+                $correction = $history->first(function ($request) use ($notification, $target) {
+                    return strcasecmp($request->table_no, (string) $target['table']) === 0
+                        && (int) $request->reporting_year === (int) $target['year']
+                        && $request->created_at
+                        && $request->created_at->lessThanOrEqualTo($notification->created_at);
+                });
+                return $correction && $correction->status === 'resolved'
+                    && $correction->resolved_at
+                    && $correction->resolved_at->greaterThanOrEqualTo($notification->created_at);
+            });
+        }
+
         foreach ($stored as $n) {
             $key = 'stored_' . $n->id;
             if (in_array($key, $deletedKeys, true)) {
@@ -197,7 +221,7 @@ class NotificationController extends Controller
         $uniqueNotifs = [];
         $seenKeys = [];
         foreach ($notifications as $n) {
-            $dedupKey = trim($n['msg']) . '_' . ($n['notif_type'] ?? '') . '_' . substr($n['time'] ?? '', 0, 16);
+            $dedupKey = trim($n['msg']) . '_' . ($n['notif_type'] ?? '') . '_' . ($n['action'] ?? '') . '_' . substr($n['time'] ?? '', 0, 16);
             if (!isset($seenKeys[$dedupKey])) {
                 $seenKeys[$dedupKey] = true;
                 $uniqueNotifs[] = $n;

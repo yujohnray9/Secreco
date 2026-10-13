@@ -91,11 +91,11 @@
     tr.dataset.cat = catKey;
     tr.innerHTML = `
       <td class="t2a-num" style="text-align:center;font-weight:600"></td>
-      <td><input type="text" class="t2a-title" placeholder="Title" value="${esc(data.title||'')}"/></td>
-      <td><input type="text" class="t2a-agency" placeholder="Implementing agency(ies)" value="${esc(data.agency||'')}"/></td>
-      <td><input type="text" class="t2a-researcher" placeholder="Researcher(s)" value="${esc(data.researcher||'')}"/></td>
+      <td><textarea rows="2" class="t2a-title" placeholder="Title">${esc(data.title||'')}</textarea></td>
+      <td><textarea rows="2" class="t2a-agency" placeholder="Implementing agency(ies)">${esc(data.agency||'')}</textarea></td>
+      <td><textarea rows="2" class="t2a-researcher" placeholder="Researcher(s)">${esc(data.researcher||'')}</textarea></td>
       <td><textarea class="t2a-recommendations" placeholder="Major recommendations" rows="2" style="width:100%;resize:vertical">${esc(data.recommendations||'')}</textarea></td>
-      <td><input type="text" class="t2a-winners" placeholder="Winners" value="${esc(data.winners||'')}"/></td>
+      <td><textarea rows="2" class="t2a-winners" placeholder="Winners">${esc(data.winners||'')}</textarea></td>
       <td style="text-align:center">${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T2a._renumber('${catKey}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}</td>
     `;
     return tr;

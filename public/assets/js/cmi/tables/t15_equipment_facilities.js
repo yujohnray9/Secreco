@@ -79,10 +79,10 @@
     tr.className = 't15-data-row';
     tr.dataset.cat = cat;
     tr.innerHTML = `
-      <td><input type="text" class="t15-item" placeholder="Item description" value="${esc(data.item || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
-      <td><input type="text" class="t15-location" placeholder="Location / Agency" value="${esc(data.location || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
+      <td><textarea rows="2" class="t15-item" placeholder="Item description" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px">${esc(data.item || '')}</textarea></td>
+      <td><textarea rows="2" class="t15-location" placeholder="Location / Agency" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px">${esc(data.location || '')}</textarea></td>
       <td><input type="number" step="0.01" min="0" class="t15-expense" placeholder="0.00" value="${esc(data.expense || data.expenditures || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
-      <td><input type="text" class="t15-funds" placeholder="Source(s) of Funds" value="${esc(data.funds || data.source || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
+      <td><textarea rows="2" class="t15-funds" placeholder="Source(s) of Funds" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px">${esc(data.funds || data.source || '')}</textarea></td>
       <td style="text-align:center">
         <button type="button" class="row-remove-btn" onclick="this.closest('tr').remove()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;font-weight:700;padding:0 6px;line-height:1" title="Remove row">&times;</button>
       </td>

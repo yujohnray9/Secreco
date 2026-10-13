@@ -157,7 +157,7 @@
     <script src="/assets/js/pta/renderers/render-t2a.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t2b.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t3.js?v=11"></script>
-    <script src="/assets/js/pta/renderers/render-t4.js?v=11"></script>
+    <script src="/assets/js/pta/renderers/render-t4.js?v=20261012"></script>
     <script src="/assets/js/pta/renderers/render-t5.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t6.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t7a.js?v=11"></script>
@@ -166,10 +166,10 @@
     <script src="/assets/js/pta/renderers/render-t8b.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t9.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t10.js?v=11"></script>
-    <script src="/assets/js/pta/renderers/render-t11.js?v=11"></script>
+    <script src="/assets/js/pta/renderers/render-t11.js?v=20261012"></script>
     <script src="/assets/js/pta/renderers/render-t12.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t13.js?v=11"></script>
-    <script src="/assets/js/pta/renderers/render-t14.js?v=12"></script>
+    <script src="/assets/js/pta/renderers/render-t14.js?v=20261012"></script>
     <script src="/assets/js/pta/renderers/render-t15.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t16.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t17.js?v=12"></script>
@@ -184,7 +184,7 @@
     <script src="/assets/js/pta/reports-tabledefs.js?v=9"></script>
     <script src="/assets/js/pta/reports-api.js?v=8"></script>
     <script src="/assets/js/pta/reports-view-table.js?v=8"></script>
-    <script src="/assets/js/pta/reports-view-cmi.js?v=8"></script>
-    <script src="/assets/js/pta/reports-export.js?v=8"></script>
+    <script src="/assets/js/pta/reports-view-cmi.js?v=20261012"></script>
+    <script src="/assets/js/pta/reports-export.js?v=20261012"></script>
     <script src="/assets/js/pta/reports-boot.js?v=8"></script>
     @endsection

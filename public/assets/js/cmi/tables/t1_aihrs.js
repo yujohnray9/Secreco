@@ -97,7 +97,7 @@
     const newCountVal = (data.new_ !== undefined && data.new_ !== '') ? data.new_ : ((data.new !== undefined && data.new !== '') ? data.new : '');
     tr.innerHTML = `
       <td><input type="date" class="t1-date" value="${esc(data.date||'')}"/></td>
-      <td><input type="text" class="t1-agency" placeholder="Agency name" value="${esc(data.agency||'')}"/></td>
+      <td><textarea rows="2" class="t1-agency" placeholder="Agency name">${esc(data.agency||'')}</textarea></td>
       <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(newCountVal)}"/></td>
       <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.ongoing ?? '')}"/></td>
       <td><input type="number" class="t1-num t1-calc" min="0" placeholder="0" value="${esc(data.completed ?? '')}"/></td>
