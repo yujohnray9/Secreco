@@ -1,7 +1,7 @@
     @extends('layouts.pta')
 
     @section('styles')
-    <link rel="stylesheet" href="/assets/css/pta/reports.css?v=10"/>
+    <link rel="stylesheet" href="/assets/css/pta/reports.css?v=11"/>
     <style>
     /* ── Modern FreshCart adjustments for Reports ── */
     .page-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
@@ -29,6 +29,32 @@
     .btn-primary:hover { background:#235425; }
 
     .word-preview { background:#fff; border:1px solid #e0e0e0; border-radius:10px; padding:40px 48px; font-family:'Calibri',Arial,sans-serif; font-size:13px; color:#1a1a1a; max-width:780px; margin:0 auto; box-shadow:0 4px 24px rgba(0,0,0,.08); }
+
+    /* ── On-screen dashboard: Hide the detail text tables; KEEP the top data with numbers visible ── */
+    #tableContainer .detail-table,
+    #tableContainer table.detail-table,
+    #tableContainer .detail-table-wrap,
+    #tableContainer .detail-title,
+    #tableContainer .rpt-sec-title,
+    #tableContainer .rpt-docs-section {
+      display: none !important;
+    }
+
+    /* ── Word Preview modal: KEEP everything visible (both top data/numbers & detail text) ── */
+    #wordPreviewContent .detail-table-wrap {
+      display: block !important;
+    }
+    #wordPreviewContent .detail-table,
+    #wordPreviewContent table.detail-table {
+      display: table !important;
+    }
+    #wordPreviewContent .detail-title,
+    #wordPreviewContent .rpt-sec-title {
+      display: block !important;
+    }
+    #wordPreviewContent .rpt-docs-section {
+      display: block !important;
+    }
     </style>
     @endsection
 
@@ -183,8 +209,8 @@
     <script src="/assets/js/pta/reports-renderers.js?v=11"></script>
     <script src="/assets/js/pta/reports-tabledefs.js?v=9"></script>
     <script src="/assets/js/pta/reports-api.js?v=8"></script>
-    <script src="/assets/js/pta/reports-view-table.js?v=8"></script>
+    <script src="/assets/js/pta/reports-view-table.js?v=20261020"></script>
     <script src="/assets/js/pta/reports-view-cmi.js?v=20261012"></script>
-    <script src="/assets/js/pta/reports-export.js?v=20261012"></script>
-    <script src="/assets/js/pta/reports-boot.js?v=8"></script>
+    <script src="/assets/js/pta/reports-export.js?v=20261020"></script>
+    <script src="/assets/js/pta/reports-boot.js?v=10"></script>
     @endsection

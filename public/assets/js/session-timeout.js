@@ -222,7 +222,14 @@
     if (countdownTimer) clearInterval(countdownTimer);
     if (checkInterval) clearInterval(checkInterval);
 
-    fetch('/api/auth/logout', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    fetch('/api/auth/logout?reason=inactivity', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ reason: 'inactivity' })
+    })
       .finally(() => {
         window.location.href = '/login?timeout=1';
       });

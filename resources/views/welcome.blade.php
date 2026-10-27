@@ -383,7 +383,7 @@
     </div>
     <div class="header-right">
       <div class="stat-badge">
-        <div class="num">22</div>
+        <div class="num">23</div>
         <div class="lbl">Member Institutions</div>
       </div>
       <a href="/login" class="header-btn secondary">Log In</a>
@@ -411,7 +411,7 @@
     <section class="showcase">
       <div class="showcase-heading">
         <div class="showcase-eyebrow">Consortium at a glance</div>
-        <div class="showcase-title">Twenty-Two Institutions, One Mandate</div>
+        <div class="showcase-title">Twenty-Three Institutions, One Mandate</div>
       </div>
 
       <div class="orbit-wrap" id="orbitWrap">
@@ -453,7 +453,7 @@
   <script>
   document.addEventListener('DOMContentLoaded', () => {
 
-    // ---- Institution data (all 22 members) mapped to public/assets/logo/ ----
+    // ---- Institution data (all 23 members) mapped to public/assets/logo/ ----
     const institutions = [
       { name:'Isabela State University - Echague', sub:'Echague, Isabela', logo:'isu logo new.png', tag:'State University', category:'academic', desc:'Main campus leading agro-industrial R&D, smart agriculture, and forestry innovations in Isabela.' },
       { name:'Isabela State University - Cabagan', sub:'Cabagan, Isabela', logo:'isu logo new.png', tag:'State University', category:'academic', desc:'Pioneer in environmental science, agroforestry, and biodiversity research.' },
@@ -466,6 +466,7 @@
       { name:'Watershed & Water Resources Dev Center', sub:'Region II Center', logo:'9. WWRRDEC.png', tag:'R&D Center', category:'partner', desc:'Dedicated to watershed dynamics, freshwater ecosystem sustainability, and soil preservation.' },
       { name:'Mabuwaya Foundation Inc.', sub:'San Mariano, Isabela', logo:'10. Mabuwaya-Foundation.png', tag:'NGO Partner', category:'partner', desc:'World-renowned NGO conserving the Philippine Crocodile and critical riverine habitats.' },
       { name:'Government City of Santiago', sub:'Santiago City', logo:'12. Santiago City.png', tag:'LGU Partner', category:'partner', desc:'Independent component city providing institutional synergy for agricultural commercialization.' },
+      { name:'PLGU Cagayan', sub:'Tuguegarao, Cagayan', logo:'PGU Cagayan.jpg', tag:'LGU Partner', category:'partner', desc:'Provincial Local Government Unit of Cagayan driving provincial agri-fishery initiatives, local governance, and community development partnerships.' },
       { name:'DA - Regional Field Office 2', sub:'Tuguegarao, Cagayan', logo:'4. DA.png', tag:'DA Regional', category:'agency', desc:'Department of Agriculture driving crop production, livestock, and farm modernization.' },
       { name:'DOST - Regional Office II', sub:'Tuguegarao City', logo:'19. DOST.png', tag:'DOST Regional', category:'agency', desc:'Leading science & technology transfers, innovation funding, and laboratory testing centers.' },
       { name:'BFAR - Regional Office 2', sub:'Tuguegarao City', logo:'13. BFAR.png', tag:'Fisheries R2', category:'agency', desc:'Promoting sustainable aquaculture, marine sanctuary protection, and fisherfolk livelihood.' },

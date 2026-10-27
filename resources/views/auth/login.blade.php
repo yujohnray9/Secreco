@@ -519,6 +519,7 @@
                     <option value="Watershed &amp; Water Resources Research Development and Extension Center">Watershed &amp; Water Resources Research Development and Extension Center</option>
                     <option value="Mabuwaya Foundation Inc.">Mabuwaya Foundation Inc.</option>
                     <option value="Government City of Santiago">Government City of Santiago</option>
+                    <option value="PLGU Cagayan">PLGU Cagayan</option>
                     <option value="Commission on Higher Education - Regional Office 2">Commission on Higher Education - Regional Office 2</option>
                   </select>
                 </div>

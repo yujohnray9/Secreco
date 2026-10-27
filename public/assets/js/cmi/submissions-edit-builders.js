@@ -35,11 +35,29 @@
       t.table_no.toUpperCase() === tableNo.toUpperCase() ||
       t.table_no.toUpperCase() === canon.toUpperCase()
     );
-    if (tmpl && tmpl.columns_json && Array.isArray(tmpl.columns_json) && tmpl.columns_json.length > 0) {
-      let cols = tmpl.columns_json.map(c => ({
+    let colsList = [];
+    if (tmpl && tmpl.columns_json) {
+      let rawCols = tmpl.columns_json;
+      if (typeof rawCols === 'string') {
+        try { rawCols = JSON.parse(rawCols); } catch (e) { rawCols = null; }
+      }
+      if (Array.isArray(rawCols)) {
+        colsList = rawCols;
+      } else if (rawCols && typeof rawCols === 'object') {
+        if (Array.isArray(rawCols.titles) && rawCols.titles.length > 0 && Array.isArray(rawCols.titles[0]?.columns) && rawCols.titles[0].columns.length > 0) {
+          colsList = rawCols.titles[0].columns;
+        } else if (Array.isArray(rawCols.columns) && rawCols.columns.length > 0) {
+          colsList = rawCols.columns;
+        }
+      }
+    }
+
+    if (colsList.length > 0) {
+      let cols = colsList.map(c => ({
         key: c.key || c.name || c.id,
         label: c.label || c.title || c.key || 'Column',
-        type: 'text'
+        type: c.type || 'text',
+        options: c.options || []
       }));
       if (isInternalCat) {
         cols = cols.filter(c => c.key !== 'category');

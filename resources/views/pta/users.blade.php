@@ -1,601 +1,623 @@
-@extends('layouts.pta')
+  @extends('layouts.pta')
 
-@section('styles')
-<style>
-/* ── Shared page styles ── */
-.pg-banner { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
-.pg-banner-title { font-size:22px; font-weight:700; color:#111827; letter-spacing:-.4px; }
-.pg-banner-sub   { font-size:13px; color:#6b7280; margin-top:3px; }
-.fc-card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; box-shadow:0 2px 12px rgba(16,185,129,.05); margin-bottom:24px; overflow:hidden; }
-.fc-card-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 14px; border-bottom:1px solid #f3f4f6; flex-wrap:wrap; gap:10px; }
-.fc-card-title { font-size:15px; font-weight:700; color:#111827; display:flex; align-items:center; gap:8px; }
-.fc-card-title svg { color:#10b981; }
-.fc-card-body  { padding:0; }
-.fc-table-wrap { overflow-x:auto; margin:0; }
-.fc-table { width:100%; border-collapse:collapse; font-size:13.5px; }
-.fc-table thead tr { background:#f9fafb; }
-.fc-table thead th { padding:12px 24px; text-align:left; font-size:11.5px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid #f0f0f0; white-space:nowrap; }
-.fc-table tbody tr { border-bottom:1px solid #f3f4f6; transition:background .15s; }
-.fc-table tbody tr:last-child { border-bottom:none; }
-.fc-table tbody tr:hover { background:#f9fafe; }
-.fc-table td { padding:13px 24px; color:#374151; vertical-align:middle; }
-.fc-table td strong { color:#111827; font-weight:600; }
-.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600; }
-.badge-green  { background:#ecfdf5; color:#059669; }
-.badge-orange { background:#fff7ed; color:#d97706; }
-.badge-red    { background:#fef2f2; color:#dc2626; }
-.badge-gray   { background:#f3f4f6; color:#6b7280; }
-.badge-blue   { background:#eff6ff; color:#2563eb; }
-.badge-purple { background:#f5f3ff; color:#7c3aed; }
-.btn-sm-fc { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; border:none; cursor:pointer; transition:all .15s; }
-.btn-sm-view    { background:#ecfdf5; color:#059669; }
-.btn-sm-view:hover { background:#d1fae5; }
-.btn-sm-danger  { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
-.btn-sm-danger:hover { background:#fee2e2; }
-.btn-sm-toggle  { background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; }
-.btn-sm-toggle:hover { background:#dbeafe; }
+  @section('styles')
+  <style>
+  /* ── Shared page styles ── */
+  .pg-banner { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .pg-banner-title { font-size:22px; font-weight:700; color:#111827; letter-spacing:-.4px; }
+  .pg-banner-sub   { font-size:13px; color:#6b7280; margin-top:3px; }
+  .fc-card { background:#fff; border-radius:16px; border:1px solid #f0f0f0; box-shadow:0 2px 12px rgba(16,185,129,.05); margin-bottom:24px; overflow:hidden; }
+  .fc-card-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 14px; border-bottom:1px solid #f3f4f6; flex-wrap:wrap; gap:10px; }
+  .fc-card-title { font-size:15px; font-weight:700; color:#111827; display:flex; align-items:center; gap:8px; }
+  .fc-card-title svg { color:#10b981; }
+  .fc-card-body  { padding:0; }
+  .fc-table-wrap { overflow-x:auto; margin:0; }
+  .fc-table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  .fc-table thead tr { background:#f9fafb; }
+  .fc-table thead th { padding:12px 24px; text-align:left; font-size:11.5px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid #f0f0f0; white-space:nowrap; }
+  .fc-table tbody tr { border-bottom:1px solid #f3f4f6; transition:background .15s; }
+  .fc-table tbody tr:last-child { border-bottom:none; }
+  .fc-table tbody tr:hover { background:#f9fafe; }
+  .fc-table td { padding:13px 24px; color:#374151; vertical-align:middle; }
+  .fc-table td strong { color:#111827; font-weight:600; }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600; }
+  .badge-green  { background:#ecfdf5; color:#059669; }
+  .badge-orange { background:#fff7ed; color:#d97706; }
+  .badge-red    { background:#fef2f2; color:#dc2626; }
+  .badge-gray   { background:#f3f4f6; color:#6b7280; }
+  .badge-blue   { background:#eff6ff; color:#2563eb; }
+  .badge-purple { background:#f5f3ff; color:#7c3aed; }
+  .btn-sm-fc { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; border:none; cursor:pointer; transition:all .15s; }
+  .btn-sm-view    { background:#ecfdf5; color:#059669; }
+  .btn-sm-view:hover { background:#d1fae5; }
+  .btn-sm-danger  { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+  .btn-sm-danger:hover { background:#fee2e2; }
+  .btn-sm-toggle  { background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; }
+  .btn-sm-toggle:hover { background:#dbeafe; }
 
-/* ── User Avatar ── */
-.user-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; background:#ecfdf5; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#059669; border:2px solid #a7f3d0; flex-shrink:0; }
+  /* ── User Avatar ── */
+  .user-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; background:#ecfdf5; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#059669; border:2px solid #a7f3d0; flex-shrink:0; }
 
-/* ── Add User Button ── */
-.btn-primary-fc { display:inline-flex; align-items:center; gap:7px; background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,.3); transition:all .2s; }
-.btn-primary-fc:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(16,185,129,.4); }
+  /* ── Add User Button ── */
+  .btn-primary-fc { display:inline-flex; align-items:center; gap:7px; background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,.3); transition:all .2s; }
+  .btn-primary-fc:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(16,185,129,.4); }
 
-/* ── Modal ── */
-.modal-overlay { display:none; position:fixed; inset:0; background:rgba(17,24,39,.55); backdrop-filter:blur(6px); z-index:9990; align-items:center; justify-content:center; padding:16px; }
-.modal-overlay.open { display:flex; }
-.modal-box { background:#fff; border-radius:20px; padding:28px 32px; width:100%; max-width:480px; box-shadow:0 24px 60px rgba(0,0,0,.18); max-height:90vh; overflow-y:auto; }
-.modal-title { font-size:18px; font-weight:800; color:#111827; margin-bottom:4px; display:flex; align-items:center; gap:9px; }
-.modal-title svg { color:#10b981; }
-.modal-desc { font-size:13px; color:#6b7280; margin-bottom:20px; }
-.modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
-.form-group { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
-.form-label { font-size:12.5px; font-weight:600; color:#374151; }
-.form-input, .form-select { border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 14px; font-size:13.5px; color:#111827; background:#fafafa; outline:none; font-family:inherit; transition:all .15s; width:100%; box-sizing:border-box; }
-.form-input:focus, .form-select:focus { border-color:#10b981; background:#fff; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
-.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.btn-cancel { background:#f3f4f6; color:#374151; border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
-.btn-cancel:hover { background:#e5e7eb; }
+  /* ── Modal ── */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(17,24,39,.55); backdrop-filter:blur(6px); z-index:9990; align-items:center; justify-content:center; padding:16px; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:#fff; border-radius:20px; padding:28px 32px; width:100%; max-width:480px; box-shadow:0 24px 60px rgba(0,0,0,.18); max-height:90vh; overflow-y:auto; }
+  .modal-title { font-size:18px; font-weight:800; color:#111827; margin-bottom:4px; display:flex; align-items:center; gap:9px; }
+  .modal-title svg { color:#10b981; }
+  .modal-desc { font-size:13px; color:#6b7280; margin-bottom:20px; }
+  .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
+  .form-group { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+  .form-label { font-size:12.5px; font-weight:600; color:#374151; }
+  .form-input, .form-select { border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 14px; font-size:13.5px; color:#111827; background:#fafafa; outline:none; font-family:inherit; transition:all .15s; width:100%; box-sizing:border-box; }
+  .form-input:focus, .form-select:focus { border-color:#10b981; background:#fff; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .btn-cancel { background:#f3f4f6; color:#374151; border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+  .btn-cancel:hover { background:#e5e7eb; }
 
-/* ── Temp password success box ── */
-.temp-pw-box { background:#f0fdf4; border:1px solid #a7f3d0; border-radius:12px; padding:16px; margin-top:16px; display:none; }
-.temp-pw-label { font-size:12px; color:#6b7280; margin-bottom:4px; }
-.temp-pw-val { font-size:17px; font-weight:800; color:#059669; letter-spacing:.05em; font-family:monospace; }
+  /* ── Temp password success box ── */
+  .temp-pw-box { background:#f0fdf4; border:1px solid #a7f3d0; border-radius:12px; padding:16px; margin-top:16px; display:none; }
+  .temp-pw-label { font-size:12px; color:#6b7280; margin-bottom:4px; }
+  .temp-pw-val { font-size:17px; font-weight:800; color:#059669; letter-spacing:.05em; font-family:monospace; }
 
-@media (max-width: 640px) {
-  .pg-banner { flex-direction: column; align-items: stretch; gap: 12px; }
-  .pg-banner .btn-primary-fc { align-self: flex-start; }
-  .modal-box { padding: 20px 16px; }
-  .form-row { grid-template-columns: 1fr; }
-  .fc-table thead th, .fc-table td { padding: 10px 12px; }
-}
-</style>
-@endsection
+  @media (max-width: 640px) {
+    .pg-banner { flex-direction: column; align-items: stretch; gap: 12px; }
+    .pg-banner .btn-primary-fc { align-self: flex-start; }
+    .modal-box { padding: 20px 16px; }
+    .form-row { grid-template-columns: 1fr; }
+    .fc-table thead th, .fc-table td { padding: 10px 12px; }
+  }
+  </style>
+  @endsection
 
-@section('content')
-<div class="page active" id="page-users">
+  @section('content')
+  <div class="page active" id="page-users">
 
-  <div class="pg-banner">
-    <div>
-      <div class="pg-banner-title">User Management</div>
-      <div class="pg-banner-sub">Manage system users, CMI representatives, and pending account approvals</div>
-    </div>
-    <button class="btn-primary-fc" onclick="openAddUserModal()">
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="8.5" cy="7" r="4"/>
-        <line x1="20" y1="8" x2="20" y2="14"/>
-        <line x1="23" y1="11" x2="17" y2="11"/>
-      </svg>
-      Add User
-    </button>
-  </div>
-
-  <!-- Pending Approvals Card -->
-  <div class="fc-card">
-    <div class="fc-card-head" style="gap:12px;flex-wrap:wrap">
-      <div class="fc-card-title">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    <div class="pg-banner">
+      <div>
+        <div class="pg-banner-title">User Management</div>
+        <div class="pg-banner-sub">Manage system users, CMI representatives, and pending account approvals</div>
+      </div>
+      <button class="btn-primary-fc" onclick="openAddUserModal()">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <line x1="20" y1="8" x2="20" y2="14"/>
+          <line x1="23" y1="11" x2="17" y2="11"/>
         </svg>
-        Pending Account Approvals
-        <span class="badge badge-orange" id="pendingCount" style="margin-left:6px">—</span>
-      </div>
-      <div style="position:relative;width:240px;" id="pendingSearchWrap">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input type="text" id="pendingSearchInput" placeholder="Filter pending by name, email..."
-          style="width:100%;box-sizing:border-box;padding:7px 10px 7px 32px;border:1px solid #d1d5db;border-radius:9px;font-size:12.5px;outline:none;background:#f9fafb;transition:all .15s;"
-          onfocus="this.style.borderColor='#d97706';this.style.background='#fff';"
-          onblur="this.style.borderColor='#d1d5db';this.style.background='#f9fafb';"
-          oninput="filterPendingTable()" />
-      </div>
+        Add User
+      </button>
     </div>
-    <div class="fc-card-body">
-      <div class="fc-table-wrap">
-        <table class="fc-table">
-          <thead>
-            <tr>
-              <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th style="text-align:center">Action</th>
-            </tr>
-          </thead>
-          <tbody id="pendingTbody">
-            <tr><td colspan="6" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading pending users...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
 
-  <!-- Active Users Card -->
-  <div class="fc-card">
-    <div class="fc-card-head" style="gap:12px;flex-wrap:wrap">
-      <div class="fc-card-title">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-        Active Users
-        <span class="badge badge-green" id="activeCount" style="margin-left:6px">—</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div style="position:relative;width:260px;">
+    <!-- Pending Approvals Card -->
+    <div class="fc-card">
+      <div class="fc-card-head" style="gap:12px;flex-wrap:wrap">
+        <div class="fc-card-title">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          Pending Account Approvals
+          <span class="badge badge-orange" id="pendingCount" style="margin-left:6px">—</span>
+        </div>
+        <div style="position:relative;width:240px;" id="pendingSearchWrap">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-          <input type="text" id="userSearchInput" placeholder="Filter by name, email..."
+          <input type="text" id="pendingSearchInput" placeholder="Filter pending by name, email..."
             style="width:100%;box-sizing:border-box;padding:7px 10px 7px 32px;border:1px solid #d1d5db;border-radius:9px;font-size:12.5px;outline:none;background:#f9fafb;transition:all .15s;"
-            onfocus="this.style.borderColor='#10b981';this.style.background='#fff';"
+            onfocus="this.style.borderColor='#d97706';this.style.background='#fff';"
             onblur="this.style.borderColor='#d1d5db';this.style.background='#f9fafb';"
-            oninput="filterUsersTable()" />
+            oninput="filterPendingTable()" />
         </div>
-        <select id="userRoleFilter" onchange="filterUsersTable()"
-          style="border:1px solid #d1d5db;border-radius:9px;padding:7px 10px;font-size:12.5px;background:#f9fafb;outline:none;color:#374151;cursor:pointer;">
-          <option value="">All Roles</option>
-          <option value="cmi">CMI Representative</option>
-          <option value="executive">Executive</option>
-          <option value="viewer">Guest</option>
-        </select>
+      </div>
+      <div class="fc-card-body">
+        <div class="fc-table-wrap">
+          <table class="fc-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th style="text-align:center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="pendingTbody">
+              <tr><td colspan="6" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading pending users...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-    <div class="fc-card-body">
-      <div class="fc-table-wrap">
-        <table class="fc-table">
-          <thead>
-            <tr>
-              <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Status</th><th style="text-align:center">Action</th>
-            </tr>
-          </thead>
-          <tbody id="activeTbody">
-            <tr><td colspan="7" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading active users...</td></tr>
-          </tbody>
-        </table>
+
+    <!-- Active Users Card -->
+    <div class="fc-card">
+      <div class="fc-card-head" style="gap:12px;flex-wrap:wrap">
+        <div class="fc-card-title">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Active Users
+          <span class="badge badge-green" id="activeCount" style="margin-left:6px">—</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="position:relative;width:260px;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="userSearchInput" placeholder="Filter by name, email..."
+              style="width:100%;box-sizing:border-box;padding:7px 10px 7px 32px;border:1px solid #d1d5db;border-radius:9px;font-size:12.5px;outline:none;background:#f9fafb;transition:all .15s;"
+              onfocus="this.style.borderColor='#10b981';this.style.background='#fff';"
+              onblur="this.style.borderColor='#d1d5db';this.style.background='#f9fafb';"
+              oninput="filterUsersTable()" />
+          </div>
+          <select id="userRoleFilter" onchange="filterUsersTable()"
+            style="border:1px solid #d1d5db;border-radius:9px;padding:7px 10px;font-size:12.5px;background:#f9fafb;outline:none;color:#374151;cursor:pointer;">
+            <option value="">All Roles</option>
+            <option value="cmi">CMI Representative</option>
+            <option value="executive">Executive</option>
+            <option value="viewer">Guest</option>
+          </select>
+        </div>
+      </div>
+      <div class="fc-card-body">
+        <div class="fc-table-wrap">
+          <table class="fc-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Position</th><th>Status</th><th style="text-align:center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="activeTbody">
+              <tr><td colspan="7" style="text-align:center;padding:32px 24px;color:#9ca3af">Loading active users...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+
   </div>
 
-</div>
-
-<!-- ═══ ADD USER MODAL ═══ -->
-<div class="modal-overlay" id="modalAddUser">
-  <div class="modal-box">
-    <div class="modal-title">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="8.5" cy="7" r="4"/>
-        <line x1="20" y1="8" x2="20" y2="14"/>
-        <line x1="23" y1="11" x2="17" y2="11"/>
-      </svg>
-      Add New User
-    </div>
-    <div class="modal-desc">Create a user account directly. A temporary password will be generated — share it with the user.</div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">First Name <span style="color:#ef4444">*</span></label>
-        <input class="form-input" id="addUserFirstName" placeholder="e.g. Juan"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Last Name <span style="color:#ef4444">*</span></label>
-        <input class="form-input" id="addUserLastName" placeholder="e.g. Dela Cruz"/>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Email Address <span style="color:#ef4444">*</span></label>
-      <input class="form-input" id="addUserEmail" type="email" placeholder="user@institution.gov.ph"/>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Role <span style="color:#ef4444">*</span></label>
-        <select class="form-select" id="addUserRole" onchange="onRoleChange()">
-          <option value="cmi">CMI Representative</option>
-          <option value="executive">Executive</option>
-          <option value="viewer">Guest</option>
-        </select>
-      </div>
-      <div class="form-group" id="addUserInstGroup">
-        <label class="form-label">Institution</label>
-        <select class="form-select" id="addUserInstitution">
-          <option value="">— Select institution —</option>
-          <option value="Isabela State University - Echague">Isabela State University - Echague</option>
-          <option value="Isabela State University - Cabagan">Isabela State University - Cabagan</option>
-          <option value="Batanes State College">Batanes State College</option>
-          <option value="Cagayan State University">Cagayan State University</option>
-          <option value="Nueva Vizcaya State University">Nueva Vizcaya State University</option>
-          <option value="Quirino State University">Quirino State University</option>
-          <option value="University of La Salette">University of La Salette</option>
-          <option value="DA - Agricultural Training Institute Region II">DA - Agricultural Training Institute Region II</option>
-          <option value="DA - Regional Field Office 2">DA - Regional Field Office 2</option>
-          <option value="Bureau of Fisheries &amp; Aquatic Resources - R2">Bureau of Fisheries &amp; Aquatic Resources - R2</option>
-          <option value="Department of Environment and Natural Resources - Region II">Department of Environment and Natural Resources - Region II</option>
-          <option value="Department of Science and Technology - Region II">Department of Science and Technology - Region II</option>
-          <option value="Department of Trade and Industry - Region II">Department of Trade and Industry - Region II</option>
-          <option value="Department of Economy, Planning and Development - Region II">Department of Economy, Planning and Development - Region II</option>
-          <option value="National Tobacco Administration">National Tobacco Administration</option>
-          <option value="DA - Philippine Rice Research Institute - Isabela">DA - Philippine Rice Research Institute - Isabela</option>
-          <option value="Philippine Council for Agriculture, Aquatic and Natural Resources Research and Development">Philippine Council for Agriculture, Aquatic and Natural Resources Research and Development</option>
-          <option value="DA - Bureau of Agricultural Research">DA - Bureau of Agricultural Research</option>
-          <option value="Watershed &amp; Water Resources Research Development and Extension Center">Watershed &amp; Water Resources Research Development and Extension Center</option>
-          <option value="Mabuwaya Foundation Inc.">Mabuwaya Foundation Inc.</option>
-          <option value="Government City of Santiago">Government City of Santiago</option>
-          <option value="Commission on Higher Education - Regional Office 2">Commission on Higher Education - Regional Office 2</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Position</label>
-      <input class="form-input" id="addUserPosition" placeholder="e.g. Research Specialist"/>
-    </div>
-
-    <!-- Temp password display after creation -->
-    <div class="temp-pw-box" id="tempPwBox">
-      <div class="temp-pw-label">User created! Temporary password (share securely):</div>
-      <div class="temp-pw-val" id="tempPwVal"></div>
-      <div style="font-size:11px;color:#9ca3af;margin-top:6px">The user must change this password after first login.</div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal('modalAddUser')">Cancel</button>
-      <button class="btn-primary-fc" id="addUserSubmitBtn" onclick="submitAddUser()">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  <!-- ═══ ADD USER MODAL ═══ -->
+  <div class="modal-overlay" id="modalAddUser">
+    <div class="modal-box">
+      <div class="modal-title">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <line x1="20" y1="8" x2="20" y2="14"/>
+          <line x1="23" y1="11" x2="17" y2="11"/>
         </svg>
-        Create User
-      </button>
+        Add New User
+      </div>
+      <div class="modal-desc">Create a user account directly. A temporary password will be generated — share it with the user.</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name <span style="color:#ef4444">*</span></label>
+          <input class="form-input" id="addUserFirstName" placeholder="e.g. Juan"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name <span style="color:#ef4444">*</span></label>
+          <input class="form-input" id="addUserLastName" placeholder="e.g. Dela Cruz"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address <span style="color:#ef4444">*</span></label>
+        <input class="form-input" id="addUserEmail" type="email" placeholder="user@institution.gov.ph"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Role <span style="color:#ef4444">*</span></label>
+          <select class="form-select" id="addUserRole" onchange="onRoleChange()">
+            <option value="cmi">CMI Representative</option>
+            <option value="executive">Executive</option>
+            <option value="viewer">Guest</option>
+          </select>
+        </div>
+        <div class="form-group" id="addUserInstGroup">
+          <label class="form-label">Institution</label>
+          <select class="form-select" id="addUserInstitution">
+            <option value="">— Select institution —</option>
+            <option value="Isabela State University - Echague">Isabela State University - Echague</option>
+            <option value="Isabela State University - Cabagan">Isabela State University - Cabagan</option>
+            <option value="Batanes State College">Batanes State College</option>
+            <option value="Cagayan State University">Cagayan State University</option>
+            <option value="Nueva Vizcaya State University">Nueva Vizcaya State University</option>
+            <option value="Quirino State University">Quirino State University</option>
+            <option value="University of La Salette">University of La Salette</option>
+            <option value="DA - Agricultural Training Institute Region II">DA - Agricultural Training Institute Region II</option>
+            <option value="DA - Regional Field Office 2">DA - Regional Field Office 2</option>
+            <option value="Bureau of Fisheries &amp; Aquatic Resources - R2">Bureau of Fisheries &amp; Aquatic Resources - R2</option>
+            <option value="Department of Environment and Natural Resources - Region II">Department of Environment and Natural Resources - Region II</option>
+            <option value="Department of Science and Technology - Region II">Department of Science and Technology - Region II</option>
+            <option value="Department of Trade and Industry - Region II">Department of Trade and Industry - Region II</option>
+            <option value="Department of Economy, Planning and Development - Region II">Department of Economy, Planning and Development - Region II</option>
+            <option value="National Tobacco Administration">National Tobacco Administration</option>
+            <option value="DA - Philippine Rice Research Institute - Isabela">DA - Philippine Rice Research Institute - Isabela</option>
+            <option value="Philippine Council for Agriculture, Aquatic and Natural Resources Research and Development">Philippine Council for Agriculture, Aquatic and Natural Resources Research and Development</option>
+            <option value="DA - Bureau of Agricultural Research">DA - Bureau of Agricultural Research</option>
+            <option value="Watershed &amp; Water Resources Research Development and Extension Center">Watershed &amp; Water Resources Research Development and Extension Center</option>
+            <option value="Mabuwaya Foundation Inc.">Mabuwaya Foundation Inc.</option>
+            <option value="Government City of Santiago">Government City of Santiago</option>
+            <option value="PLGU Cagayan">PLGU Cagayan</option>
+            <option value="Commission on Higher Education - Regional Office 2">Commission on Higher Education - Regional Office 2</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Position</label>
+        <input class="form-input" id="addUserPosition" placeholder="e.g. Research Specialist"/>
+      </div>
+
+      <!-- Temp password display after creation -->
+      <div class="temp-pw-box" id="tempPwBox">
+        <div class="temp-pw-label">User created! Temporary password (share securely):</div>
+        <div class="temp-pw-val" id="tempPwVal"></div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:6px">The user must change this password after first login.</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('modalAddUser')">Cancel</button>
+        <button class="btn-primary-fc" id="addUserSubmitBtn" onclick="submitAddUser()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Create User
+        </button>
+      </div>
     </div>
   </div>
-</div>
-@endsection
+  @endsection
 
-@section('scripts')
-<script>
-function initials(name) {
-  return name ? name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase() : '?';
-}
-
-function formatRoleLabel(role) {
-  const r = (role || '').toLowerCase();
-  if (r === 'cmi') return 'CMI Representative';
-  if (r === 'viewer' || r === 'guest') return 'Guest';
-  if (r === 'executive') return 'Executive';
-  if (r === 'pta') return 'Project Technical Assistant II';
-  return role || '—';
-}
-
-let ptaOccupiedInstitutions = [];
-
-async function loadPtaOccupiedInstitutions() {
-  try {
-    const res  = await fetch('/api/auth/occupied-institutions');
-    const data = await res.json();
-    if (data.success && Array.isArray(data.occupied)) {
-      ptaOccupiedInstitutions = data.occupied;
-      updateAddUserInstOptions();
-    }
-  } catch(e) {
-    console.error('Error loading occupied institutions:', e);
+  @section('scripts')
+  <script>
+  function initials(name) {
+    return name ? name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase() : '?';
   }
-}
 
-function updateAddUserInstOptions() {
-  const select = document.getElementById('addUserInstitution');
-  const role   = document.getElementById('addUserRole')?.value;
-  if (!select) return;
-
-  for (let i = 0; i < select.options.length; i++) {
-    const opt = select.options[i];
-    if (!opt.value) continue;
-
-    if (!opt.dataset.origText) {
-      opt.dataset.origText = opt.text;
-    }
-
-    opt.disabled = false;
-    opt.text = opt.dataset.origText;
-    opt.style.color = "";
+  function formatRoleLabel(role) {
+    const r = (role || '').toLowerCase();
+    if (r === 'cmi') return 'CMI Representative';
+    if (r === 'viewer' || r === 'guest') return 'Guest';
+    if (r === 'executive') return 'Executive';
+    if (r === 'pta') return 'Project Technical Assistant II';
+    return role || '—';
   }
-}
 
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-  // Reset form if it's the add user modal
-  if (id === 'modalAddUser') {
-    ['addUserFirstName','addUserLastName','addUserEmail','addUserInstitution','addUserPosition'].forEach(f => {
-      const el = document.getElementById(f);
-      if (el) el.value = '';
-    });
-    document.getElementById('addUserRole').value = 'cmi';
-    document.getElementById('tempPwBox').style.display = 'none';
+  let ptaOccupiedInstitutions = [];
+
+  async function loadPtaOccupiedInstitutions() {
+    try {
+      const res  = await fetch('/api/auth/occupied-institutions');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.occupied)) {
+        ptaOccupiedInstitutions = data.occupied;
+        updateAddUserInstOptions();
+      }
+    } catch(e) {
+      console.error('Error loading occupied institutions:', e);
+    }
+  }
+
+  function updateAddUserInstOptions() {
+    const select = document.getElementById('addUserInstitution');
+    const role   = document.getElementById('addUserRole')?.value;
+    if (!select) return;
+
+    for (let i = 0; i < select.options.length; i++) {
+      const opt = select.options[i];
+      if (!opt.value) continue;
+
+      if (!opt.dataset.origText) {
+        opt.dataset.origText = opt.text;
+      }
+
+      opt.disabled = false;
+      opt.text = opt.dataset.origText;
+      opt.style.color = "";
+    }
+  }
+
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    // Reset form if it's the add user modal
+    if (id === 'modalAddUser') {
+      ['addUserFirstName','addUserLastName','addUserEmail','addUserInstitution','addUserPosition'].forEach(f => {
+        const el = document.getElementById(f);
+        if (el) el.value = '';
+      });
+      document.getElementById('addUserRole').value = 'cmi';
+      document.getElementById('tempPwBox').style.display = 'none';
+      onRoleChange();
+    }
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', function(e){ if(e.target===this) closeModal(this.id); }));
+
+  function onRoleChange() {
+    const role = document.getElementById('addUserRole').value;
+    const instGroup = document.getElementById('addUserInstGroup');
+    if (instGroup) instGroup.style.display = role === 'cmi' ? '' : 'none';
+    updateAddUserInstOptions();
+  }
+
+  function openAddUserModal() {
+    openModal('modalAddUser');
+    loadPtaOccupiedInstitutions();
     onRoleChange();
   }
-}
 
-document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', function(e){ if(e.target===this) closeModal(this.id); }));
+  let cachedActiveUsers = [];
+  let cachedPendingUsers = [];
 
-function onRoleChange() {
-  const role = document.getElementById('addUserRole').value;
-  const instGroup = document.getElementById('addUserInstGroup');
-  if (instGroup) instGroup.style.display = role === 'cmi' ? '' : 'none';
-  updateAddUserInstOptions();
-}
-
-function openAddUserModal() {
-  openModal('modalAddUser');
-  loadPtaOccupiedInstitutions();
-  onRoleChange();
-}
-
-let cachedActiveUsers = [];
-let cachedPendingUsers = [];
-
-function formatDisplayDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  } catch(e) {
-    return dateStr;
-  }
-}
-
-function matchesUserSearch(u, query) {
-  if (!query) return true;
-  const q = query.trim().toLowerCase();
-  const cleanNum = q.replace(/^(id\s*[:#-]?\s*|#)/i, '').trim();
-
-  const idStr = String(u.id || '');
-  const idMatch = (cleanNum !== '' && (idStr === cleanNum || idStr.includes(cleanNum))) || idStr.includes(q) || ('#' + idStr).includes(q);
-
-  const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).toLowerCase();
-  const email = (u.email || '').toLowerCase();
-  const inst = (u.institution || '').toLowerCase();
-  const pos = (u.position || u.designation || '').toLowerCase();
-  const role = (u.role || '').toLowerCase();
-
-  return idMatch || fullName.includes(q) || email.includes(q) || inst.includes(q) || pos.includes(q) || role.includes(q);
-}
-
-function renderPendingUsers(pending) {
-  const pTbody = document.getElementById('pendingTbody');
-  if (!pTbody) return;
-  document.getElementById('pendingCount').textContent = pending.length + ' pending';
-
-  if (pending.length === 0) {
-    pTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px 24px;color:#9ca3af">
-      <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 10px">
-        <circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/>
-      </svg>No pending accounts matching filter.
-    </td></tr>`;
-    return;
-  }
-
-  pTbody.innerHTML = pending.map(u => {
-    const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).trim();
-    return `
-      <tr>
-        <td>
-          <div style="display:flex;align-items:center;gap:10px">
-            <div class="user-avatar">${initials(fullName)}</div>
-            <strong>${fullName}</strong>
-          </div>
-        </td>
-        <td style="color:#6b7280">${u.email}</td>
-        <td><span class="badge badge-purple">${formatRoleLabel(u.role)}</span></td>
-        <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
-        <td>${u.designation || u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
-        <td style="display:flex;gap:6px;justify-content:center">
-          <button class="btn-sm-fc btn-sm-view" onclick="approveUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', 'approve')">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Approve
-          </button>
-          <button class="btn-sm-fc btn-sm-danger" onclick="approveUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', 'reject')">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function filterPendingTable() {
-  const query = (document.getElementById('pendingSearchInput')?.value || '').trim();
-  const filtered = cachedPendingUsers.filter(u => matchesUserSearch(u, query));
-  renderPendingUsers(filtered);
-}
-
-function renderActiveUsers(users) {
-  const aTbody = document.getElementById('activeTbody');
-  if (!aTbody) return;
-  document.getElementById('activeCount').textContent = users.length + ' users';
-
-  if (users.length === 0) {
-    aTbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px 24px;color:#9ca3af">No registered users matching filter.</td></tr>';
-    return;
-  }
-
-  aTbody.innerHTML = users.map(u => {
-    const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).trim();
-    return `
-      <tr>
-        <td>
-          <div style="display:flex;align-items:center;gap:10px">
-            <div class="user-avatar">${initials(fullName)}</div>
-            <strong>${fullName}</strong>
-          </div>
-        </td>
-        <td style="color:#6b7280">${u.email}</td>
-        <td><span class="badge badge-blue">${formatRoleLabel(u.role)}</span></td>
-        <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
-        <td>${u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
-        <td><span class="badge ${u.status==='Active' ? 'badge-green' : 'badge-red'}">${u.status}</span></td>
-        <td style="text-align:center">
-          <button class="btn-sm-fc ${u.status==='Active' ? 'btn-sm-danger' : 'btn-sm-toggle'}"
-            onclick="toggleUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', '${u.status==='Active' ? 'inactive' : 'active'}')">
-            ${u.status==='Active' ? 'Deactivate' : 'Activate'}
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function filterUsersTable() {
-  const query = (document.getElementById('userSearchInput')?.value || '').trim();
-  const selectedRole = (document.getElementById('userRoleFilter')?.value || '').toLowerCase();
-
-  const filtered = cachedActiveUsers.filter(u => {
-    if (selectedRole) {
-      const uRole = (u.role || '').toLowerCase();
-      const mappedRole = uRole === 'guest' ? 'viewer' : uRole;
-      if (mappedRole !== selectedRole && !formatRoleLabel(u.role).toLowerCase().includes(selectedRole)) {
-        return false;
-      }
+  function formatDisplayDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch(e) {
+      return dateStr;
     }
-    return matchesUserSearch(u, query);
-  });
+  }
 
-  renderActiveUsers(filtered);
-}
+  function matchesUserSearch(u, query) {
+    if (!query) return true;
+    const q = query.trim().toLowerCase();
+    const cleanNum = q.replace(/^(id\s*[:#-]?\s*|#)/i, '').trim();
 
-async function submitAddUser() {
-  const firstName = document.getElementById('addUserFirstName').value.trim();
-  const lastName  = document.getElementById('addUserLastName').value.trim();
-  const email     = document.getElementById('addUserEmail').value.trim();
-  const role      = document.getElementById('addUserRole').value;
-  const inst      = document.getElementById('addUserInstitution')?.value?.trim() || '';
-  const position  = document.getElementById('addUserPosition').value.trim();
+    const idStr = String(u.id || '');
+    const idMatch = (cleanNum !== '' && (idStr === cleanNum || idStr.includes(cleanNum))) || idStr.includes(q) || ('#' + idStr).includes(q);
 
-  if (!firstName || !lastName) { showToast('First and last name are required.'); return; }
-  if (!email) { showToast('Email is required.'); return; }
+    const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const inst = (u.institution || '').toLowerCase();
+    const pos = (u.position || u.designation || '').toLowerCase();
+    const role = (u.role || '').toLowerCase();
 
-  if (role === 'cmi') {
-    if (!inst) { showToast('Institution is required for CMI Representatives.'); return; }
-    if (ptaOccupiedInstitutions.includes(inst)) {
-      showToast('This institution already has a CMI Representative account.');
+    return idMatch || fullName.includes(q) || email.includes(q) || inst.includes(q) || pos.includes(q) || role.includes(q);
+  }
+
+  function renderPendingUsers(pending) {
+    const pTbody = document.getElementById('pendingTbody');
+    if (!pTbody) return;
+    document.getElementById('pendingCount').textContent = pending.length + ' pending';
+
+    if (pending.length === 0) {
+      pTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px 24px;color:#9ca3af">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#d1d5db" stroke-width="1.5" style="display:block;margin:0 auto 10px">
+          <circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/>
+        </svg>No pending accounts matching filter.
+      </td></tr>`;
       return;
     }
+
+    pTbody.innerHTML = pending.map(u => {
+      const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).trim();
+      return `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="user-avatar">${initials(fullName)}</div>
+              <strong>${fullName}</strong>
+            </div>
+          </td>
+          <td style="color:#6b7280">${u.email}</td>
+          <td><span class="badge badge-purple">${formatRoleLabel(u.role)}</span></td>
+          <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
+          <td>${u.designation || u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
+          <td style="display:flex;gap:6px;justify-content:center">
+            <button class="btn-sm-fc btn-sm-view" onclick="approveUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', 'approve')">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Approve
+            </button>
+            <button class="btn-sm-fc btn-sm-danger" onclick="approveUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', 'reject')">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
   }
 
-  const btn = document.getElementById('addUserSubmitBtn');
-  btn.disabled = true;
-  btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 0.8s linear infinite;display:inline-block;vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg> Creating...`;
+  function filterPendingTable() {
+    const query = (document.getElementById('pendingSearchInput')?.value || '').trim();
+    const filtered = cachedPendingUsers.filter(u => matchesUserSearch(u, query));
+    renderPendingUsers(filtered);
+  }
 
-  try {
-    const res  = await fetch('/api/pta/users/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        first_name  : firstName,
-        last_name   : lastName,
-        name        : firstName + ' ' + lastName,
-        email,
-        role,
-        institution : inst,
-        position,
-      })
+  function renderActiveUsers(users) {
+    const aTbody = document.getElementById('activeTbody');
+    if (!aTbody) return;
+    document.getElementById('activeCount').textContent = users.length + ' users';
+
+    if (users.length === 0) {
+      aTbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px 24px;color:#9ca3af">No registered users matching filter.</td></tr>';
+      return;
+    }
+
+    aTbody.innerHTML = users.map(u => {
+      const fullName = (u.name || ((u.first_name || '') + ' ' + (u.last_name || ''))).trim();
+      return `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="user-avatar">${initials(fullName)}</div>
+              <strong>${fullName}</strong>
+            </div>
+          </td>
+          <td style="color:#6b7280">${u.email}</td>
+          <td><span class="badge badge-blue">${formatRoleLabel(u.role)}</span></td>
+          <td>${(u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? '—' : (u.institution || '—')}</td>
+          <td>${u.position || ((u.role === 'executive' || (u.role && u.role.toLowerCase() === 'executive')) ? 'Executive Director' : '—')}</td>
+          <td><span class="badge ${u.status==='Active' ? 'badge-green' : 'badge-red'}">${u.status}</span></td>
+          <td style="text-align:center">
+            <button class="btn-sm-fc ${u.status==='Active' ? 'btn-sm-danger' : 'btn-sm-toggle'}"
+              onclick="toggleUser(${u.id}, '${fullName.replace(/'/g, "\\'")}', '${u.status==='Active' ? 'inactive' : 'active'}')">
+              ${u.status==='Active' ? 'Deactivate' : 'Activate'}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function filterUsersTable() {
+    const query = (document.getElementById('userSearchInput')?.value || '').trim();
+    const roleSel = document.getElementById('userRoleFilter');
+    const selectedRole = (roleSel?.value || '').toLowerCase();
+
+    try {
+      const u = new URL(window.location);
+      if (selectedRole) {
+        u.searchParams.set('role', selectedRole);
+        localStorage.setItem('secreco_user_role_filter', selectedRole);
+      } else {
+        u.searchParams.delete('role');
+        localStorage.removeItem('secreco_user_role_filter');
+      }
+      window.history.replaceState({}, '', u);
+    } catch(e){}
+
+    const filtered = cachedActiveUsers.filter(u => {
+      if (selectedRole) {
+        const uRole = (u.role || '').toLowerCase();
+        const mappedRole = uRole === 'guest' ? 'viewer' : uRole;
+        if (mappedRole !== selectedRole && !formatRoleLabel(u.role).toLowerCase().includes(selectedRole)) {
+          return false;
+        }
+      }
+      return matchesUserSearch(u, query);
     });
-    const json = await res.json();
 
-    if (json.success) {
-      document.getElementById('tempPwVal').textContent = json.temp_password;
-      document.getElementById('tempPwBox').style.display = 'block';
-      showToast('User created successfully!');
-      btn.disabled = false;
-      btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Done`;
-      btn.onclick = function() {
-        btn.disabled = true;
-        btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 0.8s linear infinite;display:inline-block;vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg> Closing...`;
-        setTimeout(() => {
-          closeModal('modalAddUser');
-          btn.disabled = false;
-          btn.onclick = submitAddUser;
-          btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create User`;
-        }, 300);
-      };
-      loadUsers();
-    } else {
-      showToast(json.error || json.message || 'Failed to create user.');
+    renderActiveUsers(filtered);
+  }
+
+  async function submitAddUser() {
+    const firstName = document.getElementById('addUserFirstName').value.trim();
+    const lastName  = document.getElementById('addUserLastName').value.trim();
+    const email     = document.getElementById('addUserEmail').value.trim();
+    const role      = document.getElementById('addUserRole').value;
+    const inst      = document.getElementById('addUserInstitution')?.value?.trim() || '';
+    const position  = document.getElementById('addUserPosition').value.trim();
+
+    if (!firstName || !lastName) { showToast('First and last name are required.'); return; }
+    if (!email) { showToast('Email is required.'); return; }
+
+    if (role === 'cmi') {
+      if (!inst) { showToast('Institution is required for CMI Representatives.'); return; }
+      if (ptaOccupiedInstitutions.includes(inst)) {
+        showToast('This institution already has a CMI Representative account.');
+        return;
+      }
+    }
+
+    const btn = document.getElementById('addUserSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 0.8s linear infinite;display:inline-block;vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg> Creating...`;
+
+    try {
+      const res  = await fetch('/api/pta/users/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name  : firstName,
+          last_name   : lastName,
+          name        : firstName + ' ' + lastName,
+          email,
+          role,
+          institution : inst,
+          position,
+        })
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        document.getElementById('tempPwVal').textContent = json.temp_password;
+        document.getElementById('tempPwBox').style.display = 'block';
+        showToast('User created successfully!');
+        btn.disabled = false;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Done`;
+        btn.onclick = function() {
+          btn.disabled = true;
+          btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 0.8s linear infinite;display:inline-block;vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg> Closing...`;
+          setTimeout(() => {
+            closeModal('modalAddUser');
+            btn.disabled = false;
+            btn.onclick = submitAddUser;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create User`;
+          }, 300);
+        };
+        loadUsers();
+      } else {
+        showToast(json.error || json.message || 'Failed to create user.');
+        btn.disabled = false;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create User`;
+      }
+    } catch(e) {
+      showToast('Network error. Please try again.');
       btn.disabled = false;
       btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create User`;
     }
-  } catch(e) {
-    showToast('Network error. Please try again.');
-    btn.disabled = false;
-    btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create User`;
   }
-}
 
-async function loadUsers() {
-  try {
-    // --- Pending ---
-    const pRes   = await fetch('/api/pta/users/pending');
-    const pJson  = await pRes.json();
-    cachedPendingUsers = pJson.pending || [];
-    filterPendingTable();
+  async function loadUsers() {
+    try {
+      // --- Pending ---
+      const pRes   = await fetch('/api/pta/users/pending');
+      const pJson  = await pRes.json();
+      cachedPendingUsers = pJson.pending || [];
+      filterPendingTable();
 
-    // --- Active ---
-    const uRes   = await fetch('/api/pta/users');
-    const uJson  = await uRes.json();
-    cachedActiveUsers = Array.isArray(uJson) ? uJson : [];
-    filterUsersTable();
+      // --- Active ---
+      const uRes   = await fetch('/api/pta/users');
+      const uJson  = await uRes.json();
+      cachedActiveUsers = Array.isArray(uJson) ? uJson : [];
+      filterUsersTable();
 
-    loadPtaOccupiedInstitutions();
-  } catch(e) { console.error('Users load error:', e); }
-}
+      loadPtaOccupiedInstitutions();
+    } catch(e) { console.error('Users load error:', e); }
+  }
 
-window.approveUser = function(id, userName, action) {
-  showConfirmModal({
-    title: action === 'approve' ? 'Approve User Account?' : 'Reject User Request?',
-    message: `Are you sure you want to ${action} the account for ${userName}?`,
-    confirmText: action === 'approve' ? 'Approve User' : 'Reject Request',
-    type: action === 'approve' ? 'green' : 'red',
-    onConfirm: async function() {
-      const res  = await fetch('/api/pta/users/approve-user', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user_id:id, action}) });
-      const json = await res.json();
-      showToast(json.message || 'Done');
-      loadUsers();
+  window.approveUser = function(id, userName, action) {
+    showConfirmModal({
+      title: action === 'approve' ? 'Approve User Account?' : 'Reject User Request?',
+      message: `Are you sure you want to ${action} the account for ${userName}?`,
+      confirmText: action === 'approve' ? 'Approve User' : 'Reject Request',
+      type: action === 'approve' ? 'green' : 'red',
+      onConfirm: async function() {
+        const res  = await fetch('/api/pta/users/approve-user', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user_id:id, action}) });
+        const json = await res.json();
+        showToast(json.message || 'Done');
+        loadUsers();
+      }
+    });
+  };
+
+  window.toggleUser = function(id, userName, newStatus) {
+    showConfirmModal({
+      title: newStatus === 'active' ? 'Activate User Account?' : 'Deactivate User Account?',
+      message: `Are you sure you want to set account status for ${userName} to ${newStatus}?`,
+      confirmText: newStatus === 'active' ? 'Activate' : 'Deactivate',
+      type: newStatus === 'active' ? 'green' : 'red',
+      onConfirm: async function() {
+        const res  = await fetch('/api/pta/users/toggle-user-status', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user_id:id, new_status:newStatus}) });
+        const json = await res.json();
+        showToast(json.message || 'Done');
+        loadUsers();
+      }
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const savedRole = urlParams.get('role') || localStorage.getItem('secreco_user_role_filter');
+    const roleSel = document.getElementById('userRoleFilter');
+    if (roleSel && savedRole) {
+      roleSel.value = savedRole;
     }
+    loadUsers();
   });
-};
-
-window.toggleUser = function(id, userName, newStatus) {
-  showConfirmModal({
-    title: newStatus === 'active' ? 'Activate User Account?' : 'Deactivate User Account?',
-    message: `Are you sure you want to set account status for ${userName} to ${newStatus}?`,
-    confirmText: newStatus === 'active' ? 'Activate' : 'Deactivate',
-    type: newStatus === 'active' ? 'green' : 'red',
-    onConfirm: async function() {
-      const res  = await fetch('/api/pta/users/toggle-user-status', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user_id:id, new_status:newStatus}) });
-      const json = await res.json();
-      showToast(json.message || 'Done');
-      loadUsers();
-    }
-  });
-};
-
-document.addEventListener('DOMContentLoaded', loadUsers);
-</script>
-@endsection
+  </script>
+  @endsection

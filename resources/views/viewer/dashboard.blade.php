@@ -465,21 +465,63 @@ async function loadPtaDashboard(year) {
 
 document.addEventListener('DOMContentLoaded', async function () {
   const yrFilter = document.getElementById('ptaDashYearFilter');
+  const urlParams = new URLSearchParams(window.location.search);
+  const rawUrlYear = urlParams.get('year');
+  const urlYear = rawUrlYear ? parseInt(rawUrlYear, 10) : null;
+  let storedYear = null;
   try {
-    const fRes = await fetch('/api/formats');
+    const rawStored = localStorage.getItem('secreco_selected_year');
+    if (rawStored) storedYear = parseInt(rawStored, 10);
+  } catch(e){}
+
+  try {
+    const fRes = await fetch('/api/formats?include_drafts=1');
     const fData = await fRes.json();
-    if (fData && fData.years && Array.isArray(fData.years) && fData.years.length > 0) {
-      const activeYr = fData.active_year || new Date().getFullYear();
-      if (yrFilter) {
-        yrFilter.innerHTML = fData.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
-        currentPtaDashYear = yrFilter.value;
-      }
+    const backendYears = [
+      ...(Array.isArray(fData.all_years) ? fData.all_years : []),
+      ...(Array.isArray(fData.years) ? fData.years : []),
+      fData.active_year
+    ].map(y => parseInt(y, 10)).filter(y => !isNaN(y) && y >= 2000);
+
+    let targetYr = null;
+    if (urlYear && !isNaN(urlYear) && urlYear >= 2000) {
+      targetYr = urlYear;
+    } else if (storedYear && !isNaN(storedYear) && storedYear >= 2000) {
+      targetYr = storedYear;
+    } else if (fData.active_year && !isNaN(parseInt(fData.active_year, 10))) {
+      targetYr = parseInt(fData.active_year, 10);
+    } else if (backendYears.length > 0) {
+      targetYr = Math.max(...backendYears);
+    } else {
+      targetYr = new Date().getFullYear();
     }
+
+    const yearList = [...new Set([...backendYears, targetYr])].sort((a,b) => b - a);
+    currentPtaDashYear = targetYr;
+
+    if (yrFilter) {
+      yrFilter.innerHTML = yearList.map(y => `<option value="${y}" ${y === targetYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+      yrFilter.value = String(targetYr);
+    }
+    try {
+      localStorage.setItem('secreco_selected_year', String(targetYr));
+      const u = new URL(window.location);
+      u.searchParams.set('year', targetYr);
+      window.history.replaceState({}, '', u);
+    } catch(e){}
   } catch(err) {}
 
   if (yrFilter) {
     yrFilter.addEventListener('change', function () {
-      loadPtaDashboard(this.value);
+      const yr = parseInt(this.value, 10) || new Date().getFullYear();
+      try {
+        localStorage.setItem('secreco_selected_year', String(yr));
+        const u = new URL(window.location);
+        u.searchParams.set('year', yr);
+        window.history.replaceState({}, '', u);
+      } catch(err){}
+      currentPtaDashYear = yr;
+      loadPtaDashboard(yr);
     });
   }
 

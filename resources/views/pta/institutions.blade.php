@@ -209,11 +209,16 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#10b981" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           All Tables (<span id="detailTablesCount">24</span>)
         </div>
-        <div style="display:inline-flex;align-items:center;gap:6px;border:1px solid #d1d5db;border-radius:8px;padding:5px 12px;background:#fff;">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <select id="detailYearSel" onchange="onDetailYearChange()" style="border:none;background:transparent;outline:none;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
-            <option value="2026">CY 2026</option>
-          </select>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <a id="detailFillOutBtn" href="#" style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;" title="Fill out report for this institution">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out Report
+          </a>
+          <div style="display:inline-flex;align-items:center;gap:6px;border:1px solid #d1d5db;border-radius:8px;padding:5px 12px;background:#fff;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <select id="detailYearSel" onchange="onDetailYearChange()" style="border:none;background:transparent;outline:none;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
+              <option value="2026">CY 2026</option>
+            </select>
+          </div>
         </div>
       </div>
       
@@ -221,11 +226,12 @@
         <table class="fc-table" style="width:100%;border-collapse:collapse;">
           <thead>
             <tr style="background:#00875a;color:#ffffff;">
-              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:12%;border:none;">TABLE</th>
-              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:35%;border:none;">TITLE</th>
-              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:23%;border:none;">STATUS</th>
-              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:12%;border:none;">ROWS</th>
-              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:18%;border:none;">UPDATED</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:10%;border:none;">TABLE</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:32%;border:none;">TITLE</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:20%;border:none;">STATUS</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:10%;border:none;">ROWS</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:14%;border:none;">UPDATED</th>
+              <th style="padding:13px 20px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#fff;width:14%;border:none;text-align:center;">ACTION</th>
             </tr>
           </thead>
           <tbody id="detailTablesTbody">
@@ -254,6 +260,12 @@ function setView(v) {
   document.getElementById('viewTable').style.display = v === 'table' ? 'block' : 'none';
   document.getElementById('btnCardView').classList.toggle('active', v === 'cards');
   document.getElementById('btnTableView').classList.toggle('active', v === 'table');
+  try {
+    localStorage.setItem('secreco_pta_inst_view', v);
+    const u = new URL(window.location);
+    u.searchParams.set('view', v);
+    window.history.replaceState({}, '', u);
+  } catch(e){}
 }
 
 function statusBadgeClass(s) {
@@ -289,10 +301,9 @@ function renderCards(data) {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:6px;flex-wrap:wrap">
           <span class="badge ${badgeClass}">${inst.status}</span>
           <div style="display:flex;gap:6px">
-            ${lockedTables.length > 0 ? `
-            <a href="/dashboard/cmi/fillup?year=${currentYear}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name)}&table=${lockedTables[0]}" style="display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;transition:all .15s" title="Fill out locked tables for this institution">
+            <a href="/dashboard/cmi/fillup?year=${currentYear}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name)}&table=${(lockedTables && lockedTables.length > 0) ? lockedTables[0] : 'T1'}" style="display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;transition:all .15s" title="Fill out report for this institution">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out
-            </a>` : ''}
+            </a>
             <button type="button" onclick="openInstDetail('${instEsc}')" style="display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
             </button>
@@ -335,10 +346,9 @@ function renderTable(data) {
         <td><span class="badge ${badgeClass}">${inst.status}</span></td>
         <td>
           <div style="display:flex;gap:6px">
-            ${lockedTables.length > 0 ? `
-            <a href="/dashboard/cmi/fillup?year=${currentYear}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name)}&table=${lockedTables[0]}" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;" title="Fill out locked tables for this institution">
+            <a href="/dashboard/cmi/fillup?year=${currentYear}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name)}&table=${(lockedTables && lockedTables.length > 0) ? lockedTables[0] : 'T1'}" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;" title="Fill out report for this institution">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out
-            </a>` : ''}
+            </a>
             <button type="button" onclick="openInstDetail('${instEsc}')" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='#ecfdf5'">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
             </button>
@@ -353,9 +363,12 @@ window.backToInstList = function() {
   document.getElementById('viewInstDetail').style.display = 'none';
   document.getElementById('viewInstMain').style.display = 'block';
   loadInstitutions(currentYear);
-  if (history.pushState) {
-    history.pushState(null, null, window.location.pathname + `?year=${currentYear}`);
-  }
+  try {
+    const u = new URL(window.location);
+    u.searchParams.delete('institution');
+    u.searchParams.delete('inst');
+    window.history.replaceState({}, '', u);
+  } catch(e){}
 };
 
 async function loadInstitutions(year) {
@@ -388,18 +401,24 @@ window.openInstDetail = async function(instName, selectedYear) {
   const year = selectedYear || (yearSel ? yearSel.value : currentYear);
   if (yearSel && year) yearSel.value = year;
 
+  try {
+    const u = new URL(window.location);
+    u.searchParams.set('institution', instName);
+    window.history.replaceState({}, '', u);
+  } catch(e){}
+
   document.getElementById('viewInstMain').style.display = 'none';
   document.getElementById('viewInstDetail').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   const tbody = document.getElementById('detailTablesTbody');
-  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:36px;color:#9ca3af">Loading institution details...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:36px;color:#9ca3af">Loading institution details...</td></tr>';
 
   try {
     const res = await fetch(`/api/pta/institutions/details?institution=${encodeURIComponent(instName)}&year=${year}`);
     const json = await res.json();
     if (!json.ok) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:36px;color:#ef4444">Failed to load institution details.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:36px;color:#ef4444">Failed to load institution details.</td></tr>';
       return;
     }
 
@@ -421,8 +440,14 @@ window.openInstDetail = async function(instName, selectedYear) {
       logoEl.style.display = 'block';
     }
 
-    // Render 24 tables with exact pill and column layout from screenshot
     const tables = json.tables || [];
+    const firstTarget = (lockedTables && lockedTables.length > 0) ? lockedTables[0] : (tables[0]?.table_no || 'T1');
+    const topDetailBtn = document.getElementById('detailFillOutBtn');
+    if (topDetailBtn) {
+      topDetailBtn.href = `/dashboard/cmi/fillup?year=${year}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name || instName)}&table=${encodeURIComponent(firstTarget)}`;
+    }
+
+    // Render 24 tables with exact pill and column layout plus Action Fill Out
     tbody.innerHTML = tables.map(t => {
       let statusPill = '';
       if (t.status === 'Submitted') {
@@ -440,13 +465,18 @@ window.openInstDetail = async function(instName, selectedYear) {
           <td style="padding:13px 20px;">${statusPill}</td>
           <td style="padding:13px 20px;color:#4b5563;">${t.rows}</td>
           <td style="padding:13px 20px;color:#4b5563;">${t.updated}</td>
+          <td style="padding:13px 20px;text-align:center;">
+            <a href="/dashboard/cmi/fillup?year=${year}&cmi_user_id=${inst.user_id||''}&inst=${encodeURIComponent(inst.name || instName)}&table=${encodeURIComponent(t.table_no)}" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;background:var(--forest,#075b42);color:#fff;text-decoration:none;" title="Fill out ${t.table_no} for this institution">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out
+            </a>
+          </td>
         </tr>
       `;
     }).join('');
 
   } catch(e) {
     console.error('Error fetching inst details:', e);
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:36px;color:#ef4444">Error loading details.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:36px;color:#ef4444">Error loading details.</td></tr>';
   }
 };
 
@@ -465,30 +495,54 @@ window.onDetailYearChange = function() {
 document.addEventListener('DOMContentLoaded', async function () {
   try {
     const urlParams = new URLSearchParams(window.location.search);
-    const urlYear = urlParams.get('year');
+    const urlYear = urlParams.get('year') ? parseInt(urlParams.get('year')) : null;
+    let storedYear = null;
+    try { storedYear = parseInt(localStorage.getItem('secreco_selected_year')); } catch(e){}
 
     const yrFilter = document.getElementById('instYearFilter');
     const detailYearSel = document.getElementById('detailYearSel');
 
     // Populate Year Selectors
     try {
-      const fRes = await fetch('/api/formats');
+      const fRes = await fetch('/api/formats?include_drafts=1');
       const fData = await fRes.json();
-      if (fData && fData.years && Array.isArray(fData.years) && fData.years.length > 0) {
-        const availableYears = fData.years.map(y => parseInt(y));
+      const backendYears = [
+        ...(Array.isArray(fData.all_years) ? fData.all_years : []),
+        ...(Array.isArray(fData.years) ? fData.years : []),
+        fData.active_year
+      ].map(y => parseInt(y, 10)).filter(y => !isNaN(y) && y >= 2000);
 
-        if (urlYear && availableYears.includes(parseInt(urlYear))) {
-          currentYear = parseInt(urlYear);
-        } else if (fData.active_year && availableYears.includes(parseInt(fData.active_year))) {
-          currentYear = parseInt(fData.active_year);
-        } else {
-          currentYear = availableYears[0] || new Date().getFullYear();
-        }
-
-        const optionsHtml = fData.years.map(y => `<option value="${y}" ${parseInt(y) === currentYear ? 'selected' : ''}>CY ${y}</option>`).join('');
-        if (yrFilter) yrFilter.innerHTML = optionsHtml;
-        if (detailYearSel) detailYearSel.innerHTML = optionsHtml;
+      let targetYr = null;
+      if (urlYear && !isNaN(urlYear) && urlYear >= 2000) {
+        targetYr = urlYear;
+      } else if (storedYear && !isNaN(storedYear) && storedYear >= 2000) {
+        targetYr = storedYear;
+      } else if (fData.active_year && !isNaN(parseInt(fData.active_year, 10))) {
+        targetYr = parseInt(fData.active_year, 10);
+      } else if (backendYears.length > 0) {
+        targetYr = Math.max(...backendYears);
+      } else {
+        targetYr = new Date().getFullYear();
       }
+
+      const availableYears = [...new Set([...backendYears, targetYr])].sort((a,b) => b - a);
+      currentYear = targetYr;
+
+      const optionsHtml = availableYears.map(y => `<option value="${y}" ${y === targetYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+      if (yrFilter) {
+        yrFilter.innerHTML = optionsHtml;
+        yrFilter.value = String(targetYr);
+      }
+      if (detailYearSel) {
+        detailYearSel.innerHTML = optionsHtml;
+        detailYearSel.value = String(targetYr);
+      }
+      try {
+        localStorage.setItem('secreco_selected_year', String(targetYr));
+        const u = new URL(window.location);
+        u.searchParams.set('year', targetYr);
+        window.history.replaceState({}, '', u);
+      } catch(e){}
     } catch(err) {
       if (urlYear) currentYear = parseInt(urlYear);
     }
@@ -496,10 +550,21 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (yrFilter) {
       yrFilter.addEventListener('change', function () {
         currentYear = parseInt(this.value);
+        try {
+          localStorage.setItem('secreco_selected_year', String(currentYear));
+          const u = new URL(window.location);
+          u.searchParams.set('year', currentYear);
+          window.history.replaceState({}, '', u);
+        } catch(e){}
         const detailYearSel = document.getElementById('detailYearSel');
         if (detailYearSel) detailYearSel.value = this.value;
         loadInstitutions(currentYear);
       });
+    }
+
+    const savedView = urlParams.get('view') || localStorage.getItem('secreco_pta_inst_view');
+    if (savedView === 'table' || savedView === 'cards') {
+      setView(savedView);
     }
 
     await loadInstitutions(currentYear);

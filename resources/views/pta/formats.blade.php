@@ -524,7 +524,7 @@
     let formatLoadSequence = 0;
     async function loadFormats(year) {
       const sequence = ++formatLoadSequence;
-      const url = year ? `/api/pta/formats?year=${year}` : `/api/pta/formats`;
+      const url = year ? `/api/pta/formats?year=${year}&include_drafts=1` : `/api/pta/formats?include_drafts=1`;
       const res  = await fetch(url);
       const json = await res.json();
       if (sequence !== formatLoadSequence) return;
@@ -532,7 +532,12 @@
       cachedTemplates = templates;
       const actualYear = json.year || json.active_year || year || 2025;
       fmtCurrentYear = actualYear;
-      try { localStorage.setItem('secreco_selected_year', String(actualYear)); } catch(e){}
+      try {
+        localStorage.setItem('secreco_selected_year', String(actualYear));
+        const u = new URL(window.location);
+        u.searchParams.set('year', actualYear);
+        window.history.replaceState({}, '', u);
+      } catch(e){}
       allYears = json.years || [actualYear];
       if (!allYears.includes(actualYear)) {
         allYears.push(actualYear);
@@ -1006,7 +1011,7 @@
           mainTitle = titlesData[0].title;
           colsData = JSON.stringify({
             titles: titlesData,
-            categories: [titlesData[0].title],
+            categories: [],
             columns: titlesData[0].columns
           });
         } else {
@@ -1155,7 +1160,7 @@
         mainTitle = titlesData[0].title;
         colsData = JSON.stringify({
           titles: titlesData,
-          categories: [titlesData[0].title],
+          categories: [],
           columns: titlesData[0].columns
         });
       } else {
@@ -1287,12 +1292,33 @@
     const searchFmt = document.getElementById('fmtSearchInput');
     if (searchFmt) searchFmt.addEventListener('input', renderFormatsTable);
     const secFmt = document.getElementById('fmtSectionFilter');
-    if (secFmt) secFmt.addEventListener('change', renderFormatsTable);
+    if (secFmt) {
+      secFmt.addEventListener('change', () => {
+        try {
+          const u = new URL(window.location);
+          if (secFmt.value) {
+            u.searchParams.set('section', secFmt.value);
+          } else {
+            u.searchParams.delete('section');
+          }
+          window.history.replaceState({}, '', u);
+        } catch(e){}
+        renderFormatsTable();
+      });
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const urlYear = parseInt(new URLSearchParams(window.location.search).get('year'));
-      const storedYear = parseInt(localStorage.getItem('secreco_selected_year'));
-      const initialYear = urlYear || storedYear || null;
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlYear = parseInt(urlParams.get('year'), 10);
+      let storedYear = null;
+      try { storedYear = parseInt(localStorage.getItem('secreco_selected_year'), 10); } catch(e){}
+      const initialYear = (!isNaN(urlYear) && urlYear > 0) ? urlYear : ((!isNaN(storedYear) && storedYear > 0) ? storedYear : null);
+
+      const urlSection = urlParams.get('section');
+      if (urlSection && secFmt) {
+        secFmt.value = urlSection;
+      }
+
       loadFormats(initialYear);
     });
     </script>

@@ -399,6 +399,12 @@
         if (tDef && (hasCustomCols || !def)) {
             const canonicalNo = tDef.table_no || canon || sNo;
             window._cmiActiveTable = canonicalNo;
+            try {
+                localStorage.setItem('cmi_fillup_table', canonicalNo);
+                const u = new URL(window.location);
+                u.searchParams.set('table', canonicalNo);
+                window.history.replaceState({}, '', u);
+            } catch(e){}
             renderFillNav();
             renderDynamicTable(canonicalNo, tDef, body);
             if (window.CMIExcel && typeof window.CMIExcel.renderToolbar === 'function') {
@@ -419,6 +425,12 @@
         if (def) {
             const canonicalNo = def.no || canon || sNo;
             window._cmiActiveTable = canonicalNo;
+            try {
+                localStorage.setItem('cmi_fillup_table', canonicalNo);
+                const u = new URL(window.location);
+                u.searchParams.set('table', canonicalNo);
+                window.history.replaceState({}, '', u);
+            } catch(e){}
             renderFillNav();
             def.render(body);
             if (window.CMIExcel && typeof window.CMIExcel.renderToolbar === 'function') {
@@ -464,13 +476,18 @@
             if (Array.isArray(parsed)) {
                 cols = parsed;
             } else if (typeof parsed === "object") {
-                if (Array.isArray(parsed.titles) && parsed.titles.length > 0) {
+                if (Array.isArray(parsed.titles) && parsed.titles.length > 1) {
                     categories = parsed.titles.map(t => String(t.title || '').trim()).filter(Boolean);
                     if (Array.isArray(parsed.titles[0]?.columns) && parsed.titles[0].columns.length > 0) {
                         cols = parsed.titles[0].columns;
                     }
+                } else if (Array.isArray(parsed.titles) && parsed.titles.length === 1) {
+                    categories = [];
+                    if (Array.isArray(parsed.titles[0]?.columns) && parsed.titles[0].columns.length > 0) {
+                        cols = parsed.titles[0].columns;
+                    }
                 }
-                if (Array.isArray(parsed.categories) && categories.length === 0) {
+                if (Array.isArray(parsed.categories) && parsed.categories.length > 1 && categories.length === 0) {
                     categories = parsed.categories.map(c => String(c).trim()).filter(Boolean);
                 }
                 if (Array.isArray(parsed.columns) && cols.length === 0) {

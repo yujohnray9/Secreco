@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\PendingRegistration;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use App\Services\MailService;
 use App\Services\RateLimitService;
 use Illuminate\Http\JsonResponse;
@@ -30,15 +31,35 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $ip = $request->ip();
+        $email    = trim($request->input('email', ''));
+        $password = $request->input('password', '');
+        $user = $email ? User::where('email', $email)->first() : null;
+        $userDisplay = $user ? ActivityLogService::formatUserDisplay($user) : ($email ? "{$email} (Unknown)" : "Unknown");
 
         // Rate limiting check
         if ($rlMessage = $this->rateLimitService->checkRateLimit($ip)) {
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'Request to /login',
+                outcome: 'Blocked (rate limit)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'Rate limit blocked login request'
+            );
             return response()->json(['success' => false, 'message' => $rlMessage]);
         }
 
         // reCAPTCHA verification
         $recaptchaToken = trim($request->input('g_recaptcha_response') ?? $request->input('g-recaptcha-response', ''));
         if (empty($recaptchaToken)) {
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'Login attempt',
+                outcome: 'Failed (reCAPTCHA)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'Failed login attempt: missing reCAPTCHA token'
+            );
             return response()->json(['success' => false, 'message' => 'Please complete the reCAPTCHA challenge.']);
         }
 
@@ -59,25 +80,52 @@ class AuthController extends Controller
 
         if (!$captchaValid) {
             $this->rateLimitService->recordFailure($ip);
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'Login attempt',
+                outcome: 'Failed (reCAPTCHA)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'Failed login attempt: invalid reCAPTCHA'
+            );
             return response()->json(['success' => false, 'message' => 'reCAPTCHA verification failed. Please try again.']);
         }
 
         // Credential validation
-        $email    = trim($request->input('email', ''));
-        $password = $request->input('password', '');
-
         if (empty($email) || empty($password)) {
+            ActivityLogService::logAudit(
+                userId: null,
+                action: 'Login attempt',
+                outcome: 'Failed (invalid credentials)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'Failed login attempt: missing email or password'
+            );
             return response()->json(['success' => false, 'message' => 'Email and password are required.']);
         }
 
-        $user = User::where('email', $email)->first();
-
         if (!$user || !Hash::check($password, $user->password)) {
             $this->rateLimitService->recordFailure($ip);
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'Login attempt',
+                outcome: 'Failed (invalid credentials)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'Failed login attempt: invalid credentials'
+            );
             return response()->json(['success' => false, 'message' => 'Invalid email or password.']);
         }
 
         if ($user->status !== 'active') {
+            ActivityLogService::logAudit(
+                userId: $user->id,
+                action: 'Login attempt',
+                outcome: 'Denied (RBAC)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: "Login denied: user status is {$user->status}"
+            );
             return response()->json([
                 'success' => false,
                 'message' => 'Your Account is Deactivated. Please contact the Project technical assistant II for assistance.'
@@ -89,6 +137,15 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+
+        ActivityLogService::logAudit(
+            userId: $user->id,
+            action: 'Login attempt',
+            outcome: 'Success',
+            userDisplay: $userDisplay,
+            ipAddress: $ip,
+            description: 'User successfully logged in'
+        );
 
         session([
             'user_id'    => $user->id,
@@ -113,6 +170,32 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
+        $user = Auth::user() ?? (session()->has('user_id') ? User::find(session('user_id')) : null);
+        $reason = $request->input('reason') ?? $request->query('reason');
+        $ip = $request->ip();
+
+        if ($user) {
+            if ($reason === 'inactivity') {
+                ActivityLogService::logAudit(
+                    userId: $user->id,
+                    action: 'Session ended after inactivity',
+                    outcome: 'Expired (inactivity)',
+                    userDisplay: ActivityLogService::formatUserDisplay($user),
+                    ipAddress: $ip,
+                    description: 'User session expired after inactivity timeout'
+                );
+            } else {
+                ActivityLogService::logAudit(
+                    userId: $user->id,
+                    action: 'Logout',
+                    outcome: 'Success',
+                    userDisplay: ActivityLogService::formatUserDisplay($user),
+                    ipAddress: $ip,
+                    description: 'User logged out'
+                );
+            }
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -230,13 +313,38 @@ class AuthController extends Controller
         $action = $request->input('action', 'verify');
         $email  = trim($request->input('email', ''));
         $otp    = trim($request->input('otp', ''));
+        $ip     = $request->ip();
 
         if (empty($email)) {
             return response()->json(['success' => false, 'message' => 'Email is required.']);
         }
 
+        $pending = PendingRegistration::where('email', $email)->first();
+        $user = User::where('email', $email)->first();
+
+        // Format user display
+        $userDisplay = null;
+        if ($user) {
+            $userDisplay = ActivityLogService::formatUserDisplay($user);
+        } elseif ($pending) {
+            $inst = $pending->institution ?? '';
+            $suffix = 'CMI';
+            if ($inst) {
+                if (str_contains($inst, '-')) {
+                    $parts = explode('-', $inst);
+                    $suffix = 'CMI ' . trim(end($parts));
+                } elseif ($pending->last_name) {
+                    $suffix = 'CMI ' . trim($pending->last_name);
+                }
+            } elseif ($pending->role) {
+                $suffix = strtoupper($pending->role);
+            }
+            $userDisplay = "{$email} ({$suffix})";
+        } else {
+            $userDisplay = "{$email} (Unknown)";
+        }
+
         if ($action === 'resend') {
-            $pending = PendingRegistration::where('email', $email)->first();
             if (!$pending) {
                 return response()->json(['success' => false, 'message' => 'No pending registration found.']);
             }
@@ -259,23 +367,63 @@ class AuthController extends Controller
         }
 
         if (empty($otp)) {
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'OTP verification',
+                outcome: 'Failed (invalid code)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'OTP verification failed: code is missing'
+            );
             return response()->json(['success' => false, 'message' => 'OTP is required.']);
         }
 
-        $pending = PendingRegistration::where('email', $email)->first();
         if (!$pending) {
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'OTP verification',
+                outcome: 'Failed (invalid code)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'OTP verification failed: no pending registration found'
+            );
             return response()->json(['success' => false, 'message' => 'No pending registration found. Please register again.']);
         }
 
         if (now()->greaterThan($pending->otp_expires_at)) {
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'OTP verification',
+                outcome: 'Failed (expired code)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'OTP verification failed: code expired'
+            );
             return response()->json(['success' => false, 'message' => 'OTP has expired. Please request a new one.']);
         }
 
         if (!hash_equals($pending->otp, $otp)) {
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'OTP verification',
+                outcome: 'Failed (invalid code)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'OTP verification failed: incorrect code'
+            );
             return response()->json(['success' => false, 'message' => 'Invalid OTP. Please try again.']);
         }
 
         $pending->update(['verified' => true]);
+
+        ActivityLogService::logAudit(
+            userId: $user?->id,
+            action: 'OTP verification',
+            outcome: 'Success',
+            userDisplay: $userDisplay,
+            ipAddress: $ip,
+            description: 'OTP verified successfully'
+        );
 
         return response()->json([
             'success' => true,
@@ -375,27 +523,72 @@ class AuthController extends Controller
     {
         $email = trim($request->input('email', ''));
         $otp   = trim($request->input('otp', ''));
+        $ip    = $request->ip();
+
+        $user = $email ? User::where('email', $email)->first() : null;
+        $userDisplay = $user ? ActivityLogService::formatUserDisplay($user) : ($email ? "{$email} (Unknown)" : "Unknown");
 
         if (!$email || !$otp) {
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'OTP verification',
+                outcome: 'Failed (invalid code)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'Forgot password OTP missing'
+            );
             return response()->json(['success' => false, 'message' => 'Email and OTP are required.']);
         }
 
         if (empty(session('fp_otp')) || empty(session('fp_email')) || session('fp_email') !== $email) {
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'OTP verification',
+                outcome: 'Failed (expired code)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'Forgot password session expired'
+            );
             return response()->json(['success' => false, 'message' => 'Session expired. Please request a new OTP.']);
         }
 
         if (strtotime(session('fp_expiry')) < time()) {
             session()->forget(['fp_otp', 'fp_email', 'fp_expiry']);
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'OTP verification',
+                outcome: 'Failed (expired code)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'Forgot password OTP expired'
+            );
             return response()->json(['success' => false, 'message' => 'OTP has expired. Please request a new one.']);
         }
 
         $otpStripped = ltrim($otp, '0') ?: '0';
         if (!Hash::check($otp, session('fp_otp')) && !Hash::check($otpStripped, session('fp_otp'))) {
+            ActivityLogService::logAudit(
+                userId: $user?->id,
+                action: 'OTP verification',
+                outcome: 'Failed (invalid code)',
+                userDisplay: $userDisplay,
+                ipAddress: $ip,
+                description: 'Forgot password invalid OTP code'
+            );
             return response()->json(['success' => false, 'message' => 'Invalid OTP. Please try again.']);
         }
 
         // Mark as verified so resetPassword can proceed
         session(['fp_verified' => true]);
+
+        ActivityLogService::logAudit(
+            userId: $user?->id,
+            action: 'OTP verification',
+            outcome: 'Success',
+            userDisplay: $userDisplay,
+            ipAddress: $ip,
+            description: 'Forgot password OTP verified successfully'
+        );
 
         return response()->json(['success' => true, 'message' => 'OTP verified successfully.']);
     }

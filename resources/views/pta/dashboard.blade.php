@@ -495,30 +495,62 @@ async function loadPtaDashboard(year) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  fetch('/api/formats')
+  fetch('/api/formats?include_drafts=1')
     .then(r => r.json())
     .then(data => {
       const urlParams = new URLSearchParams(window.location.search);
-      const urlYear   = urlParams.get('year') ? parseInt(urlParams.get('year')) : null;
-      const currentYear = new Date().getFullYear();
+      const urlYear   = urlParams.get('year') ? parseInt(urlParams.get('year'), 10) : null;
+      let storedYear  = null;
+      try {
+        const rawStored = localStorage.getItem('secreco_selected_year');
+        if (rawStored) storedYear = parseInt(rawStored, 10);
+      } catch(e){}
 
-      let targetYear = urlYear || 2026;
-      if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
-        const uniqueYears = [...new Set(data.years.map(Number))].sort((a,b) => b - a);
-        if (!uniqueYears.includes(targetYear)) {
-          targetYear = uniqueYears.includes(currentYear) ? currentYear : (data.active_year || uniqueYears[0]);
-        }
-        const yearSel = document.getElementById('ptaDashYearFilter');
-        if (yearSel) {
-          yearSel.innerHTML = uniqueYears.map(y => `<option value="${y}" ${y === targetYear ? 'selected' : ''}>CY ${y}</option>`).join('');
-        }
+      const backendYears = [
+        ...(Array.isArray(data.all_years) ? data.all_years : []),
+        ...(Array.isArray(data.years) ? data.years : []),
+        data.active_year
+      ].map(y => parseInt(y, 10)).filter(y => !isNaN(y) && y >= 2000);
+
+      let targetYear = null;
+      if (urlYear && !isNaN(urlYear) && urlYear >= 2000) {
+        targetYear = urlYear;
+      } else if (storedYear && !isNaN(storedYear) && storedYear >= 2000) {
+        targetYear = storedYear;
+      } else if (data.active_year && !isNaN(parseInt(data.active_year, 10))) {
+        targetYear = parseInt(data.active_year, 10);
+      } else if (backendYears.length > 0) {
+        targetYear = Math.max(...backendYears);
+      } else {
+        targetYear = new Date().getFullYear();
       }
+
+      const uniqueYears = [...new Set([...backendYears, targetYear])].sort((a,b) => b - a);
+
+      const yearSel = document.getElementById('ptaDashYearFilter');
+      if (yearSel) {
+        yearSel.innerHTML = uniqueYears.map(y => `<option value="${y}" ${y === targetYear ? 'selected' : ''}>CY ${y}</option>`).join('');
+        yearSel.value = String(targetYear);
+      }
+      try {
+        localStorage.setItem('secreco_selected_year', String(targetYear));
+        const u = new URL(window.location);
+        u.searchParams.set('year', targetYear);
+        window.history.replaceState({}, '', u);
+      } catch(e){}
       loadPtaDashboard(targetYear);
     })
     .catch(() => loadPtaDashboard(2026));
 
   document.getElementById('ptaDashYearFilter')?.addEventListener('change', function(e) {
-    loadPtaDashboard(parseInt(e.target.value) || 2026);
+    const yr = parseInt(e.target.value) || 2026;
+    try {
+      localStorage.setItem('secreco_selected_year', String(yr));
+      const u = new URL(window.location);
+      u.searchParams.set('year', yr);
+      window.history.replaceState({}, '', u);
+    } catch(err){}
+    loadPtaDashboard(yr);
   });
 });
 </script>

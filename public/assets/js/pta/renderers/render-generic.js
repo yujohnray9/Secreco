@@ -84,10 +84,26 @@ function renderGeneric(data, template) {
   }
 
   const columns = resolveGenericColumns(template, data);
-  const hasCategories = (data || []).some(cmi => (cmi.rows || []).some(r => r && r._cat));
+
+  // Check if columns already include an institution, agency, or member field
+  const hasInstCol = columns.some(c => {
+    const s = (c.label || c.key || '').toLowerCase().trim();
+    return s.includes('institution') || s.includes('agency') || s.includes('member') || s.includes('lead member') || s.includes('cmi');
+  });
+  const showInstCol = !hasInstCol;
+
+  // Real categories only if there are > 1 distinct categories and not just matching the table title
+  const distinctCats = new Set();
+  (data || []).forEach(cmi => {
+    (cmi.rows || []).forEach(r => {
+      if (r && r._cat && String(r._cat).trim() !== '' && String(r._cat).trim().toLowerCase() !== String(template?.title || '').trim().toLowerCase()) {
+        distinctCats.add(String(r._cat).trim());
+      }
+    });
+  });
+  const hasCategories = distinctCats.size > 1;
 
   let submitted = '';
-  let pending   = '';
   let docBlocks = '';
   let overallIdx = 0;
 
@@ -103,7 +119,6 @@ function renderGeneric(data, template) {
 
   data.forEach(cmi => {
     const s = cmi.table_status;
-    const badge = STATUS_BADGE[s] ?? STATUS_BADGE['not-started'];
     const docs = (s === 'accepted') ? (cmi.docs || []) : [];
     if (docs.length) {
       docBlocks += renderCMIDocsBlock(cmi.institution, docs);
@@ -137,11 +152,13 @@ function renderGeneric(data, template) {
           }
         });
 
-        const instCell = (rIdx === 0)
-          ? `<td rowspan="${validRows.length}" style="vertical-align:top;font-weight:600;border-right:1px solid #e5e7eb;">
-               <div style="font-weight:700;color:#1b4d2e;margin-bottom:4px">${esc(cmi.institution)}</div>
-               ${docsInline ? `<div style="margin-top:4px">${docsInline}</div>` : ''}
-             </td>`
+        const instCell = showInstCol
+          ? (rIdx === 0
+              ? `<td rowspan="${validRows.length}" style="vertical-align:top;font-weight:600;border-right:1px solid #e5e7eb;">
+                   <div style="font-weight:700;color:#1b4d2e;margin-bottom:4px">${esc(cmi.institution)}</div>
+                   ${docsInline ? `<div style="margin-top:4px">${docsInline}</div>` : ''}
+                 </td>`
+              : '')
           : '';
 
         const catCell = hasCategories ? `<td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:#f3f4f6;color:#374151">${esc(r._cat || '—')}</span></td>` : '';
@@ -154,18 +171,11 @@ function renderGeneric(data, template) {
             ${cells}
           </tr>`;
       });
-    } else {
-      pending += `
-        <tr>
-          <td><strong>${esc(cmi.institution)}</strong></td>
-          <td>${badge}</td>
-          <td style="font-size:12px;color:#9ca3af">${esc(cmi.updated_at || '—')}</td>
-        </tr>`;
     }
   });
 
   // Calculate colspans
-  const totalCols = 2 + (hasCategories ? 1 : 0) + columns.length;
+  const totalCols = 1 + (showInstCol ? 1 : 0) + (hasCategories ? 1 : 0) + columns.length;
 
   // Build footer totals if numeric columns exist
   let tfootHtml = '';
@@ -182,7 +192,7 @@ function renderGeneric(data, template) {
         tfootCells += `<td></td>`;
       }
     });
-    const labelColspan = 2 + (hasCategories ? 1 : 0);
+    const labelColspan = 1 + (showInstCol ? 1 : 0) + (hasCategories ? 1 : 0);
     tfootHtml = `
       <tfoot>
         <tr style="font-weight:700;background:var(--bg-soft,#f7faf7);border-top:2px solid #cbd5e1">
@@ -202,7 +212,7 @@ function renderGeneric(data, template) {
       <thead>
         <tr>
           <th style="width:40px;text-align:center">#</th>
-          <th style="width:200px">Institution</th>
+          ${showInstCol ? '<th style="width:200px">Institution</th>' : ''}
           ${hasCategories ? '<th style="width:140px">Category</th>' : ''}
           ${ths}
         </tr>
@@ -212,23 +222,6 @@ function renderGeneric(data, template) {
       </tbody>
       ${tfootHtml}
     </table>
-
-    ${pending ? `
-      <div style="margin-top:28px">
-        <h4 style="font-size:13px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
-          Pending / Not Yet Submitted
-        </h4>
-        <table class="rpt-table" style="width:100%">
-          <thead>
-            <tr>
-              <th>Institution</th>
-              <th style="width:140px">Status</th>
-              <th style="width:180px">Last Activity</th>
-            </tr>
-          </thead>
-          <tbody>${pending}</tbody>
-        </table>
-      </div>` : ''}
 
     ${docBlocks ? `
       <div class="doc-card" style="margin-top:28px">

@@ -284,3 +284,37 @@ table.merged td.not-submitted, table.rpt-table td.not-submitted, .fc-table td.no
     overflow-wrap: anywhere;
   }
 }
+
+/* ══════════════════════════════════════════════
+   HIDE DETAIL TEXT TABLES ON ON-SCREEN DASHBOARD
+   (KEEP top data with numbers visible on screen;
+    Preserve ALL tables in Export Preview modal, Word, DOCX, and PDF)
+   ══════════════════════════════════════════════ */
+#tableContainer .detail-table,
+#tableContainer table.detail-table,
+#tableContainer .detail-table-wrap,
+#tableContainer .detail-title,
+#tableContainer .rpt-sec-title,
+#tableContainer .rpt-docs-section {
+  display: none !important;
+}
+
+#tableContainer .summary-table,
+#tableContainer table.summary-table {
+  margin-bottom: 0 !important;
+}
+
+#wordPreviewContent .detail-table-wrap {
+  display: block !important;
+}
+#wordPreviewContent .detail-table,
+#wordPreviewContent table.detail-table {
+  display: table !important;
+}
+#wordPreviewContent .detail-title,
+#wordPreviewContent .rpt-sec-title {
+  display: block !important;
+}
+#wordPreviewContent .rpt-docs-section {
+  display: block !important;
+}

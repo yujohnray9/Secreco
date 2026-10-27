@@ -275,6 +275,12 @@ function setView(type) {
     btnT.classList.add('active');
     btnC.classList.remove('active');
   }
+  try {
+    localStorage.setItem('secreco_executive_inst_view', type);
+    const u = new URL(window.location);
+    u.searchParams.set('view', type);
+    window.history.replaceState({}, '', u);
+  } catch(e){}
 }
 
 async function loadInstitutions(year) {
@@ -395,9 +401,12 @@ window.backToInstList = function() {
   const main = document.getElementById('viewInstMain');
   if (detail) detail.style.display = 'none';
   if (main) main.style.display = 'block';
-  if (history.pushState) {
-    history.pushState(null, null, window.location.pathname);
-  }
+  try {
+    const u = new URL(window.location);
+    u.searchParams.delete('institution');
+    u.searchParams.delete('inst');
+    window.history.replaceState({}, '', u);
+  } catch(e){}
 };
 
 window.openInstDetail = async function(instName, selectedYear) {
@@ -405,6 +414,12 @@ window.openInstDetail = async function(instName, selectedYear) {
   currentDetailInstName = instName;
   const yearSel = document.getElementById('detailYearSel');
   const year = selectedYear || (yearSel ? yearSel.value : currentYear);
+
+  try {
+    const u = new URL(window.location);
+    u.searchParams.set('institution', instName);
+    window.history.replaceState({}, '', u);
+  } catch(e){}
 
   const main = document.getElementById('viewInstMain');
   const detail = document.getElementById('viewInstDetail');
@@ -494,25 +509,75 @@ window.onDetailYearChange = function() {
 document.addEventListener('DOMContentLoaded', async function () {
   const yrFilter = document.getElementById('instYearFilter');
   const detailYearSel = document.getElementById('detailYearSel');
+  const urlParams = new URLSearchParams(window.location.search);
+  const rawUrlYear = urlParams.get('year');
+  const urlYear = rawUrlYear ? parseInt(rawUrlYear, 10) : null;
+  let storedYear = null;
   try {
-    const fRes = await fetch('/api/formats');
+    const rawStored = localStorage.getItem('secreco_selected_year');
+    if (rawStored) storedYear = parseInt(rawStored, 10);
+  } catch(e){}
+
+  try {
+    const fRes = await fetch('/api/formats?include_drafts=1');
     const fData = await fRes.json();
-    if (fData && fData.years && Array.isArray(fData.years) && fData.years.length > 0) {
-      const activeYr = fData.active_year || new Date().getFullYear();
-      if (yrFilter) {
-        yrFilter.innerHTML = fData.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
-        currentYear = yrFilter.value;
-      }
-      if (detailYearSel) {
-        detailYearSel.innerHTML = fData.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
-      }
+    const backendYears = [
+      ...(Array.isArray(fData.all_years) ? fData.all_years : []),
+      ...(Array.isArray(fData.years) ? fData.years : []),
+      fData.active_year
+    ].map(y => parseInt(y, 10)).filter(y => !isNaN(y) && y >= 2000);
+
+    let targetYr = null;
+    if (urlYear && !isNaN(urlYear) && urlYear >= 2000) {
+      targetYr = urlYear;
+    } else if (storedYear && !isNaN(storedYear) && storedYear >= 2000) {
+      targetYr = storedYear;
+    } else if (fData.active_year && !isNaN(parseInt(fData.active_year, 10))) {
+      targetYr = parseInt(fData.active_year, 10);
+    } else if (backendYears.length > 0) {
+      targetYr = Math.max(...backendYears);
+    } else {
+      targetYr = new Date().getFullYear();
     }
+
+    const availableYears = [...new Set([...backendYears, targetYr])].sort((a,b) => b - a);
+    currentYear = targetYr;
+
+    const optionsHtml = availableYears.map(y => `<option value="${y}" ${y === targetYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+    if (yrFilter) {
+      yrFilter.innerHTML = optionsHtml;
+      yrFilter.value = String(targetYr);
+    }
+    if (detailYearSel) {
+      detailYearSel.innerHTML = optionsHtml;
+      detailYearSel.value = String(targetYr);
+    }
+    try {
+      localStorage.setItem('secreco_selected_year', String(targetYr));
+      const u = new URL(window.location);
+      u.searchParams.set('year', targetYr);
+      window.history.replaceState({}, '', u);
+    } catch(e){}
   } catch (err) {}
 
   if (yrFilter) {
     yrFilter.addEventListener('change', function () {
-      loadInstitutions(this.value);
+      const yr = parseInt(this.value, 10) || new Date().getFullYear();
+      try {
+        localStorage.setItem('secreco_selected_year', String(yr));
+        const u = new URL(window.location);
+        u.searchParams.set('year', yr);
+        window.history.replaceState({}, '', u);
+      } catch(err){}
+      currentYear = yr;
+      if (detailYearSel) detailYearSel.value = String(yr);
+      loadInstitutions(yr);
     });
+  }
+
+  const savedView = urlParams.get('view') || localStorage.getItem('secreco_executive_inst_view');
+  if (savedView === 'table' || savedView === 'cards') {
+    setView(savedView);
   }
 
   loadInstitutions(currentYear);

@@ -61,12 +61,9 @@ async function renderCMIAllTables(institution) {
 
     const topBtn = el('btnPtaCmiFillOut');
     if (topBtn) {
-      if (lockedTables.length > 0) {
-        topBtn.href = `/dashboard/cmi/fillup?year=${getYear()}&inst=${encodeURIComponent(institution)}&table=${encodeURIComponent(lockedTables[0])}`;
-        topBtn.style.display = 'inline-flex';
-      } else {
-        topBtn.style.display = 'none';
-      }
+      const topTbl = (lockedTables && lockedTables.length > 0) ? lockedTables[0] : (keys[0] || 'T1');
+      topBtn.href = `/dashboard/cmi/fillup?year=${getYear()}&inst=${encodeURIComponent(institution)}&table=${encodeURIComponent(topTbl)}`;
+      topBtn.style.display = 'inline-flex';
     }
 
     let rows = '';
@@ -83,13 +80,11 @@ async function renderCMIAllTables(institution) {
       const title    = tmpl?.title || (def?.label ? def.label.split('—')[1]?.trim() : key);
       const isLocked = lockedTables.includes(key.toUpperCase()) || (tmpl && tmpl.is_locked);
 
-      const actionCell = isLocked
-        ? `<td style="text-align:center">
-             <a href="/dashboard/cmi/fillup?year=${getYear()}&inst=${encodeURIComponent(institution)}&table=${encodeURIComponent(key)}" class="btn btn-sm" style="background:#075b42;color:#fff;border-radius:6px;font-size:11.5px;font-weight:700;padding:4px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Fill out locked Table ${key} for this institution">
+      const actionCell = `<td style="text-align:center">
+             <a href="/dashboard/cmi/fillup?year=${getYear()}&inst=${encodeURIComponent(institution)}&table=${encodeURIComponent(key)}" class="btn btn-sm" style="background:#075b42;color:#fff;border-radius:6px;font-size:11.5px;font-weight:700;padding:4px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Fill out Table ${key} for this institution">
                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>Fill Out
              </a>
-           </td>`
-        : `<td style="text-align:center;color:#9ca3af;font-size:13px">—</td>`;
+           </td>`;
 
       rows += `<tr>
         <td><strong>${esc(key)}</strong> ${isLocked ? '<span style="display:inline-flex;vertical-align:middle;color:#d97706;margin-left:3px;" title="Locked: PTA only"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>' : ''}</td>

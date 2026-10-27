@@ -92,7 +92,7 @@ async function loadDrafts() {
           <tr>
             <td><strong>Table ${tableNo}</strong> — ${title}</td>
             <td><span class="badge badge-orange" style="background:#fff7ed;color:#d97706;padding:4px 10px;border-radius:12px;font-weight:600;font-size:11.5px">⏳ DRAFT</span></td>
-            <td><a href="/dashboard/cmi/fillup?t=${tableNo}" class="btn btn-sm" style="background:#10b981;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;text-decoration:none">Edit Draft</a></td>
+            <td><a href="/dashboard/cmi/fillup?table=${tableNo}&year=${year}" class="btn btn-sm" style="background:#10b981;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;text-decoration:none">Edit Draft</a></td>
           </tr>
         `).join('');
       }
@@ -103,18 +103,51 @@ async function loadDrafts() {
   }
 }
 
-document.getElementById('draftsYearSel').addEventListener('change', loadDrafts);
+document.getElementById('draftsYearSel').addEventListener('change', function () {
+  const yr = this.value;
+  try {
+    localStorage.setItem('secreco_selected_year', String(yr));
+    const u = new URL(window.location);
+    u.searchParams.set('year', yr);
+    window.history.replaceState({}, '', u);
+  } catch(e){}
+  loadDrafts();
+});
+
 document.addEventListener('DOMContentLoaded', function() {
+  const urlYear = parseInt(new URLSearchParams(window.location.search).get('year'), 10);
+  let storedYear = null;
+  try {
+    const raw = localStorage.getItem('secreco_selected_year');
+    if (raw) storedYear = parseInt(raw, 10);
+  } catch(e){}
+  const targetYear = (!isNaN(urlYear) && urlYear >= 2000) ? urlYear : ((!isNaN(storedYear) && storedYear >= 2000) ? storedYear : null);
+
   // Populate year dropdown from Manage Format activated years
-  fetch('/api/formats')
+  fetch('/api/formats?include_drafts=1')
     .then(r => r.json())
     .then(data => {
       const sel = document.getElementById('draftsYearSel');
-      if (sel && data && data.years && data.years.length > 0) {
-        const activeYr = data.active_year || data.years[0];
-        sel.innerHTML = data.years.map(y =>
+      if (sel) {
+        const rawYears = [
+          ...(Array.isArray(data.all_years) ? data.all_years : []),
+          ...(Array.isArray(data.years) ? data.years : []),
+          data.active_year
+        ].map(y => parseInt(y, 10)).filter(y => !isNaN(y) && y >= 2000);
+
+        const allYears = [...new Set([...rawYears, ...(targetYear ? [targetYear] : [])])].sort((a,b) => b - a);
+        const activeYr = (targetYear && allYears.includes(targetYear)) ? targetYear : (data.active_year ? parseInt(data.active_year, 10) : (allYears[0] || new Date().getFullYear()));
+        sel.innerHTML = allYears.map(y =>
           `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`
         ).join('');
+        sel.value = String(activeYr);
+
+        try {
+          localStorage.setItem('secreco_selected_year', String(activeYr));
+          const u = new URL(window.location);
+          u.searchParams.set('year', activeYr);
+          window.history.replaceState({}, '', u);
+        } catch(e){}
       }
     })
     .catch(() => {})

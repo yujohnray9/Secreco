@@ -8,56 +8,105 @@
 // ── BOOT ──────────────────────────────────────────────────────
 // Script is loaded at bottom of body — DOM is ready, no need for DOMContentLoaded
 function _reportsInit() {
-  el('rptTableFilter')?.addEventListener('change', loadTableView);
+  el('rptTableFilter')?.addEventListener('change', e => {
+    const tbl = e.target.value;
+    try {
+      localStorage.setItem('secreco_selected_table', String(tbl));
+      const u = new URL(window.location);
+      u.searchParams.set('table', tbl);
+      window.history.replaceState({}, '', u);
+    } catch(err){}
+    loadTableView();
+  });
   el('rptYearFilter')?.addEventListener('change', async e => {
     const yr = e.target.value;
-    try { localStorage.setItem('secreco_selected_year', String(yr)); } catch(err){}
+    try {
+      localStorage.setItem('secreco_selected_year', String(yr));
+      const u = new URL(window.location);
+      u.searchParams.set('year', yr);
+      window.history.replaceState({}, '', u);
+    } catch(err){}
     _cmiList = [];
     await syncTableOptionsForYear(yr);
     if (_curView === 'table') loadTableView();
     else loadCMIView();
   });
   el('rptCMIFilter')?.addEventListener('change', e => {
-    if (e.target.value) renderCMIAllTables(e.target.value);
+    const cmiVal = e.target.value;
+    try {
+      localStorage.setItem('secreco_reports_cmi', cmiVal);
+      const u = new URL(window.location);
+      u.searchParams.set('cmi', cmiVal);
+      window.history.replaceState({}, '', u);
+    } catch(err){}
+    if (cmiVal) renderCMIAllTables(cmiVal);
   });
 
-  const urlYear = parseInt(new URLSearchParams(window.location.search).get('year'));
+  const urlParams = new URLSearchParams(window.location.search);
+  const rawUrlYear = urlParams.get('year');
+  const urlYear = rawUrlYear ? parseInt(rawUrlYear, 10) : null;
   let storedYear = null;
-  try { storedYear = parseInt(localStorage.getItem('secreco_selected_year')); } catch(e){}
+  try {
+    const rawStored = localStorage.getItem('secreco_selected_year');
+    if (rawStored) storedYear = parseInt(rawStored, 10);
+  } catch(e){}
 
-  fetch('/api/formats')
+  fetch('/api/formats?include_drafts=1')
     .then(r => r.json())
     .then(data => {
-      if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
-        // Preferred year order: URL param -> localStorage -> active_year -> latest available year
-        let targetYear = null;
-        if (urlYear && data.years.includes(urlYear)) {
-          targetYear = urlYear;
-        } else if (storedYear && data.years.includes(storedYear)) {
-          targetYear = storedYear;
-        } else if (data.active_year && data.years.includes(data.active_year)) {
-          targetYear = data.active_year;
-        } else {
-          targetYear = data.years[0];
-        }
+      // Gather all possible years from backend and user intent
+      const backendYears = [
+        ...(Array.isArray(data.all_years) ? data.all_years : []),
+        ...(Array.isArray(data.years) ? data.years : []),
+        data.active_year
+      ].map(y => parseInt(y, 10)).filter(y => !isNaN(y) && y >= 2000);
 
-        const yearSel = el('rptYearFilter');
-        if (yearSel) {
-          yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === targetYear ? 'selected' : ''}>CY ${y}</option>`).join('');
-          yearSel.value = String(targetYear);
-        }
-        try { localStorage.setItem('secreco_selected_year', String(targetYear)); } catch(e){}
+      // Preferred year: URL param > localStorage > active_year > latest year
+      let targetYear = null;
+      if (urlYear && !isNaN(urlYear) && urlYear >= 2000) {
+        targetYear = urlYear;
+      } else if (storedYear && !isNaN(storedYear) && storedYear >= 2000) {
+        targetYear = storedYear;
+      } else if (data.active_year && !isNaN(parseInt(data.active_year, 10))) {
+        targetYear = parseInt(data.active_year, 10);
+      } else if (backendYears.length > 0) {
+        targetYear = Math.max(...backendYears);
+      } else {
+        targetYear = new Date().getFullYear();
       }
-    }).catch(() => {}).finally(async () => {
+
+      // Ensure targetYear is always in the options list so it cannot be omitted
+      const yearList = [...new Set([...backendYears, targetYear])].sort((a, b) => b - a);
+
+      const yearSel = el('rptYearFilter');
+      if (yearSel) {
+        yearSel.innerHTML = yearList.map(y => `<option value="${y}" ${parseInt(y, 10) === targetYear ? 'selected' : ''}>CY ${y}</option>`).join('');
+        yearSel.value = String(targetYear);
+      }
+      try {
+        localStorage.setItem('secreco_selected_year', String(targetYear));
+        const u = new URL(window.location);
+        u.searchParams.set('year', targetYear);
+        window.history.replaceState({}, '', u);
+      } catch(e){}
+    }).catch(() => {
+      const fallbackYear = urlYear || storedYear || new Date().getFullYear();
+      const yearSel = el('rptYearFilter');
+      if (yearSel && !yearSel.value) {
+        yearSel.innerHTML = `<option value="${fallbackYear}" selected>CY ${fallbackYear}</option>`;
+        yearSel.value = String(fallbackYear);
+      }
+    }).finally(async () => {
       const curYr = el('rptYearFilter')?.value || new Date().getFullYear();
       await syncTableOptionsForYear(curYr);
-      switchReportView('table');
+      const targetView = urlParams.get('view') || localStorage.getItem('secreco_reports_view') || 'table';
+      switchReportView(targetView);
     });
 }
 
 async function syncTableOptionsForYear(year) {
   try {
-    const res = await fetch(`/api/formats?year=${year}`);
+    const res = await fetch(`/api/formats?year=${year}&include_drafts=1`);
     const json = await res.json();
     const templates = json.templates || [];
     const tblSel = el('rptTableFilter');
@@ -71,8 +120,16 @@ async function syncTableOptionsForYear(year) {
       return;
     }
 
-    const currentVal = tblSel.value;
-    let matched = false;
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTable = urlParams.get('table');
+    let storedTable = null;
+    try { storedTable = localStorage.getItem('secreco_selected_table'); } catch(e){}
+    const targetTable = urlTable || storedTable || tblSel.value || 'T1';
+
+    const norm = str => String(str || '').trim().toLowerCase().replace(/^table\s*/i, '').replace(/^t/i, '');
+    const cleanTarget = norm(targetTable);
+
+    let targetMatched = null;
     tblSel.innerHTML = templates.map(t => {
       const no = t.table_no;
       const cleanNo = String(no).replace(/^Table\s*/i, '');
@@ -97,15 +154,20 @@ async function syncTableOptionsForYear(year) {
       window.TABLE_DEFS[cleanNo] = defObj;
       window.TABLE_DEFS['T' + cleanNo] = defObj;
 
-      if (no === currentVal || cleanNo === currentVal || ('T' + cleanNo) === currentVal) matched = true;
+      if (!targetMatched && norm(no) === cleanTarget) {
+        targetMatched = no;
+      }
       return `<option value="${no}">${label}</option>`;
     }).join('');
 
-    if (matched) {
-      tblSel.value = currentVal;
-    } else if (templates.length > 0) {
-      tblSel.value = templates[0].table_no;
-    }
+    const finalTable = targetMatched || (templates.length > 0 ? templates[0].table_no : 'T1');
+    tblSel.value = finalTable;
+    try {
+      localStorage.setItem('secreco_selected_table', String(finalTable));
+      const u = new URL(window.location);
+      u.searchParams.set('table', finalTable);
+      window.history.replaceState({}, '', u);
+    } catch(e){}
   } catch (e) {
     console.warn('[reports] syncTableOptionsForYear warning:', e);
   }

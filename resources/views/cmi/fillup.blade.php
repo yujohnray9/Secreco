@@ -229,26 +229,57 @@
       return s;
     }
     const rawReqTable = params.get('table') || params.get('t') || '';
-    const requestedTable = rawReqTable ? normalizeTableKey(rawReqTable) : '';
+    let storedTable = null;
+    try { storedTable = localStorage.getItem('cmi_fillup_table'); } catch(e){}
+    const requestedTable = rawReqTable ? normalizeTableKey(rawReqTable) : (storedTable ? normalizeTableKey(storedTable) : '');
 
     if (yearSel) {
       // Load format years from Manage Formats
-      fetch('/api/formats')
+      fetch('/api/formats?include_drafts=1')
         .then(r => r.json())
         .then(data => {
-          if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
-            const urlHasYear = params.has('year');
-            const activeYr = (urlHasYear && params.get('year'))
-              ? parseInt(params.get('year'))
-              : (data.active_year || data.years[0] || new Date().getFullYear());
+          const backendYears = [
+            ...(Array.isArray(data.all_years) ? data.all_years : []),
+            ...(Array.isArray(data.years) ? data.years : []),
+            data.active_year
+          ].map(y => parseInt(y, 10)).filter(y => !isNaN(y) && y >= 2000);
 
-            window.CMI_REPORTING_YEAR = activeYr;
-            yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
-            yearSel.value = activeYr;
-            if (subtitle) subtitle.textContent = 'CY ' + activeYr + ' Annual Accomplishment Report — All Sections & Tables';
+          const urlYear = params.has('year') ? parseInt(params.get('year'), 10) : null;
+          let storedYear = null;
+          try {
+            const rawStored = localStorage.getItem('secreco_selected_year');
+            if (rawStored) storedYear = parseInt(rawStored, 10);
+          } catch(e){}
 
-            // Fetch format templates and statuses sequentially for active year before rendering table
-            fetch('/api/formats?year=' + activeYr)
+          let activeYr = null;
+          if (urlYear && !isNaN(urlYear) && urlYear >= 2000) {
+            activeYr = urlYear;
+          } else if (storedYear && !isNaN(storedYear) && storedYear >= 2000) {
+            activeYr = storedYear;
+          } else if (data.active_year && !isNaN(parseInt(data.active_year, 10))) {
+            activeYr = parseInt(data.active_year, 10);
+          } else if (backendYears.length > 0) {
+            activeYr = Math.max(...backendYears);
+          } else {
+            activeYr = new Date().getFullYear();
+          }
+
+          const yearList = [...new Set([...backendYears, activeYr])].sort((a, b) => b - a);
+
+          try {
+            localStorage.setItem('secreco_selected_year', String(activeYr));
+            const u = new URL(window.location);
+            u.searchParams.set('year', activeYr);
+            window.history.replaceState({}, '', u);
+          } catch(e){}
+
+          window.CMI_REPORTING_YEAR = activeYr;
+          yearSel.innerHTML = yearList.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+          yearSel.value = activeYr;
+          if (subtitle) subtitle.textContent = 'CY ' + activeYr + ' Annual Accomplishment Report — All Sections & Tables';
+
+          // Fetch format templates and statuses sequentially for active year before rendering table
+          fetch('/api/formats?year=' + activeYr + '&include_drafts=1')
               .then(r => r.json())
               .then(fmtData => {
                 if (fmtData && Array.isArray(fmtData.templates) && typeof CMI !== 'undefined') {
@@ -275,11 +306,16 @@
                   CMI.showTable(requestedTable || 'T1');
                 }
               });
-          }
         }).catch(() => {});
 
       yearSel.addEventListener('change', function() {
         const selectedYear = parseInt(this.value);
+        try {
+          localStorage.setItem('secreco_selected_year', String(selectedYear));
+          const u = new URL(window.location);
+          u.searchParams.set('year', selectedYear);
+          window.history.replaceState({}, '', u);
+        } catch(e){}
         window.CMI_REPORTING_YEAR = selectedYear;
         if (subtitle) subtitle.textContent = 'CY ' + selectedYear + ' Annual Accomplishment Report — All Sections & Tables';
         

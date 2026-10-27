@@ -49,21 +49,43 @@ class FormatController extends Controller
             return $array;
         });
 
-        $dbYears = FormatTemplate::distinct()->where('year', '>=', 2025)->pluck('year')->all();
+        $dbYears = FormatTemplate::distinct()->where('year', '>=', 2025)->pluck('year')->map(fn($y) => (int) $y)->all();
         $settingRow = SystemSetting::where('key', 'format_years')->first();
-        $savedYears = $settingRow ? (json_decode($settingRow->value, true) ?: []) : [];
-        $years = array_values(array_unique(array_merge($dbYears, $savedYears, [$activeYear, $year])));
-        rsort($years);
-        if (empty($years)) {
-            $years = [2026, 2025];
+        $savedYears = $settingRow ? array_map('intval', (array) (json_decode($settingRow->value, true) ?: [])) : [];
+        $allYears = array_values(array_unique(array_map('intval', array_merge($dbYears, $savedYears, [$activeYear, $year]))));
+        rsort($allYears);
+
+        // Active/archived years and years that already have actual submissions or report tables
+        $activeArchivedYears = FormatTemplate::distinct()
+            ->whereIn('status', ['active', 'archived'])
+            ->where('year', '>=', 2025)
+            ->pluck('year')
+            ->map(fn($y) => (int) $y)
+            ->all();
+
+        $subYears = \App\Models\ReportSubmission::distinct()->pluck('reporting_year')->map(fn($y) => (int) $y)->all();
+        $tblYears = ReportTable::distinct()->pluck('reporting_year')->map(fn($y) => (int) $y)->all();
+
+        $publicYears = array_values(array_unique(array_map('intval', array_filter(array_merge($activeArchivedYears, $subYears, $tblYears, [$activeYear])))));
+        rsort($publicYears);
+        if (empty($publicYears)) {
+            $publicYears = [$activeYear];
         }
 
+        // Only include unactivated draft years when explicitly requested or managing formats
+        $includeDrafts = $request->boolean('include_drafts')
+            || $request->is('api/pta/formats*')
+            || (Auth::check() && in_array(Auth::user()->role, ['pta', 'executive', 'admin', 'viewer']));
+        $years = array_values(array_map('intval', $includeDrafts ? $allYears : $publicYears));
+
         return response()->json([
-            'ok'          => true,
-            'templates'   => $templates,
-            'years'       => $years,
-            'year'        => $year,
-            'active_year' => $activeYear,
+            'ok'           => true,
+            'templates'    => $templates,
+            'years'        => $years,
+            'all_years'    => $allYears,
+            'active_years' => $publicYears,
+            'year'         => $year,
+            'active_year'  => $activeYear,
         ]);
     }
 
@@ -149,11 +171,13 @@ class FormatController extends Controller
                 $addedCount  = 0;
                 $lastTableNo = '';
                 $errors      = [];
-
                 foreach ($rawTables as $tItem) {
                     $rawTable = trim($tItem['table_no'] ?? '');
                     if (!$rawTable) continue;
-                    $tableNo  = $canonicalMap[strtoupper($rawTable)] ?? strtoupper($rawTable);
+                    $formattedNo = preg_match('/^(T\d+)([a-zA-Z])?$/i', $rawTable, $m)
+                        ? (strtoupper($m[1]) . (isset($m[2]) ? strtolower($m[2]) : ''))
+                        : strtoupper($rawTable);
+                    $tableNo  = $canonicalMap[strtoupper($rawTable)] ?? $formattedNo;
                     $title    = trim($tItem['title'] ?? '');
                     $section  = trim($tItem['section'] ?? 'R&D Mgt. & Coord.');
                     $required = !empty($tItem['is_required']) ? 1 : 0;
@@ -216,7 +240,10 @@ class FormatController extends Controller
                 foreach (config('secreco.all_tables', []) as $stTable) {
                     $canonicalMap[strtoupper($stTable)] = $stTable;
                 }
-                $tableNo  = $canonicalMap[strtoupper($rawTable)] ?? strtoupper($rawTable);
+                $formattedNo = preg_match('/^(T\d+)([a-zA-Z])?$/i', $rawTable, $m)
+                    ? (strtoupper($m[1]) . (isset($m[2]) ? strtolower($m[2]) : ''))
+                    : strtoupper($rawTable);
+                $tableNo  = $canonicalMap[strtoupper($rawTable)] ?? $formattedNo;
                 $title    = trim($input['title'] ?? '');
                 $section  = trim($input['section'] ?? '');
                 $required = !empty($input['is_required']) ? 1 : 0;
@@ -360,16 +387,17 @@ class FormatController extends Controller
                 $count = 0;
                 foreach ($sourceRows as $r) {
                     FormatTemplate::create([
-                        'year'        => $toYear,
-                        'table_no'    => $r->table_no,
-                        'title'       => $r->title,
-                        'subtitle'    => $r->subtitle,
-                        'section'     => $r->section,
-                        'is_required' => $r->is_required,
-                        'is_locked'   => $r->is_locked,
-                        'sort_order'  => $r->sort_order,
-                        'status'      => 'draft',
-                        'created_by'  => $userId,
+                        'year'         => $toYear,
+                        'table_no'     => $r->table_no,
+                        'title'        => $r->title,
+                        'subtitle'     => $r->subtitle,
+                        'section'      => $r->section,
+                        'is_required'  => $r->is_required,
+                        'is_locked'    => $r->is_locked,
+                        'sort_order'   => $r->sort_order,
+                        'columns_json' => $r->columns_json,
+                        'status'       => 'draft',
+                        'created_by'   => $userId,
                     ]);
                     $count++;
                 }

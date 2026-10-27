@@ -772,8 +772,21 @@
     const r = cachedSubRows[idx];
     if (r.table_status === 'accepted' || r.table_status === 'returned') isViewOnly = true;
 
+    const STATUS_MAP = {
+      submitted   : 'Submitted',
+      done        : 'Submitted',
+      accepted    : 'Accepted',
+      returned    : 'Returned',
+      deleted     : 'Deleted',
+      draft       : 'Draft',
+      'not-started': 'Not Started'
+    };
+    const normStatus = String(r.table_status || '').toLowerCase().trim();
+    const formattedStatus = STATUS_MAP[normStatus] || (normStatus ? (normStatus.charAt(0).toUpperCase() + normStatus.slice(1)) : 'Submitted');
+    const escapeCell = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
     document.getElementById('vdInst').textContent    = `${r.institution} — Table ${r.table_no}`;
-    document.getElementById('vdEncoder').textContent = `Encoder: ${r.encoder} • Status: ${r.table_status}`;
+    document.getElementById('vdEncoder').innerHTML   = `Encoder: <strong>${escapeCell(r.encoder)}</strong> • Status: ${statusBadge(r.table_status || 'submitted')}`;
 
     const wrap = document.getElementById('vdTableWrap');
     let html = '';
@@ -786,14 +799,30 @@
     const groupKey = tNoUpper === 'T6' ? 'scope' : 'category';
     const grouped = Boolean(schema?.categories?.length);
     if (grouped) colDefs = colDefs.filter(c => c.key !== groupKey);
-    const escapeCell = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const groupLabel = value => {
       const raw = String(value || schema?.categories?.[0] || '');
-      const aliases = { go: 'GO', ngo: 'NGO', private: 'Private Sector', lgu: 'LGU', packaged: 'Proposals Packaged', implemented: 'Projects Approved and Implemented' };
-      if (aliases[raw]) return aliases[raw];
-      if (tNoUpper === 'T6' && /^(developed|maintained)_/.test(raw)) {
+      const rawLower = raw.toLowerCase().trim();
+      const aliases = {
+        go: 'GO',
+        ngo: 'NGO',
+        private: 'Private Sector',
+        lgu: 'LGU',
+        packaged: 'Proposals Packaged',
+        implemented: 'Projects Approved and Implemented',
+        developed: (tNoUpper === 'T7A' || tNoUpper === 'T7B') ? 'Developed / Enhanced' : 'Developed / New',
+        maintained: (tNoUpper === 'T7A' || tNoUpper === 'T7B') ? 'Maintained' : 'Maintained / Sustained',
+        developed_enhanced: 'Developed / Enhanced',
+        'developed / enhanced': 'Developed / Enhanced',
+        'developed/enhanced': 'Developed / Enhanced',
+        'developed / new': 'Developed / New',
+        'developed/new': 'Developed / New',
+        'maintained / sustained': 'Maintained / Sustained',
+        'maintained/sustained': 'Maintained / Sustained',
+      };
+      if (aliases[rawLower]) return aliases[rawLower];
+      if (tNoUpper === 'T6' && /^(developed|maintained)_/i.test(raw)) {
         const [kind, level] = raw.split('_');
-        return (kind === 'developed' ? 'Developed / New - ' : 'Maintained / Sustained - ') + level[0].toUpperCase() + level.slice(1);
+        return (kind.toLowerCase() === 'developed' ? 'Developed / New - ' : 'Maintained / Sustained - ') + (level ? (level[0].toUpperCase() + level.slice(1)) : '');
       }
       return raw;
     };
@@ -1314,28 +1343,87 @@
     });
   };
 
-  document.getElementById('subYearSel').addEventListener('change', loadSubs);
-  document.getElementById('subStatusSel').addEventListener('change', loadSubs);
+  document.getElementById('subYearSel').addEventListener('change', function(e) {
+    const yr = e.target.value;
+    try {
+      localStorage.setItem('secreco_selected_year', String(yr));
+      const u = new URL(window.location);
+      u.searchParams.set('year', yr);
+      window.history.replaceState({}, '', u);
+    } catch(err) {}
+    loadSubs();
+  });
+  document.getElementById('subStatusSel').addEventListener('change', function(e) {
+    try {
+      const u = new URL(window.location);
+      if (e.target.value) u.searchParams.set('status', e.target.value);
+      else u.searchParams.delete('status');
+      window.history.replaceState({}, '', u);
+    } catch(err){}
+    loadSubs();
+  });
   const secFilterSel = document.getElementById('subSectionFilter');
-  if (secFilterSel) secFilterSel.addEventListener('change', renderSubsTable);
+  if (secFilterSel) secFilterSel.addEventListener('change', function(e) {
+    try {
+      const u = new URL(window.location);
+      if (e.target.value) u.searchParams.set('section', e.target.value);
+      else u.searchParams.delete('section');
+      window.history.replaceState({}, '', u);
+    } catch(err){}
+    renderSubsTable();
+  });
   const searchInp = document.getElementById('subSearchInput');
   if (searchInp) searchInp.addEventListener('input', renderSubsTable);
   document.addEventListener('DOMContentLoaded', function() {
-    // Auto-apply status filter from URL param (set by dashboard KPI card links)
+    // Auto-apply status and section filter from URL param
     const urlParams = new URLSearchParams(window.location.search);
-    const autoStatus = urlParams.get('autoStatus');
-    const autoYear   = urlParams.get('year');
+    const autoStatus = urlParams.get('autoStatus') || urlParams.get('status');
+    const autoSection = urlParams.get('section');
+    if (autoSection && secFilterSel) secFilterSel.value = autoSection;
 
-    fetch('/api/formats')
+    const rawUrlYear = urlParams.get('year');
+    const autoYear   = rawUrlYear ? parseInt(rawUrlYear, 10) : null;
+    let storedYear = null;
+    try {
+      const rawStored = localStorage.getItem('secreco_selected_year');
+      if (rawStored) storedYear = parseInt(rawStored, 10);
+    } catch(e){}
+
+    fetch('/api/formats?include_drafts=1')
       .then(r => r.json())
       .then(data => {
-        if (data && data.years && Array.isArray(data.years) && data.years.length > 0) {
-          const yearSel = document.getElementById('subYearSel');
-          const activeYr = autoYear ? parseInt(autoYear) : (data.active_year || new Date().getFullYear());
-          if (yearSel) {
-            yearSel.innerHTML = data.years.map(y => `<option value="${y}" ${y === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
-          }
+        const backendYears = [
+          ...(Array.isArray(data.all_years) ? data.all_years : []),
+          ...(Array.isArray(data.years) ? data.years : []),
+          data.active_year
+        ].map(y => parseInt(y, 10)).filter(y => !isNaN(y) && y >= 2000);
+
+        let activeYr = null;
+        if (autoYear && !isNaN(autoYear) && autoYear >= 2000) {
+          activeYr = autoYear;
+        } else if (storedYear && !isNaN(storedYear) && storedYear >= 2000) {
+          activeYr = storedYear;
+        } else if (data.active_year && !isNaN(parseInt(data.active_year, 10))) {
+          activeYr = parseInt(data.active_year, 10);
+        } else if (backendYears.length > 0) {
+          activeYr = Math.max(...backendYears);
+        } else {
+          activeYr = new Date().getFullYear();
         }
+
+        const yearList = [...new Set([...backendYears, activeYr])].sort((a,b) => b - a);
+
+        const yearSel = document.getElementById('subYearSel');
+        if (yearSel) {
+          yearSel.innerHTML = yearList.map(y => `<option value="${y}" ${parseInt(y, 10) === activeYr ? 'selected' : ''}>CY ${y}</option>`).join('');
+          yearSel.value = String(activeYr);
+        }
+        try {
+          localStorage.setItem('secreco_selected_year', String(activeYr));
+          const u = new URL(window.location);
+          u.searchParams.set('year', activeYr);
+          window.history.replaceState({}, '', u);
+        } catch(e) {}
 
         // Apply status filter after year is set
         if (autoStatus) {
@@ -1345,10 +1433,12 @@
             const statusMap = {
               'submitted'   : 'submitted',
               'in-progress' : 'draft',
+              'draft'       : 'draft',
+              'accepted'    : 'accepted',
+              'returned'    : 'returned',
               'not-started' : 'not-started',
             };
             const mapped = statusMap[autoStatus] || autoStatus;
-            // Check if an option exists for that value; if not, leave as is
             const optExists = Array.from(statusSel.options).some(o => o.value === mapped);
             if (optExists) statusSel.value = mapped;
           }

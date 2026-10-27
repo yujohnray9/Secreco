@@ -1,7 +1,7 @@
 @extends('layouts.viewer')
 
 @section('styles')
-<link rel="stylesheet" href="/assets/css/pta/reports.css?v=10"/>
+<link rel="stylesheet" href="/assets/css/pta/reports.css?v=11"/>
 <style>
 /* ── Modern adjustments for Reports ── */
 .page-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
@@ -26,6 +26,16 @@
 
 /* STRICT RULE: NO EXPORTS IN VIEWER */
 #rptExportBtns, .btn-export, #wordPreviewCard, #btnPtaCmiFillOut { display: none !important; }
+
+/* ── On-screen dashboard: Hide the detail text tables; KEEP the top data with numbers visible ── */
+#tableContainer .detail-table,
+#tableContainer table.detail-table,
+#tableContainer .detail-table-wrap,
+#tableContainer .detail-title,
+#tableContainer .rpt-sec-title,
+#tableContainer .rpt-docs-section {
+  display: none !important;
+}
 </style>
 @endsection
 
@@ -166,10 +176,10 @@
 <script src="/assets/js/pta/reports-renderers.js?v=11"></script>
 <script src="/assets/js/pta/reports-tabledefs.js?v=9"></script>
 <script src="/assets/js/pta/reports-api.js?v=8"></script>
-<script src="/assets/js/pta/reports-view-table.js?v=8"></script>
+<script src="/assets/js/pta/reports-view-table.js?v=20261020"></script>
 <script src="/assets/js/pta/reports-view-cmi.js?v=20261012"></script>
-<script src="/assets/js/pta/reports-export.js?v=20261012"></script>
-<script src="/assets/js/pta/reports-boot.js?v=8"></script>
+<script src="/assets/js/pta/reports-export.js?v=20261020"></script>
+<script src="/assets/js/pta/reports-boot.js?v=10"></script>
 <script>
 // Ensure export buttons never display in Viewer View
 document.addEventListener('DOMContentLoaded', function() {

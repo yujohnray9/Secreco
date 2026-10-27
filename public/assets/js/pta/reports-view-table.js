@@ -9,6 +9,13 @@ function switchReportView(view) {
   _curView = view;
   const isTable = view === 'table';
 
+  try {
+    localStorage.setItem('secreco_reports_view', view);
+    const u = new URL(window.location);
+    u.searchParams.set('view', view);
+    window.history.replaceState({}, '', u);
+  } catch(e){}
+
   el('togPerTable')?.classList.toggle('active',  isTable);
   el('togPerCMI')?.classList.toggle('active',   !isTable);
 
@@ -71,9 +78,33 @@ async function loadTableView() {
     } else {
       container.innerHTML = renderer(json.data);
     }
+
+    tagDetailTables(container);
   } catch (e) {
     el('tableContainer').innerHTML =
       `<div class="loading-state" style="color:var(--danger,red)">⚠️ Failed to load: ${esc(e.message)}</div>`;
     console.error('[reports] loadTableView error:', e);
+  }
+}
+
+/**
+ * In multi-table views, marks the detail text tables with 'detail-table' / 'detail-table-wrap'.
+ * This hides the long text tables from the on-screen dashboard view (keeping the top summary data/numbers visible),
+ * while keeping all tables fully intact for Word preview and export.
+ */
+function tagDetailTables(container) {
+  if (!container) return;
+  const tables = [...container.querySelectorAll('table:not(.doc-table)')];
+  if (tables.length > 1) {
+    // tables[0] is the top summary table (data with numbers) — KEEP VISIBLE on dashboard!
+    // tables[1..n] are detail text tables — mark as detail-table to hide on dashboard
+    for (let i = 1; i < tables.length; i++) {
+      const table = tables[i];
+      table.classList.add('detail-table');
+      const wrap = table.closest('.tbl-wrap');
+      if (wrap && wrap !== container) {
+        wrap.classList.add('detail-table-wrap');
+      }
+    }
   }
 }

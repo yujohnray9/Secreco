@@ -173,7 +173,8 @@ function buildExportHTML({ forPreview, logos = {} }) {
     .replace(/color\s*:\s*#(?:1b4d2e|3a7d44|1b5e20|2e7d32|388e3c)[^;"']*/gi, 'color:#1a1a1a')
     .replace(/<summary[^>]*>.*?<\/summary>/gis, '')
     .replace(/<details[^>]*>/gi, '')
-    .replace(/<\/details>/gi, '');
+    .replace(/<\/details>/gi, '')
+    .replace(/<div[^>]*class="[^"]*(?:no-export|no-print|rpt-pending)[^"]*"[^>]*>.*?<\/div>/gis, '');
 
   const generatedAt = new Date().toLocaleString('en-PH', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -290,6 +291,12 @@ function exportToPDF(logos = {}) {
     .badge-yellow { background: #fff8e1; color: #8d6e00; }
     .badge-gray   { background: #eee; color: #666; }
     .badge-blue   { background: #e3f2fd; color: #0d47a1; }
+    .summary-table, table.summary-table { display: table !important; }
+    .summary-table-wrap { display: block !important; }
+    .detail-table, table.detail-table { display: table !important; }
+    .detail-table-wrap { display: block !important; }
+    .detail-title, .rpt-sec-title { display: block !important; }
+    .rpt-docs-section { display: block !important; }
     @media print {
       body {
         -webkit-print-color-adjust: exact;
@@ -687,6 +694,12 @@ function exportToWord(logos = {}) {
   .badge-yellow { background:#fff8e1; color:#8d6e00; }
   .badge-gray   { background:#eee; color:#666; }
   .badge-blue   { background:#e3f2fd; color:#0d47a1; }
+  .summary-table, table.summary-table { display:table !important; }
+  .summary-table-wrap { display:block !important; }
+  .detail-table, table.detail-table { display:table !important; }
+  .detail-table-wrap { display:block !important; }
+  .detail-title, .rpt-sec-title { display:block !important; }
+  .rpt-docs-section { display:block !important; }
 </style>
 </head>
 <body>${body}</body>

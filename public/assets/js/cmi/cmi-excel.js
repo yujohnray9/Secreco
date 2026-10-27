@@ -60,10 +60,14 @@
           cols = parsedCols;
         } else if (typeof parsedCols === 'object') {
           if (Array.isArray(parsedCols.titles) && parsedCols.titles.length > 0) {
-            categories = parsedCols.titles.map(t => String(t.title || '').trim()).filter(Boolean);
+            if (parsedCols.titles.length > 1) {
+              categories = parsedCols.titles.map(t => String(t.title || '').trim()).filter(Boolean);
+            }
             if (Array.isArray(parsedCols.titles[0]?.columns)) cols = parsedCols.titles[0].columns;
           }
-          if (Array.isArray(parsedCols.categories)) categories = parsedCols.categories;
+          if (Array.isArray(parsedCols.categories) && parsedCols.categories.length > 1) {
+            categories = parsedCols.categories;
+          }
           if (Array.isArray(parsedCols.columns) && cols.length === 0) cols = parsedCols.columns;
         }
       }
@@ -76,9 +80,19 @@
         ];
       }
 
+      // Check distinct categories; ignore if single category or equals table title
+      const tblTitle = String(tDef.title || '').trim().toLowerCase();
+      const distinctCats = [...new Set(categories.map(c => String(c).trim()).filter(Boolean))]
+        .filter(c => c.toLowerCase() !== tblTitle);
+      const finalCategories = distinctCats.length > 1 ? distinctCats : [];
+
       const schemaCols = [];
-      if (categories.length > 0) {
-        schemaCols.push({ key: 'category', header: 'Category', aliases: ['category', 'cat'], sample: categories[0] });
+      const hasCatCol = cols.some(c => {
+        const n = String(typeof c === 'string' ? c : (c.name || c.header || c.key || '')).toLowerCase();
+        return n === 'category' || n === 'cat';
+      });
+      if (finalCategories.length > 1 && !hasCatCol) {
+        schemaCols.push({ key: 'category', header: 'Category', aliases: ['category', 'cat'], sample: finalCategories[0] });
       }
       cols.forEach((c, idx) => {
         const name = typeof c === 'string' ? c : (c.name || c.label || `Column ${idx + 1}`);
@@ -94,7 +108,7 @@
       return {
         no: canon,
         title: tDef.title || `Table ${canon}`,
-        categories: categories,
+        categories: finalCategories,
         columns: schemaCols,
         sampleRows: []
       };
@@ -167,7 +181,7 @@
     // For categorized tables (e.g. T6, T7a, T7b, T8a, T10, T13, T15, T20b, T1, T2a, T2b, T16):
     // Pre-populate clean starter rows with the category title in Column A,
     // so users immediately see where to enter data for each category/scope!
-    if (schema.categories && schema.categories.length > 0) {
+    if (schema.categories && schema.categories.length > 1) {
       schema.categories.forEach(cat => {
         for (let rowIndex = 0; rowIndex < 10; rowIndex++) {
           data.push(schema.columns.map(c => {

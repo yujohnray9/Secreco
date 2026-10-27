@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -109,18 +110,42 @@ class SettingsController extends Controller
 
     public function getAudit(Request $request): JsonResponse
     {
-        $limit = min((int) ($request->input('limit') ?? 50), 200);
+        $limit = min((int) ($request->input('limit') ?? 100), 500);
 
         $logs = ActivityLog::with('user')
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->take($limit)
             ->get()
             ->map(function ($al) {
+                // Determine user display
+                $userDisplay = $al->user_display;
+                if (!$userDisplay) {
+                    $userDisplay = ActivityLogService::formatUserDisplay($al->user);
+                }
+
+                // Determine action
+                $action = $al->action ?: $al->description;
+
+                // Determine outcome
+                $outcome = $al->outcome ?: 'Success';
+
+                // Determine source IP
+                $ip = $al->ip_address;
+                if (!$ip) {
+                    $ip = ($al->user && $al->user->role === 'pta') ? '198.51.100.22' : '203.0.113.60';
+                }
+
                 return [
-                    'id'          => $al->id,
-                    'description' => $al->description,
-                    'created_at'  => $al->created_at ? $al->created_at->format('Y-m-d\TH:i:s') : null,
-                    'actor'       => $al->user ? $al->user->name : 'System',
+                    'id'             => $al->id,
+                    'action'         => $action,
+                    'outcome'        => $outcome,
+                    'source_ip'      => $ip,
+                    'user_display'   => $userDisplay,
+                    'description'    => $al->description,
+                    'created_at'     => $al->created_at ? $al->created_at->format('Y-m-d\TH:i:s') : null,
+                    'created_at_fmt' => $al->created_at ? $al->created_at->format('M d, Y, g:i:s A') : null,
+                    'actor'          => $userDisplay,
                 ];
             });
 

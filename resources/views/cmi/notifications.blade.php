@@ -1055,6 +1055,11 @@ function renderCmiList() {
     const yrMatch = (n.msg || '').match(/CY\s*(\d{4})/i);
     const yr = yrMatch ? yrMatch[1] : '{{ $currentYear ?? date('Y') }}';
 
+    const isApprovalOrActivation = isYearActivation ||
+      n.notif_type === 'accepted' || n.type === 'accepted' ||
+      n.notif_type === 'user_approval' ||
+      (n.msg && (n.msg.toLowerCase().includes('is now active') || n.msg.toLowerCase().includes('accepted') || n.msg.toLowerCase().includes('approved')));
+
     let cardTitle = n.msg || 'Report Update';
     let badgeHtml = '';
     let btnText = '';
@@ -1134,7 +1139,11 @@ function renderCmiList() {
 }
 
 async function loadCmiNotifs() {
-  const year = new Date().getFullYear();
+  let year = new Date().getFullYear();
+  try {
+    const raw = localStorage.getItem('secreco_selected_year');
+    if (raw && !isNaN(parseInt(raw, 10))) year = parseInt(raw, 10);
+  } catch(e){}
   try {
     const res = await fetch(`/api/notifications?year=${year}`);
     const json = await res.json();

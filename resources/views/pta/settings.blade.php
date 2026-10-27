@@ -250,7 +250,7 @@
       </div>
       <div class="fc-table-wrap">
         <table class="perm-tbl">
-          <thead><tr><th>Permission</th><th>PTA Admin</th><th>CMI Rep</th><th>Viewer</th></tr></thead>
+          <thead><tr><th>Permission</th><th>PTA Admin</th><th>CMI Rep</th><th>Executive</th></tr></thead>
           <tbody>
             <tr><td>Fill Up / Submit Tables</td><td><span class="perm-chk">✔</span></td><td><span class="perm-chk">✔</span></td><td><span class="perm-crs">✘</span></td></tr>
             <tr><td>View All CMI Submissions</td><td><span class="perm-chk">✔</span></td><td><span class="perm-part">Own only</span></td><td><span class="perm-chk">✔</span></td></tr>
@@ -336,10 +336,16 @@
       <div class="fc-table-wrap">
         <table class="fc-table" id="auditTable">
           <thead>
-            <tr><th>Date &amp; Time</th><th>User</th><th>Action</th></tr>
+            <tr>
+              <th style="min-width:140px">Date &amp; Time</th>
+              <th>User</th>
+              <th>Action</th>
+              <th style="min-width:120px">Source IP</th>
+              <th style="min-width:110px">Outcome</th>
+            </tr>
           </thead>
           <tbody id="auditBody">
-            <tr><td colspan="3" style="text-align:center;padding:32px;color:#9ca3af">Click the Audit Logs tab to load logs.</td></tr>
+            <tr><td colspan="5" style="text-align:center;padding:32px;color:#9ca3af">Click the Audit Logs tab to load logs.</td></tr>
           </tbody>
         </table>
       </div>
@@ -520,40 +526,101 @@ async function saveReportSettings() {
 // ── Audit Logs ───────────────────────────────────────────────────
 async function loadAuditLogs() {
   const tbody = document.getElementById('auditBody');
-  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:#9ca3af">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#9ca3af">Loading...</td></tr>';
   try {
     const res  = await fetch('/api/pta/settings/audit');
     const json = await res.json();
     const logs = json.logs || [];
     if (!logs.length) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:40px;color:#9ca3af">No audit log entries found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#9ca3af">No audit log entries found.</td></tr>';
       return;
     }
-    tbody.innerHTML = logs.map(l => `
-      <tr data-search="${esc(l.description+' '+l.actor)}">
-        <td style="color:#6b7280;font-size:12.5px;white-space:nowrap">${formatDate(l.created_at)}</td>
-        <td><strong>${esc(l.actor||'System')}</strong></td>
-        <td>${esc(l.description)}</td>
-      </tr>
-    `).join('');
-  } catch(e) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:40px;color:#9ca3af">Failed to load audit logs.</td></tr>'; }
+    tbody.innerHTML = logs.map(l => {
+      const userText = l.user_display || l.actor || 'System';
+      const actionText = l.action || l.description;
+      const ipText = l.source_ip || '—';
+      const outcomeText = l.outcome || 'Success';
+      const searchText = [userText, actionText, ipText, outcomeText, l.created_at_fmt || ''].join(' ').toLowerCase();
+
+      return `
+        <tr data-search="${esc(searchText)}">
+          <td style="color:#6b7280;font-size:12.5px;white-space:nowrap;vertical-align:middle">
+            ${formatAuditDateTime(l.created_at)}
+          </td>
+          <td style="vertical-align:middle;font-size:13px;color:#111827;font-weight:500">
+            ${formatUserCol(userText)}
+          </td>
+          <td style="vertical-align:middle;font-size:13px;color:#374151">
+            ${esc(actionText)}
+          </td>
+          <td style="vertical-align:middle;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12.5px;color:#4b5563">
+            ${esc(ipText)}
+          </td>
+          <td style="vertical-align:middle">
+            ${renderOutcomeBadge(outcomeText)}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#9ca3af">Failed to load audit logs.</td></tr>'; }
 }
 
 function filterAuditLogs() {
-  const q = document.getElementById('auditSearch').value.toLowerCase();
+  const q = document.getElementById('auditSearch').value.toLowerCase().trim();
   let any = false;
   document.querySelectorAll('#auditTable tbody tr').forEach(tr => {
-    const show = !q || (tr.dataset.search||'').toLowerCase().includes(q);
+    const show = !q || (tr.dataset.search||'').includes(q);
     tr.style.display = show ? '' : 'none';
     if (show) any = true;
   });
   document.getElementById('auditEmpty').style.display = (!any && q) ? 'block' : 'none';
 }
 
-function formatDate(str) {
-  try { return new Date(str).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}); }
-  catch { return str; }
+function formatAuditDateTime(str) {
+  if (!str) return '—';
+  try {
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return esc(str);
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+    return `<div style="color:#111827;font-weight:500">${dateStr},</div><div style="color:#6b7280;font-size:11.5px;margin-top:2px">${timeStr}</div>`;
+  } catch(e) { return esc(str); }
 }
+
+function formatUserCol(userStr) {
+  // Highlight email vs role
+  const match = String(userStr).match(/^(.*?)\s*(\(.*?\))?$/);
+  if (match && match[2]) {
+    return `<span style="color:#111827">${esc(match[1])}</span> <span style="color:#6b7280;font-size:12px;font-weight:400">${esc(match[2])}</span>`;
+  }
+  return `<span>${esc(userStr)}</span>`;
+}
+
+function renderOutcomeBadge(outcome) {
+  const o = String(outcome || 'Success').trim();
+  const lower = o.toLowerCase();
+
+  let bg = '#ecfdf5';
+  let color = '#059669';
+  let border = '#a7f3d0';
+
+  if (lower.startsWith('failed') || lower.startsWith('denied')) {
+    bg = '#fef2f2';
+    color = '#dc2626';
+    border = '#fecaca';
+  } else if (lower.startsWith('blocked')) {
+    bg = '#fffbeb';
+    color = '#d97706';
+    border = '#fde68a';
+  } else if (lower.startsWith('expired')) {
+    bg = '#f3f4f6';
+    color = '#4b5563';
+    border = '#e5e7eb';
+  }
+
+  return `<span style="display:inline-block;padding:3px 10px;font-size:11.5px;font-weight:600;border-radius:20px;background:${bg};color:${color};border:1px solid ${border};white-space:nowrap">${esc(o)}</span>`;
+}
+
 function esc(s) { const el=document.createElement('span'); el.textContent=String(s??''); return el.innerHTML; }
 
 // ── Avatar Photo Upload Handler ──────────────────────────────────

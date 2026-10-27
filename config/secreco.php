@@ -104,6 +104,7 @@ return [
         'Watershed & Water Resources Research Development and Extension Center' => ['short' => 'WWRRDEC', 'type' => 'Research Center', 'logo' => 19],
         'Mabuwaya Foundation Inc.'              => ['short' => 'MFI',          'type' => 'NGO/Foundation',  'logo' => 20],
         'Government City of Santiago'           => ['short' => 'LGU-Santiago', 'type' => 'LGU',            'logo' => 21],
+        'PLGU Cagayan'                          => ['short' => 'PLGU-Cagayan', 'type' => 'LGU',            'logo' => 23],
         'Commission on Higher Education - Regional Office 2' => ['short' => 'CHED-RO2', 'type' => "Gov't Agency", 'logo' => 22],
     ],
 

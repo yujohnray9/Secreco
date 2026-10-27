@@ -95,9 +95,7 @@ class InstitutionController extends Controller
                 $status = 'Not Started';
             }
 
-            $logoId  = $meta['logo'] ?? $idx;
-            $ext     = in_array((int)$logoId, [25, 26], true) ? 'png' : 'jpg';
-            $logoUrl = "/assets/img/logo{$logoId}.{$ext}";
+            $logoUrl = $this->getLogoUrl($meta, $idx);
             $idx++;
 
             $firstUser = $cmiUsersByInst->get($instName)?->first();
@@ -166,9 +164,7 @@ class InstitutionController extends Controller
             $meta = $masterList[$matchedName] ?? ['short' => 'ISU-E', 'type' => 'State University', 'logo' => 1];
         }
 
-        $logoId  = $meta['logo'] ?? 1;
-        $ext     = in_array((int)$logoId, [25, 26], true) ? 'png' : 'jpg';
-        $logoUrl = "/assets/img/logo{$logoId}.{$ext}";
+        $logoUrl = $this->getLogoUrl($meta, 1);
 
         $locations = [
             'Isabela State University - Echague' => 'Echague, Isabela',
@@ -192,6 +188,7 @@ class InstitutionController extends Controller
             'Watershed & Water Resources Research Development and Extension Center' => 'Los Baños, Laguna',
             'Mabuwaya Foundation Inc.' => 'Cabagan, Isabela',
             'Government City of Santiago' => 'Santiago City, Isabela',
+            'PLGU Cagayan' => 'Tuguegarao City, Cagayan',
             'Commission on Higher Education - Regional Office 2' => 'Tuguegarao City, Cagayan',
         ];
 
@@ -354,6 +351,7 @@ class InstitutionController extends Controller
             'year'        => $year,
             'institution' => [
                 'name'         => $matchedName,
+                'user_id'      => $uIds[0] ?? 0,
                 'short'        => $meta['short'] ?? '',
                 'type'         => $meta['type'] ?? 'State University',
                 'location'     => $location,
@@ -368,5 +366,57 @@ class InstitutionController extends Controller
             ],
             'tables' => $tablesData,
         ]);
+    }
+
+    private function getLogoUrl(array $meta, int $fallbackIdx): string
+    {
+        $logo = $meta['logo'] ?? $fallbackIdx;
+
+        // If a direct filename was given (e.g. "PGU Cagayan.jpg" or "logo23.jpg")
+        if (is_string($logo) && !is_numeric($logo)) {
+            if (file_exists(public_path('assets/logo/' . $logo))) {
+                return '/assets/logo/' . rawurlencode($logo);
+            }
+            if (file_exists(public_path('assets/img/' . $logo))) {
+                return '/assets/img/' . rawurlencode($logo);
+            }
+            return '/assets/logo/' . rawurlencode($logo);
+        }
+
+        $logoId = (int) $logo;
+        $extensions = ['jpg', 'png', 'jpeg', 'JPG', 'PNG', 'JPEG', 'webp'];
+
+        // 1. Check in assets/img/
+        foreach ($extensions as $ext) {
+            if (file_exists(public_path("assets/img/logo{$logoId}.{$ext}"))) {
+                return "/assets/img/logo{$logoId}.{$ext}";
+            }
+        }
+
+        // 2. Check in assets/logo/ with short name
+        $short = $meta['short'] ?? '';
+        if ($short) {
+            foreach ($extensions as $ext) {
+                if (file_exists(public_path("assets/logo/{$short}.{$ext}"))) {
+                    return "/assets/logo/" . rawurlencode("{$short}.{$ext}");
+                }
+            }
+        }
+
+        // 3. Specifically check for PGU Cagayan or PLGU Cagayan in assets/logo or assets/img
+        if (str_contains($short, 'PLGU') || str_contains($short, 'PGU')) {
+            foreach (['PGU Cagayan.jpg', 'PGU Cagayan.png', 'PGU Cagayan.jpeg', 'PLGU Cagayan.jpg', 'PLGU Cagayan.png'] as $fn) {
+                if (file_exists(public_path("assets/logo/{$fn}"))) {
+                    return "/assets/logo/" . rawurlencode($fn);
+                }
+                if (file_exists(public_path("assets/img/{$fn}"))) {
+                    return "/assets/img/" . rawurlencode($fn);
+                }
+            }
+        }
+
+        // 4. Fallback to default path format
+        $ext = in_array($logoId, [25, 26], true) ? 'png' : 'jpg';
+        return "/assets/img/logo{$logoId}.{$ext}";
     }
 }

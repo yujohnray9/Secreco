@@ -19,6 +19,7 @@ class ReviewCorrectionsTest extends TestCase
         foreach ([
             '0001_01_01_000000_create_users_table.php',
             '2026_07_24_052503_create_format_templates_table.php',
+            '2026_07_24_052504_create_system_settings_table.php',
             '2026_09_03_185703_add_subtitle_and_is_locked_to_format_templates_table.php',
         ] as $file) {
             (require database_path('migrations/' . $file))->up();
@@ -44,6 +45,17 @@ class ReviewCorrectionsTest extends TestCase
         $response = (new FormatController)->save(Request::create('/', 'POST', ['action' => 'toggle_lock', 'id' => $format->id, 'year' => 2026]));
         $this->assertSame(422, $response->getStatusCode());
         $this->assertFalse($format->fresh()->is_locked);
+    }
+
+    public function test_clone_year_preserves_columns_json(): void
+    {
+        $columns = ['titles' => [['title' => 'Consortium Project Status Report', 'columns' => [['name' => 'Project Title', 'type' => 'text']]]]];
+        FormatTemplate::create(['year' => 2025, 'table_no' => 'T7c', 'title' => 'Consortium Project Status Report', 'section' => 'R&D Mgt. & Coord.', 'columns_json' => $columns]);
+        $response = (new FormatController)->save(Request::create('/', 'POST', ['action' => 'clone', 'from_year' => 2025, 'to_year' => 2027]));
+        $this->assertTrue($response->getData(true)['ok']);
+        $cloned = FormatTemplate::where('year', 2027)->where('table_no', 'T7c')->first();
+        $this->assertNotNull($cloned);
+        $this->assertSame($columns, $cloned->columns_json);
     }
 
     public function test_second_representative_can_be_approved_and_reactivated(): void
