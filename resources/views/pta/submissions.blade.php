@@ -500,7 +500,7 @@
       'T8B': ['program', 'project', 'agency', 'duration', 'budget', 'source', 'role'],
       'T9':  ['title', 'source', 'agency', 'researcher', 'impact'],
       'T10': ['title', 'agency', 'priority', 'duration', 'budget', 'fund'],
-      'T11': ['tech', 'project', 'stcbf', 'stc4id', 'safe', 'food_value_chain', 'others'],
+      'T11': ['tech', 'project', 'agency', 'stcbf', 'stc4id', 'safe', 'food_value_chain', 'others'],
       'T12': ['tech', 'owner', 'precomm', 'licensor', 'startup', 'spinoff'],
       'T13': ['remarks'],
       'T14': ['title', 'venue', 'participants', 'expenditures', 'funds'],

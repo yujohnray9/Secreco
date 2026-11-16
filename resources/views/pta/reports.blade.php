@@ -179,7 +179,7 @@
     <script src="/assets/js/pta/reports-docs-lightbox.js?v=9"></script>
 
     <!-- ── Table renderers (must load before reports-tabledefs.js) ── -->
-    <script src="/assets/js/pta/renderers/render-t1.js?v=11"></script>
+    <script src="/assets/js/pta/renderers/render-t1.js?v=20261030"></script>
     <script src="/assets/js/pta/renderers/render-t2a.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t2b.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t3.js?v=11"></script>
@@ -203,7 +203,7 @@
     <script src="/assets/js/pta/renderers/render-t19.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t20a.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t20b.js?v=12"></script>
-    <script src="/assets/js/pta/renderers/render-generic.js?v=11"></script>
+    <script src="/assets/js/pta/renderers/render-generic.js?v=20261030"></script>
     <!-- ── End renderers ── -->
 
     <script src="/assets/js/pta/reports-renderers.js?v=11"></script>
@@ -212,5 +212,5 @@
     <script src="/assets/js/pta/reports-view-table.js?v=20261020"></script>
     <script src="/assets/js/pta/reports-view-cmi.js?v=20261012"></script>
     <script src="/assets/js/pta/reports-export.js?v=20261020"></script>
-    <script src="/assets/js/pta/reports-boot.js?v=10"></script>
+    <script src="/assets/js/pta/reports-boot.js?v=20261030"></script>
     @endsection

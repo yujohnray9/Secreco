@@ -39,6 +39,7 @@
               <th class="group" rowspan="2" style="width:36px">#</th>
               <th class="group" rowspan="2">Name of Technology</th>
               <th class="group" rowspan="2">Project Title</th>
+              <th class="group" rowspan="2" style="width:160px">Implementing Agency</th>
               <th class="group" colspan="${MODALITIES.length}">Technology Transfer Modality</th>
               <th class="group" rowspan="2" style="width:36px"></th>
             </tr>
@@ -116,6 +117,7 @@
       <td class="t11-num" style="text-align:center;font-weight:600"></td>
       <td><textarea rows="2" class="t11-tech"    placeholder="Name of Technology"   >${esc(data.tech||'')}</textarea></td>
       <td><textarea rows="2" class="t11-project" placeholder="Project Title"        >${esc(data.project||'')}</textarea></td>
+      <td><textarea rows="2" class="t11-agency"  placeholder="Implementing Agency" >${esc(data.agency||'')}</textarea></td>
       ${modalityCells}
       <td style="text-align:center">
         ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T11._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
@@ -158,7 +160,7 @@
       return {
         tech:       tr.querySelector('.t11-tech')?.value    || '',
         project:    tr.querySelector('.t11-project')?.value || '',
-        agency:     tr.dataset.legacyAgency || '',
+        agency:     tr.querySelector('.t11-agency')?.value.trim() || tr.dataset.legacyAgency || '',
         modalities: mods,
         modality:   activeMods.join(', '),
         stcbf:      Boolean(mods.stcbf),
@@ -202,7 +204,7 @@
      STATUS (auto-derived)
   ───────────────────────────────────────── */
   function isRowTouched(r) {
-    const hasText = ['tech', 'project'].some(k => (r[k] || '').trim() !== '');
+    const hasText = ['tech', 'project', 'agency'].some(k => (r[k] || '').trim() !== '');
     const hasMod  = r.modalities && Object.values(r.modalities).some(Boolean);
     return hasText || hasMod;
   }
@@ -243,7 +245,7 @@
   function save(requestedStatus) {
     const rows = collectRows();
 
-    const textFields = ['tech', 'project'];
+    const textFields = ['tech', 'project', 'agency'];
     const hasTextContent = CMIUtils.filterEmptyRows(rows, textFields).length > 0;
     const hasCheckedMod  = rows.some(r => r.modalities && Object.values(r.modalities).some(Boolean));
     if (!hasTextContent && !hasCheckedMod) {

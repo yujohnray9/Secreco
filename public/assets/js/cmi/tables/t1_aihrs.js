@@ -157,7 +157,6 @@
         date:       tr.querySelector('.t1-date')?.value || '',
         agency:     tr.querySelector('.t1-agency')?.value || '',
         new_:       valNew,
-        new:        valNew,
         ongoing:    nums[1]?.value || '',
         completed:  nums[2]?.value || '',
         terminated: nums[3]?.value || '',

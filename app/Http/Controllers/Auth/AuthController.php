@@ -207,8 +207,11 @@ class AuthController extends Controller
     {
         $email = trim($request->input('email', ''));
 
-        // Resend OTP shortcut
-        if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // Resend OTP shortcut (only when called as a bare email resend without registration form fields)
+        $isResendOnly = $request->input('action') === 'resend'
+            || (!$request->filled('first_name') && !$request->filled('password') && !$request->filled('role'));
+
+        if ($isResendOnly && !empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $existing = PendingRegistration::where('email', $email)->where('verified', false)->first();
 
             if ($existing) {

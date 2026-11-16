@@ -474,7 +474,6 @@
 
         if (matchedCol) {
           rowObj[matchedCol.key] = val;
-          if (matchedCol.key === 'new_') rowObj['new'] = val;
           // Mark hasData only if actual data field has content (not just category/scope)
           if (val !== '' && !['category', 'scope', 'linkage_type'].includes(matchedCol.key)) {
             hasData = true;
@@ -489,7 +488,6 @@
           if (rawValues[idx] !== undefined && String(rawValues[idx]).trim() !== '') {
             let v = String(rawValues[idx]).trim();
             rowObj[c.key] = v;
-            if (c.key === 'new_') rowObj['new'] = v;
             if (!['category', 'scope', 'linkage_type'].includes(c.key)) {
               hasData = true;
             }
@@ -749,7 +747,11 @@
       const cleanKey = escapedKey.replace(/_/g, '');
       const input = tr.querySelector(`input[class*="${escapedKey}"], textarea[class*="${escapedKey}"], select[class*="${escapedKey}"], input[class*="${cleanKey}"], textarea[class*="${cleanKey}"], select[class*="${cleanKey}"]`);
       if (input) {
-        input.value = val;
+        if (input.type === 'number') {
+          input.value = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, '');
+        } else {
+          input.value = val;
+        }
         input.title = val;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));

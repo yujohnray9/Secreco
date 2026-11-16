@@ -486,7 +486,7 @@
   <script src="/assets/js/cmi/fillup-docs-modal.js?v=20261012"></script>
 
   <!-- Section 1: R&D Mgt. & Coord. -->
-  <script src="/assets/js/cmi/tables/t1_aihrs.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t1_aihrs.js?v=20261030"></script>
   <script src="/assets/js/cmi/tables/t2a_rsrdh_summary.js?v=20261012"></script>
   <script src="/assets/js/cmi/tables/t2b_rsrdh_participants.js?v=20261012"></script>
   <script src="/assets/js/cmi/tables/t3_projects_monitored.js?v=20261012"></script>
@@ -498,18 +498,18 @@
 
   <!-- Section 2: Strategic R&D -->
   <script src="/assets/js/cmi/tables/t8a_rd_projects.js?v=20261012"></script>
-  <script src="/assets/js/cmi/tables/t8b_collaborative_rd.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t8b_collaborative_rd.js?v=20261029"></script>
   <script src="/assets/js/cmi/tables/t9_technologies_generated.js?v=20261012"></script>
 
   <!-- Section 3: Results Utilization -->
-  <script src="/assets/js/cmi/tables/t10_tt_projects.js?v=20261012"></script>
-  <script src="/assets/js/cmi/tables/t11_technologies_extended.js?v=20261012b"></script>
+  <script src="/assets/js/cmi/tables/t10_tt_projects.js?v=20261029"></script>
+  <script src="/assets/js/cmi/tables/t11_technologies_extended.js?v=20261029"></script>
   <script src="/assets/js/cmi/tables/t12_commercialized.js?v=20261012"></script>
   <script src="/assets/js/cmi/tables/t13_tech_promotion.js?v=20261012"></script>
 
   <!-- Section 4: Capability & Gov. -->
-  <script src="/assets/js/cmi/tables/t14_trainings.js?v=20261012"></script>
-  <script src="/assets/js/cmi/tables/t15_equipment_facilities.js?v=20261012"></script>
+  <script src="/assets/js/cmi/tables/t14_trainings.js?v=20261029"></script>
+  <script src="/assets/js/cmi/tables/t15_equipment_facilities.js?v=20261029"></script>
   <script src="/assets/js/cmi/tables/t16_awards.js?v=20261012"></script>
   <script src="/assets/js/cmi/tables/t17_meetings.js?v=20261012"></script>
   <script src="/assets/js/cmi/tables/t18_cmi_contributions.js?v=20261012"></script>

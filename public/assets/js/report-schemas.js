@@ -211,6 +211,7 @@
       columns: [
         { key: 'tech', header: 'Name of Technology', aliases: ['tech', 'technology', 'name'], sample: 'Mushroom Spawn Production & Substrate Preparation' },
         { key: 'project', header: 'Project Title', aliases: ['project', 'title', 'project title'], sample: 'Community-Based Mushroom Enterprise' },
+        { key: 'agency', header: 'Implementing Agency', aliases: ['agency', 'implementing agency', 'institution'], sample: 'Quirino State University' },
         { key: 'stcbf', header: 'STCBF', aliases: ['stcbf', 'stabs'], sample: '✓' },
         { key: 'stc4id', header: 'STC4iD', aliases: ['stc4id', 'stc4_id'], sample: '' },
         { key: 'safe', header: 'SAFE', aliases: ['safe'], sample: '' },

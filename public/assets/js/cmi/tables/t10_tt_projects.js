@@ -62,6 +62,13 @@
             </tr>
           </thead>
           <tbody id="t10_rows"></tbody>
+          <tfoot>
+            <tr style="font-weight:700;background:var(--bg-soft,#f3f6f4)">
+              <td colspan="8" style="text-align:right;padding-right:12px;font-weight:700">TOTAL</td>
+              <td id="t10_total_budget" style="text-align:center;color:var(--green,#2e7d32);font-weight:700">—</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
@@ -132,13 +139,23 @@
     return ['approved', 'yes', 'true', '1', '✓', 'x', 'checked', 'y'].includes(str);
   }
 
+  function recalcTotal() {
+    let total = 0;
+    document.querySelectorAll('#t10_rows .t10-budget').forEach(inp => {
+      const v = parseFloat(String(inp.value || '').replace(/,/g, '').replace(/[^0-9.-]/g, ''));
+      total += isNaN(v) ? 0 : v;
+    });
+    const el = document.getElementById('t10_total_budget');
+    if (el) el.textContent = total > 0 ? total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+  }
+
   function makeRow(catKey, data = {}, removable = false) {
     const tr = document.createElement('tr');
     tr.className = 'data-row';
     tr.dataset.cat = catKey;
 
     const statusNorm = String(data.status || '').toLowerCase().trim();
-    const isApp = isTruthyVal(data.approved) || statusNorm === 'approved' || statusNorm === 'app';
+    const isApp = isTruthyVal(data.approved)    || statusNorm === 'approved' || statusNorm === 'app';
     const isRev = isTruthyVal(data.for_revision) || statusNorm.includes('revis');
     const isDis = isTruthyVal(data.disapproved) || statusNorm.includes('disapprov');
 
@@ -158,9 +175,10 @@
       <td><textarea rows="2" class="t10-budget"   placeholder="Budget (if approved)"     >${esc(data.budget||'')}</textarea></td>
       <td><textarea rows="2" class="t10-fund"     placeholder="Funding Source"           >${esc(data.fund||'')}</textarea></td>
       <td style="text-align:center">
-        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T10._renumber('${catKey}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
+        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T10._renumber('${catKey}');T10._recalc()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
     `;
+    tr.querySelector('.t10-budget').addEventListener('input', recalcTotal);
     return tr;
   }
 
@@ -192,6 +210,7 @@
     if (last) last.insertAdjacentElement('afterend', newRow);
     else tbody.appendChild(newRow);
     renumber(catKey);
+    recalcTotal();
   }
 
   function collectRows() {
@@ -256,6 +275,7 @@
       catRows.forEach((row, i) => tbody.appendChild(makeRow(cat.key, row, i > 0)));
       renumber(cat.key);
     });
+    recalcTotal();
     const status = computeStatus(saved.length ? saved : []);
     updateStatusBadge(status);
   }
@@ -273,6 +293,7 @@
         updateBadge();
         const status = computeStatus(saved.length ? saved : []);
         updateStatusBadge(status);
+        recalcTotal();
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
@@ -283,6 +304,7 @@
           renumber(cat.key);
         });
         updateStatusBadge('not-started');
+        recalcTotal();
       });
   }
 
@@ -342,6 +364,7 @@
     openDocs,
     _renumber(catKey)      { renumber(catKey); },
     _syncStatus(cb, field) { syncStatus(cb, field); },
+    _recalc: recalcTotal,
   };
 
   (window.CMI = window.CMI || {});

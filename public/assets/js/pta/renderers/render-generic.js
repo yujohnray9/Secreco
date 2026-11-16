@@ -58,9 +58,15 @@ function resolveGenericColumns(template, data) {
       });
     });
     if (keySet.size > 0) {
+      if (keySet.has('new_') && keySet.has('new')) {
+        keySet.delete('new');
+      }
+      if (keySet.has('expenditures') && keySet.has('expenditure')) {
+        keySet.delete('expenditure');
+      }
       normalizedCols = Array.from(keySet).map(k => ({
         key: k,
-        label: k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' '),
+        label: (k === 'new_' ? 'New' : k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, ' ')).trim(),
         type: 'text'
       }));
     }

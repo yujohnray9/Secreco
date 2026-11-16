@@ -113,7 +113,7 @@ function renderT1(data) {
   `;
 
   // Helper for generating category table
-  function buildCategoryTable(title, rows) {
+  function buildCategoryTable(title, rows, isFirst = false) {
     let sumN = 0, sumO = 0, sumC = 0, sumT = 0, sumTot = 0;
     rows.forEach(r => {
       sumN += r.new;
@@ -138,7 +138,7 @@ function renderT1(data) {
     `;
 
     return `
-      <div class="rpt-sec-title" style="font-size:14px;font-weight:800;color:#111827;margin:24px 0 8px 0;">${title}</div>
+      <div class="rpt-sec-title" style="font-size:14px;font-weight:800;color:#111827;margin:${isFirst ? '0 0 10px 0' : '28px 0 10px 0'};">${title}</div>
       <div class="tbl-wrap" style="overflow-x:auto;margin-bottom:20px;">
         <table class="merged" style="width:100%;border-collapse:collapse;">
           <thead>
@@ -173,14 +173,8 @@ function renderT1(data) {
     `;
   }
 
-  const preTableHtml = buildCategoryTable('Pre In-House', preInHouseRows);
-  const aihrsTableHtml = buildCategoryTable("AIHR's", aihrsRows);
-
-  const footnoteHtml = `
-    <div class="rpt-footnote" style="font-size:11.5px;font-style:italic;color:#6b7280;margin:12px 0 24px 0;">
-      Note: The Regional Consortium may prepare other tables for ease in data presentation.
-    </div>
-  `;
+  const preTableHtml = buildCategoryTable('Pre In-House', preInHouseRows, true);
+  const aihrsTableHtml = buildCategoryTable("AIHR's", aihrsRows, false);
 
   const docsSection = docRows ? `
     <div class="doc-card" style="margin-top:24px;">
@@ -193,10 +187,8 @@ function renderT1(data) {
 
   return `
     <div class="rpt-t1-container">
-      ${summaryTableHtml}
       ${preTableHtml}
       ${aihrsTableHtml}
-      ${footnoteHtml}
       ${docsSection}
     </div>
   `;

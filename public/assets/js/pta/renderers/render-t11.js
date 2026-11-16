@@ -94,6 +94,7 @@ function renderT11(arg1, arg2) {
         <td style="text-align:center;padding:8px 6px;font-size:11px;font-weight:600;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${i + 1}</td>
         <td style="padding:8px 10px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;">${esc(r.tech)}</td>
         <td style="padding:8px 10px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;">${esc(r.project)}</td>
+        <td style="padding:8px 10px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;">${esc(r.agency)}</td>
         <td style="text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${r.stcbf ? '/' : ''}</td>
         <td style="text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${r.stc4id ? '/' : ''}</td>
         <td style="text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${r.safe ? '/' : ''}</td>
@@ -117,8 +118,9 @@ function renderT11(arg1, arg2) {
         <thead>
           <tr style="background:#c9e2ca;color:#111827;">
             <th rowspan="2" style="width:40px;text-align:center;padding:8px 6px;font-size:11px;font-weight:700;border:1px solid #7ea87e;background:#c9e2ca;color:#111827;">No.</th>
-            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;width:24%;background:#c9e2ca;color:#111827;">Name of Technology</th>
-            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;width:25%;background:#c9e2ca;color:#111827;">Project Title</th>
+            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;width:20%;background:#c9e2ca;color:#111827;">Name of Technology</th>
+            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;width:20%;background:#c9e2ca;color:#111827;">Project Title</th>
+            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;width:18%;background:#c9e2ca;color:#111827;">Implementing Agency</th>
             <th colspan="5" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Technology Transfer Modality</th>
           </tr>
           <tr style="background:#c9e2ca;color:#111827;">

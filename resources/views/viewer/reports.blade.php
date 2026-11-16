@@ -146,7 +146,7 @@
 <script src="/assets/js/pta/reports-docs-lightbox.js?v=9"></script>
 
 <!-- ── Table renderers (must load before reports-tabledefs.js) ── -->
-<script src="/assets/js/pta/renderers/render-t1.js?v=11"></script>
+<script src="/assets/js/pta/renderers/render-t1.js?v=20261030"></script>
 <script src="/assets/js/pta/renderers/render-t2a.js?v=11"></script>
 <script src="/assets/js/pta/renderers/render-t2b.js?v=11"></script>
 <script src="/assets/js/pta/renderers/render-t3.js?v=11"></script>

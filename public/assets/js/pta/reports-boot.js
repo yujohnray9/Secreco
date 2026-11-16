@@ -136,9 +136,29 @@ async function syncTableOptionsForYear(year) {
       const label = t.title ? `Table ${cleanNo} — ${t.title}` : `Table ${cleanNo}`;
 
       const existingDef = window.TABLE_DEFS[no] || window.TABLE_DEFS[cleanNo] || window.TABLE_DEFS['T' + cleanNo] || {};
-      // If table is a custom format with columns_json, or lacks a dedicated renderer, use renderGeneric
-      const isPlaceholder = Array.isArray(t.columns_json) && t.columns_json.length === 3 && t.columns_json[0] === 'Item Description';
-      const hasCustomCols = t.columns_json && !isPlaceholder && (Array.isArray(t.columns_json) ? t.columns_json.length > 0 : Object.keys(t.columns_json).length > 0);
+      // Check if template has actual custom columns (from Manage Formats)
+      let hasCustomCols = false;
+      if (t.columns_json) {
+        let parsedCols = t.columns_json;
+        if (typeof parsedCols === 'string') {
+          try { parsedCols = JSON.parse(parsedCols); } catch (e) { parsedCols = null; }
+        }
+        if (parsedCols && typeof parsedCols === 'object') {
+          if (Array.isArray(parsedCols.titles) && parsedCols.titles.some(tit => Array.isArray(tit.columns) && tit.columns.length > 0)) {
+            hasCustomCols = true;
+          } else if (Array.isArray(parsedCols.columns) && parsedCols.columns.length > 0) {
+            hasCustomCols = true;
+          } else if (Array.isArray(parsedCols) && parsedCols.length > 0) {
+            const isLegacyPlaceholder = parsedCols.length === 3 &&
+              parsedCols[0] === 'Item Description' &&
+              parsedCols[1] === 'Agency' &&
+              parsedCols[2] === 'Remarks';
+            if (!isLegacyPlaceholder) {
+              hasCustomCols = true;
+            }
+          }
+        }
+      }
       let chosenRenderer = existingDef.renderer || (typeof renderGeneric !== 'undefined' ? renderGeneric : null);
       if (hasCustomCols || !chosenRenderer) {
         chosenRenderer = (typeof renderGeneric !== 'undefined' ? renderGeneric : existingDef.renderer);

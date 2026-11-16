@@ -49,6 +49,13 @@
             </tr>
           </thead>
           <tbody id="t15_rows"></tbody>
+          <tfoot>
+            <tr style="font-weight:700;background:var(--bg-soft,#f3f6f4)">
+              <td colspan="2" style="text-align:right;padding-right:12px;font-weight:700">TOTAL</td>
+              <td id="t15_total_expenditures" style="text-align:center;color:var(--green,#2e7d32);font-weight:700">—</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
@@ -68,6 +75,16 @@
     </div>`;
   }
 
+  function recalcTotal() {
+    let total = 0;
+    document.querySelectorAll('#t15_rows .t15-expense').forEach(inp => {
+      const v = parseFloat(String(inp.value || '').replace(/,/g, '').replace(/[^0-9.-]/g, ''));
+      total += isNaN(v) ? 0 : v;
+    });
+    const el = document.getElementById('t15_total_expenditures');
+    if (el) el.textContent = total > 0 ? total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+  }
+
   function makeCatHeader(cat) {
     return `<tr class="t15-cat-row" data-cat="${esc(cat)}">
       <td colspan="5" style="font-weight:700;background:var(--bg-soft,#f3f6f4);padding:9px 12px;color:var(--forest,#075b42);border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb">${esc(cat)}</td>
@@ -81,12 +98,13 @@
     tr.innerHTML = `
       <td><textarea rows="2" class="t15-item" placeholder="Item description" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px">${esc(data.item || '')}</textarea></td>
       <td><textarea rows="2" class="t15-location" placeholder="Location / Agency" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px">${esc(data.location || '')}</textarea></td>
-      <td><input type="number" step="0.01" min="0" class="t15-expense" placeholder="0.00" value="${esc(data.expense || data.expenditures || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
+      <td><input type="text" class="t15-expense" placeholder="0.00" value="${esc(data.expense || data.expenditures || '')}" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px"/></td>
       <td><textarea rows="2" class="t15-funds" placeholder="Source(s) of Funds" style="width:100%;box-sizing:border-box;padding:6px;border:1px solid #d1d5db;border-radius:4px">${esc(data.funds || data.source || '')}</textarea></td>
       <td style="text-align:center">
-        <button type="button" class="row-remove-btn" onclick="this.closest('tr').remove()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;font-weight:700;padding:0 6px;line-height:1" title="Remove row">&times;</button>
+        <button type="button" class="row-remove-btn" onclick="this.closest('tr').remove();T15._recalc()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;font-weight:700;padding:0 6px;line-height:1" title="Remove row">&times;</button>
       </td>
     `;
+    tr.querySelector('.t15-expense').addEventListener('input', recalcTotal);
     return tr;
   }
 
@@ -102,6 +120,7 @@
       if (header) header.insertAdjacentElement('afterend', tr);
       else tbody.appendChild(tr);
     }
+    recalcTotal();
     const input = tr.querySelector('.t15-item');
     if (input && !data.item) input.focus();
   }
@@ -164,6 +183,7 @@
 
     const status = computeStatus(collectRows());
     updateStatusBadge(status);
+    recalcTotal();
   }
 
   function loadData() {
@@ -177,10 +197,12 @@
         updateBadge();
         const status = data.status || computeStatus(collectRows());
         updateStatusBadge(status);
+        recalcTotal();
         if (data.updated_at) setMsg(`Last saved: ${data.updated_at}`);
       })
       .catch(() => {
         setRows([]);
+        recalcTotal();
       });
   }
 
@@ -247,6 +269,7 @@
     addRow,
     openDocs,
     setRows,
+    _recalc: recalcTotal,
   };
 
   (window.CMI = window.CMI || {});

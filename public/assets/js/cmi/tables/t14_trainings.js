@@ -38,6 +38,13 @@
             </tr>
           </thead>
           <tbody id="t14_rows"></tbody>
+          <tfoot>
+            <tr style="font-weight:700;background:var(--bg-soft,#f3f6f4)">
+              <td colspan="4" style="text-align:right;padding-right:12px">TOTAL</td>
+              <td id="t14_total_expenditures" style="text-align:center;color:var(--green,#2e7d32);font-weight:700">—</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
@@ -54,6 +61,16 @@
         <span id="t14_status_msg" style="font-size:12px;color:var(--text-muted)"></span>
       </div>
     </div>`;
+  }
+
+  function recalcTotal() {
+    let total = 0;
+    document.querySelectorAll('#t14_rows .t14-expenditures').forEach(inp => {
+      const v = parseFloat(String(inp.value || '').replace(/,/g, '').replace(/[^0-9.-]/g, ''));
+      total += isNaN(v) ? 0 : v;
+    });
+    const el = document.getElementById('t14_total_expenditures');
+    if (el) el.textContent = total > 0 ? total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
   }
 
   function makeRow(data = {}, removable = false) {
@@ -75,9 +92,10 @@
            >${esc(expendituresVal)}</textarea></td>
       <td><textarea rows="2" class="t14-funds"   placeholder="Source of Funds"        >${esc(fundsVal)}</textarea></td>
       <td style="text-align:center">
-        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T14._renumber()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
+        ${removable ? `<button class="row-remove-btn" onclick="this.closest('tr').remove();T14._renumber();T14._recalc()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
       </td>
     `;
+    tr.querySelector('.t14-expenditures').addEventListener('input', recalcTotal);
     return tr;
   }
 
@@ -93,6 +111,7 @@
     if (!tbody) return;
     tbody.appendChild(makeRow(data, removable));
     renumber();
+    recalcTotal();
   }
 
   function setRows(rows) {
@@ -102,6 +121,7 @@
     const list = (rows && rows.length) ? rows : [{}];
     list.forEach((row, i) => tbody.appendChild(makeRow(row, i > 0)));
     renumber();
+    recalcTotal();
     const status = computeStatus(list);
     updateStatusBadge(status);
   }
@@ -203,6 +223,7 @@
     save,
     openDocs,
     _renumber: renumber,
+    _recalc: recalcTotal,
   };
 
   (window.CMI = window.CMI || {});

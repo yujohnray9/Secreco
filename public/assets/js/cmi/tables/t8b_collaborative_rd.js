@@ -110,7 +110,7 @@
       <td><textarea rows="2"   class="t8b-project"  placeholder="Project Title"              >${esc(data.project||'')}</textarea></td>
       <td><textarea rows="2"   class="t8b-agency"   placeholder="Implementing Agency"        >${esc(data.agency||'')}</textarea></td>
       <td><textarea rows="2"   class="t8b-duration" placeholder="e.g. Jan 2025 – Dec 2026"  >${esc(data.duration||'')}</textarea></td>
-      <td><input type="number" class="t8b-budget"   placeholder="0" min="0" step="0.01"
+      <td><input type="text" class="t8b-budget" placeholder="0.00"
             style="text-align:right;width:100%" value="${esc(data.budget||'')}"/></td>
       <td><textarea rows="2"   class="t8b-source"   placeholder="Source of Fund"             >${esc(data.source||'')}</textarea></td>
       <td><textarea rows="2"   class="t8b-role"     placeholder="Role of Consortium"         >${esc(data.role||'')}</textarea></td>
@@ -132,7 +132,8 @@
   function recalcTotal() {
     let total = 0;
     document.querySelectorAll('#t8b_rows .t8b-budget').forEach(inp => {
-      total += parseFloat(inp.value) || 0;
+      const v = parseFloat(String(inp.value || '').replace(/,/g, '').replace(/[^0-9.-]/g, ''));
+      total += isNaN(v) ? 0 : v;
     });
     const el = document.getElementById('t8b_total');
     if (el) el.textContent = total > 0 ? total.toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '—';
