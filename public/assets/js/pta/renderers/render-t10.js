@@ -38,15 +38,16 @@ function renderT10(arg1, arg2) {
 
   acceptedData.forEach(cmi => {
     (cmi.rows || []).forEach(r => {
-      const title = (r.title || '').trim();
-      const agency = (r.agency || cmi.institution || '').trim();
-      const priority = (r.priority || '').trim();
-      const duration = (r.duration || '').trim();
-      const budget = (r.budget || '').trim();
-      const fund = (r.fund || '').trim();
-      const approved = !!r.approved;
-      const for_revision = !!r.for_revision;
-      const disapproved = !!r.disapproved;
+      const title = String(r.title || '').trim();
+      const agency = String(r.agency || cmi.institution || '').trim();
+      const priority = String(r.priority || '').trim();
+      const duration = String(r.duration || '').trim();
+      const budget = String(r.budget ?? '').trim();
+      const fund = String(r.fund || r.source || r.fundsource || '').trim();
+      const statusNorm = String(r.status || '').trim().toLowerCase();
+      const approved = !!r.approved || statusNorm === 'approved';
+      const for_revision = !!r.for_revision || statusNorm === 'for revision' || statusNorm === 'revision';
+      const disapproved = !!r.disapproved || statusNorm === 'disapproved';
 
       // Only include non-empty rows
       if (!title && !agency && !priority && !duration && !budget && !fund && !approved && !for_revision && !disapproved) {
@@ -95,13 +96,13 @@ function renderT10(arg1, arg2) {
 
     return rows.map((r, i) => `
       <tr>
-        <td style="text-align:center;padding:8px 6px;font-size:11px;font-weight:600;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${i + 1}</td>
-        <td style="padding:8px 10px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;">${esc(r.title)}</td>
-        <td style="padding:8px 10px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;">${esc(r.agency)}</td>
-        <td style="padding:8px 10px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;">${esc(r.priority)}</td>
-        <td style="padding:8px 8px;font-size:11px;border:1px solid #7ea87e;text-align:center;vertical-align:middle;background:#fff;">${esc(r.duration)}</td>
-        <td style="padding:8px 8px;font-size:11px;border:1px solid #7ea87e;text-align:right;vertical-align:middle;background:#fff;white-space:nowrap;">${esc(r.budget)}</td>
-        <td style="padding:8px 8px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;">${esc(r.fund)}</td>
+        <td style="text-align:center;padding:8px 6px;font-size:11.5px;font-weight:600;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${i + 1}</td>
+        <td style="padding:8px 10px;font-size:11.5px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.45;word-break:normal;overflow-wrap:break-word;">${esc(r.title)}</td>
+        <td style="padding:8px 10px;font-size:11.5px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;word-break:normal;overflow-wrap:break-word;">${esc(r.agency)}</td>
+        <td style="padding:8px 10px;font-size:11.5px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;word-break:normal;overflow-wrap:break-word;">${esc(r.priority)}</td>
+        <td style="padding:8px 8px;font-size:11px;border:1px solid #7ea87e;text-align:center;vertical-align:middle;background:#fff;line-height:1.35;word-break:normal;overflow-wrap:break-word;">${esc(r.duration)}</td>
+        <td style="padding:8px 8px;font-size:11px;border:1px solid #7ea87e;text-align:right;vertical-align:middle;background:#fff;font-variant-numeric:tabular-nums;word-break:normal;overflow-wrap:break-word;">${esc(r.budget)}</td>
+        <td style="padding:8px 8px;font-size:11px;border:1px solid #7ea87e;text-align:center;vertical-align:middle;background:#fff;line-height:1.35;word-break:normal;overflow-wrap:break-word;">${esc(r.fund)}</td>
         <td style="text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${r.for_revision ? '/' : ''}</td>
         <td style="text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${r.disapproved ? '/' : ''}</td>
       </tr>
@@ -118,24 +119,35 @@ function renderT10(arg1, arg2) {
     </div>
 
     <div class="tbl-wrap" style="overflow-x:auto;margin-bottom:18px;">
-      <table class="merged" style="width:100%;border-collapse:collapse;border:1px solid #7ea87e;">
+      <table class="merged tbl-fixed-cols tbl-t10" style="width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #7ea87e;">
+        <colgroup>
+          <col style="width:4%">
+          <col style="width:22%">
+          <col style="width:13%">
+          <col style="width:12%">
+          <col style="width:12%">
+          <col style="width:12%">
+          <col style="width:8%">
+          <col style="width:8%">
+          <col style="width:9%">
+        </colgroup>
         <thead>
           <tr style="background:#c9e2ca;color:#111827;">
-            <th rowspan="3" style="width:36px;text-align:center;padding:8px 6px;font-size:11px;font-weight:700;border:1px solid #7ea87e;background:#c9e2ca;color:#111827;">No</th>
-            <th rowspan="3" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;width:24%;background:#c9e2ca;color:#111827;">Program/<br>Project<br>Title</th>
-            <th rowspan="3" style="width:125px;padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;background:#c9e2ca;color:#111827;">Agency<br>Proponent</th>
-            <th rowspan="3" style="width:120px;padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;background:#c9e2ca;color:#111827;">Regional<br>Priority<br>Addressed</th>
+            <th rowspan="3" style="text-align:center;padding:8px 4px;font-size:11px;font-weight:700;border:1px solid #7ea87e;background:#c9e2ca;color:#111827;">No</th>
+            <th rowspan="3" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;background:#c9e2ca;color:#111827;">Program / Project Title</th>
+            <th rowspan="3" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;background:#c9e2ca;color:#111827;">Agency Proponent</th>
+            <th rowspan="3" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;background:#c9e2ca;color:#111827;">Regional Priority Addressed</th>
             <th colspan="5" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Status</th>
           </tr>
           <tr style="background:#c9e2ca;color:#111827;">
-            <th colspan="3" style="padding:6px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Approved</th>
-            <th rowspan="2" style="width:75px;padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">For<br>Revision</th>
-            <th rowspan="2" style="width:75px;padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Dis-<br>approved</th>
+            <th colspan="3" style="padding:6px 8px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Approved</th>
+            <th rowspan="2" style="padding:6px 4px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">For<br>Revision</th>
+            <th rowspan="2" style="padding:6px 4px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Disapproved</th>
           </tr>
           <tr style="background:#c9e2ca;color:#111827;">
-            <th style="width:120px;padding:6px 6px;font-size:10px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Approved<br>Duration</th>
-            <th style="width:115px;padding:6px 6px;font-size:10px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Approved<br>Budget<br>(Php)</th>
-            <th style="width:95px;padding:6px 6px;font-size:10px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Funding<br>Source</th>
+            <th style="padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Approved<br>Duration</th>
+            <th style="padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Approved Budget<br>(Php)</th>
+            <th style="padding:6px 4px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Funding<br>Source</th>
           </tr>
         </thead>
         <tbody>
@@ -185,8 +197,15 @@ function formatT10Budget(val) {
   if (!val && val !== 0) return '';
   const str = String(val).trim();
   if (!str) return '';
-  // If already formatted (contains comma or spaces), clean and re-format or return
-  const cleanNum = parseFloat(str.replace(/[^0-9.]/g, ''));
+  const match = str.match(/-?\d[\d,.]*/);
+  if (!match) return str;
+  let cleaned = match[0].replace(/,/g, '');
+  const parts = cleaned.split('.');
+  if (parts.length > 2) {
+    const last = parts.pop();
+    cleaned = parts.join('') + (last.length <= 2 ? '.' + last : last);
+  }
+  const cleanNum = parseFloat(cleaned);
   if (isNaN(cleanNum) || cleanNum === 0) return str;
   return cleanNum.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }

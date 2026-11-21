@@ -439,10 +439,22 @@ async function exportToDOCX(logos = {}) {
       return new TableRow({ children: cells });
     });
 
+    const colEls = [...domTable.querySelectorAll('colgroup col')];
+    let columnWidths = undefined;
+    if (colEls.length > 0) {
+      const pcts = colEls.map(c => parseFloat((c.style?.width || c.getAttribute('width') || '').replace('%', '')));
+      if (pcts.every(p => Number.isFinite(p) && p > 0)) {
+        const totalPct = pcts.reduce((a, b) => a + b, 0) || 100;
+        const CONTENT_DXA = 9412; // A4 width (11906) minus 2 * 1247 margins
+        columnWidths = pcts.map(p => Math.round((p / totalPct) * CONTENT_DXA));
+      }
+    }
+
     return new Table({
       rows: [...docxHead, ...docxBody, ...docxFoot],
       width: { size: 100, type: WidthType.PERCENTAGE },
       layout: TableLayoutType.FIXED,
+      ...(columnWidths ? { columnWidths } : {}),
     });
   };
 

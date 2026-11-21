@@ -1,7 +1,7 @@
 @extends('layouts.viewer')
 
 @section('styles')
-<link rel="stylesheet" href="/assets/css/pta/reports.css?v=11"/>
+<link rel="stylesheet" href="/assets/css/pta/reports.css?v=20261121"/>
 <style>
 /* ── Modern adjustments for Reports ── */
 .page-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
@@ -158,8 +158,8 @@
 <script src="/assets/js/pta/renderers/render-t8a.js?v=11"></script>
 <script src="/assets/js/pta/renderers/render-t8b.js?v=20261121"></script>
 <script src="/assets/js/pta/renderers/render-t9.js?v=11"></script>
-<script src="/assets/js/pta/renderers/render-t10.js?v=11"></script>
-<script src="/assets/js/pta/renderers/render-t11.js?v=20261012"></script>
+<script src="/assets/js/pta/renderers/render-t10.js?v=20261121"></script>
+<script src="/assets/js/pta/renderers/render-t11.js?v=20261121"></script>
 <script src="/assets/js/pta/renderers/render-t12.js?v=11"></script>
 <script src="/assets/js/pta/renderers/render-t13.js?v=11"></script>
 <script src="/assets/js/pta/renderers/render-t14.js?v=20261012"></script>
@@ -178,7 +178,7 @@
 <script src="/assets/js/pta/reports-api.js?v=8"></script>
 <script src="/assets/js/pta/reports-view-table.js?v=20261020"></script>
 <script src="/assets/js/pta/reports-view-cmi.js?v=20261012"></script>
-<script src="/assets/js/pta/reports-export.js?v=20261020"></script>
+<script src="/assets/js/pta/reports-export.js?v=20261121"></script>
 <script src="/assets/js/pta/reports-boot.js?v=10"></script>
 <script>
 // Ensure export buttons never display in Viewer View

@@ -35,38 +35,49 @@ function renderT11(arg1, arg2) {
   let docRows = '';
   const allDetailRows = [];
 
+  function isCheckedMod(v) {
+    if (v === true || v === 1) return true;
+    if (typeof v === 'string') {
+      const s = v.trim().toLowerCase();
+      return ['1', 'true', 'yes', '✓', '✔', '/', 'x'].includes(s);
+    }
+    return false;
+  }
+
   acceptedData.forEach(cmi => {
     (cmi.rows || []).forEach(r => {
-      const tech = (r.tech || '').trim();
-      const project = (r.project || '').trim();
-      const agency = (r.agency || cmi.institution || '').trim();
+      const tech = String(r.tech || r.title || '').trim();
+      const project = String(r.project || r.source || '').trim();
+      const agency = String(r.agency || cmi.institution || '').trim();
       const mods = r.modalities || {};
 
-      const hasMod = Object.values(mods).some(v => v === true || (typeof v === 'string' && v.trim() !== ''));
-
-      // Skip completely empty rows
-      if (!tech && !project && !hasMod) return;
+      const stcbf = isCheckedMod(mods.stcbf ?? r.stcbf);
+      const stc4id = isCheckedMod(mods.stc4id ?? r.stc4id);
+      const safe = isCheckedMod(mods.safe ?? r.safe);
+      const food_value_chain = isCheckedMod(mods.food_value_chain ?? mods.fvc ?? r.food_value_chain ?? r.fvc);
 
       // Extract others text if provided
       let otherText = '';
-      if (typeof mods.others === 'string' && mods.others.trim()) {
-        otherText = mods.others.trim();
-      } else if (typeof mods.other_extension_initiatives === 'string' && mods.other_extension_initiatives.trim()) {
-        otherText = mods.other_extension_initiatives.trim();
-      } else if (r.other && String(r.other).trim()) {
-        otherText = String(r.other).trim();
-      } else if (mods.others === true || mods.other_extension_initiatives === true) {
+      const rawOthers = mods.others ?? mods.other_extension_initiatives ?? r.others ?? r.other ?? r.other_extension_initiatives ?? '';
+      if (typeof rawOthers === 'string' && rawOthers.trim()) {
+        otherText = rawOthers.trim();
+      } else if (rawOthers === true) {
         otherText = '/';
       }
+
+      const hasMod = stcbf || stc4id || safe || food_value_chain || Boolean(otherText);
+
+      // Skip completely empty rows
+      if (!tech && !project && !hasMod) return;
 
       allDetailRows.push({
         tech: tech || '—',
         project: project || '—',
         agency: agency || cmi.institution || '—',
-        stcbf: !!mods.stcbf,
-        stc4id: !!mods.stc4id,
-        safe: !!mods.safe,
-        food_value_chain: !!(mods.food_value_chain || mods.fvc),
+        stcbf,
+        stc4id,
+        safe,
+        food_value_chain,
         others: otherText,
         institution: cmi.institution
       });
@@ -84,22 +95,22 @@ function renderT11(arg1, arg2) {
   if (!allDetailRows.length) {
     rowsHtml = `
       <tr>
-        <td colspan="8" style="text-align:center;padding:16px;color:#6b7280;font-style:italic;border:1px solid #7ea87e;background:#fff;">
+        <td colspan="9" style="text-align:center;padding:16px;color:#6b7280;font-style:italic;border:1px solid #7ea87e;background:#fff;">
           No technologies extended/deployed recorded.
         </td>
       </tr>`;
   } else {
     rowsHtml = allDetailRows.map((r, i) => `
       <tr>
-        <td style="text-align:center;padding:8px 6px;font-size:11px;font-weight:600;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${i + 1}</td>
-        <td style="padding:8px 10px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;">${esc(r.tech)}</td>
-        <td style="padding:8px 10px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;">${esc(r.project)}</td>
-        <td style="padding:8px 10px;font-size:11px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;">${esc(r.agency)}</td>
+        <td style="text-align:center;padding:8px 6px;font-size:11.5px;font-weight:600;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${i + 1}</td>
+        <td style="padding:8px 10px;font-size:11.5px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.45;word-break:normal;overflow-wrap:break-word;">${esc(r.tech)}</td>
+        <td style="padding:8px 10px;font-size:11.5px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.45;word-break:normal;overflow-wrap:break-word;">${esc(r.project)}</td>
+        <td style="padding:8px 10px;font-size:11.5px;border:1px solid #7ea87e;text-align:left;vertical-align:middle;background:#fff;line-height:1.4;word-break:normal;overflow-wrap:break-word;">${esc(r.agency)}</td>
         <td style="text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${r.stcbf ? '/' : ''}</td>
         <td style="text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${r.stc4id ? '/' : ''}</td>
         <td style="text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${r.safe ? '/' : ''}</td>
         <td style="text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border:1px solid #7ea87e;vertical-align:middle;background:#fff;">${r.food_value_chain ? '/' : ''}</td>
-        <td style="text-align:center;padding:8px 8px;font-size:11px;font-weight:600;border:1px solid #7ea87e;vertical-align:middle;background:#fff;line-height:1.3;">${esc(r.others)}</td>
+        <td style="text-align:center;padding:8px 8px;font-size:11px;font-weight:600;border:1px solid #7ea87e;vertical-align:middle;background:#fff;line-height:1.35;word-break:normal;overflow-wrap:break-word;">${esc(r.others)}</td>
       </tr>
     `).join('');
   }
@@ -114,21 +125,32 @@ function renderT11(arg1, arg2) {
     </div>
 
     <div class="tbl-wrap" style="overflow-x:auto;margin-bottom:18px;">
-      <table class="merged" style="width:100%;border-collapse:collapse;border:1px solid #7ea87e;">
+      <table class="merged tbl-fixed-cols tbl-t11" style="width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #7ea87e;">
+        <colgroup>
+          <col style="width:4%">
+          <col style="width:19%">
+          <col style="width:19%">
+          <col style="width:14%">
+          <col style="width:7%">
+          <col style="width:7%">
+          <col style="width:6.5%">
+          <col style="width:10.5%">
+          <col style="width:13%">
+        </colgroup>
         <thead>
           <tr style="background:#c9e2ca;color:#111827;">
-            <th rowspan="2" style="width:40px;text-align:center;padding:8px 6px;font-size:11px;font-weight:700;border:1px solid #7ea87e;background:#c9e2ca;color:#111827;">No.</th>
-            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;width:20%;background:#c9e2ca;color:#111827;">Name of Technology</th>
-            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;width:20%;background:#c9e2ca;color:#111827;">Project Title</th>
-            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;width:18%;background:#c9e2ca;color:#111827;">Implementing Agency</th>
+            <th rowspan="2" style="text-align:center;padding:8px 4px;font-size:11px;font-weight:700;border:1px solid #7ea87e;background:#c9e2ca;color:#111827;">No.</th>
+            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;background:#c9e2ca;color:#111827;">Name of Technology</th>
+            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;background:#c9e2ca;color:#111827;">Project Title</th>
+            <th rowspan="2" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:left;background:#c9e2ca;color:#111827;">Implementing Agency</th>
             <th colspan="5" style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Technology Transfer Modality</th>
           </tr>
           <tr style="background:#c9e2ca;color:#111827;">
-            <th style="width:70px;padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">STCBF</th>
-            <th style="width:70px;padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">STC4iD</th>
-            <th style="width:70px;padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">SAFE</th>
-            <th style="width:85px;padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Food Value Chain</th>
-            <th style="width:110px;padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Others</th>
+            <th style="padding:6px 4px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">STCBF</th>
+            <th style="padding:6px 4px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">STC4iD</th>
+            <th style="padding:6px 4px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">SAFE</th>
+            <th style="padding:6px 4px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Food Value<br>Chain</th>
+            <th style="padding:6px 6px;font-size:10.5px;font-weight:700;border:1px solid #7ea87e;text-align:center;background:#c9e2ca;color:#111827;">Others</th>
           </tr>
         </thead>
         <tbody>
