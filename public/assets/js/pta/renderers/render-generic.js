@@ -143,7 +143,14 @@ function renderGeneric(data, template) {
         columns.forEach(c => {
           let val = r[c.key] ?? r[c.label] ?? r[c.key.toLowerCase()] ?? r[c.key.toUpperCase()] ?? '';
           if (c.type === 'number' || c.type === 'amount') {
-            const num = parseFloat(String(val).replace(/,/g, ''));
+            const rawMatch = String(val ?? '').trim().match(/-?\d[\d,.]*/);
+            let cleanedNumStr = rawMatch ? rawMatch[0].replace(/,/g, '') : '';
+            if (cleanedNumStr.split('.').length > 2) {
+              const pts = cleanedNumStr.split('.');
+              const lastPt = pts.pop();
+              cleanedNumStr = pts.join('') + (lastPt.length <= 2 ? '.' + lastPt : lastPt);
+            }
+            const num = cleanedNumStr ? parseFloat(cleanedNumStr) : NaN;
             if (!isNaN(num)) {
               numericTotals[c.key] = (numericTotals[c.key] || 0) + num;
               val = (c.type === 'amount')

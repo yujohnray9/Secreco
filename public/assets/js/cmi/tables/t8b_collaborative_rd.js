@@ -129,11 +129,25 @@
     });
   }
 
+  function parseBudgetInput(rawVal) {
+    const str = String(rawVal || '').trim();
+    if (!str) return 0;
+    const match = str.match(/-?\d[\d,.]*/);
+    if (!match) return 0;
+    let cleaned = match[0].replace(/,/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      const last = parts.pop();
+      cleaned = parts.join('') + (last.length <= 2 ? '.' + last : last);
+    }
+    const num = parseFloat(cleaned);
+    return Number.isFinite(num) ? num : 0;
+  }
+
   function recalcTotal() {
     let total = 0;
     document.querySelectorAll('#t8b_rows .t8b-budget').forEach(inp => {
-      const v = parseFloat(String(inp.value || '').replace(/,/g, '').replace(/[^0-9.-]/g, ''));
-      total += isNaN(v) ? 0 : v;
+      total += parseBudgetInput(inp.value);
     });
     const el = document.getElementById('t8b_total');
     if (el) el.textContent = total > 0 ? total.toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '—';

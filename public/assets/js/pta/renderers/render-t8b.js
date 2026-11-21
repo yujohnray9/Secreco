@@ -34,8 +34,8 @@
     let grandBudget = 0, grandProjects = 0;
 
     acceptedRows.forEach(inst => {
-      const rows   = (inst.rows || []).filter(r => r.program?.trim() || r.project?.trim());
-      const budget = rows.reduce((sum, r) => sum + (parseFloat(r.budget) || 0), 0);
+      const rows   = (inst.rows || []).filter(hasRowContent);
+      const budget = rows.reduce((sum, r) => sum + parseBudget(getRawBudget(r)), 0);
       grandBudget   += budget;
       grandProjects += rows.length;
 
@@ -61,15 +61,21 @@
     // ── Consolidated Detail Table ──
     const allDetailRows = [];
     acceptedRows.forEach(inst => {
-      (inst.rows || []).filter(r => (r.program || '').trim() || (r.project || '').trim()).forEach(r => {
+      (inst.rows || []).filter(hasRowContent).forEach(r => {
+        const rawBudget = getRawBudget(r);
+        const numBudget = parseBudget(rawBudget);
+        const rawBudgetStr = String(rawBudget ?? '').trim();
+        const rawBudgetClean = (rawBudgetStr && !/^0+(\.0+)?$/.test(rawBudgetStr)) ? rawBudgetStr : '';
+
         allDetailRows.push({
-          program: r.program || '—',
-          project: r.project || '—',
-          agency: r.agency || inst.institution || '—',
-          duration: r.duration || '—',
-          budget: parseFloat(r.budget) || 0,
-          source: r.source || '—',
-          role: r.role || '—',
+          program: getProgram(r) || '—',
+          project: getProject(r) || '—',
+          agency: getAgency(r) || inst.institution || '—',
+          duration: getDuration(r) || '—',
+          budget: numBudget,
+          rawBudget: rawBudgetClean,
+          source: getSource(r) || '—',
+          role: getRole(r) || '—',
           institution: inst.institution
         });
       });
@@ -101,7 +107,7 @@
                   <td style="padding:7px 12px;">${esc(r.project)}</td>
                   <td style="padding:7px 12px;">${esc(r.agency)}</td>
                   <td style="text-align:center;padding:7px 12px;">${esc(r.duration)}</td>
-                  <td style="text-align:right;padding:7px 12px;">${r.budget > 0 ? fmtAmt(r.budget) : '—'}</td>
+                  <td style="text-align:right;padding:7px 12px;">${r.budget > 0 ? fmtAmt(r.budget) : esc(r.rawBudget || '—')}</td>
                   <td style="padding:7px 12px;">${esc(r.source)}</td>
                   <td style="padding:7px 12px;">${esc(r.role)}</td>
                 </tr>
@@ -137,6 +143,70 @@
     container.innerHTML = html;
   };
 
+  function getProgram(r) {
+    return String(r?.program ?? r?.Program ?? r?.['Program Title'] ?? '').trim();
+  }
+  function getProject(r) {
+    return String(r?.project ?? r?.Project ?? r?.['Project Title'] ?? r?.title ?? '').trim();
+  }
+  function getAgency(r) {
+    return String(r?.agency ?? r?.Agency ?? r?.['Implementing Agency'] ?? r?.['Implementing Agency / Institution'] ?? '').trim();
+  }
+  function getDuration(r) {
+    return String(r?.duration ?? r?.Duration ?? r?.period ?? '').trim();
+  }
+  function getRawBudget(r) {
+    if (!r || typeof r !== 'object') return '';
+    return r.budget ?? r.Budget ?? r.total_budget ?? r['Total Budget'] ?? r.approved_budget ?? r.amount ?? r.Amount ?? r.cost ?? r.expenditures ?? r.expense ?? '';
+  }
+  function getSource(r) {
+    return String(r?.source ?? r?.Source ?? r?.fundsource ?? r?.funds ?? r?.fund ?? r?.fund_source ?? r?.['Source of Fund'] ?? r?.['Source(s) of Fund'] ?? '').trim();
+  }
+  function getRole(r) {
+    return String(r?.role ?? r?.Role ?? r?.['Role of Consortium'] ?? '').trim();
+  }
+  function hasRowContent(r) {
+    if (!r || typeof r !== 'object') return false;
+    return [
+      getProgram(r),
+      getProject(r),
+      getAgency(r),
+      getDuration(r),
+      getRawBudget(r),
+      getSource(r),
+      getRole(r),
+    ].some(v => String(v ?? '').trim() !== '');
+  }
+  function parseBudget(rawVal) {
+    if (typeof rawVal === 'number') return Number.isFinite(rawVal) ? rawVal : 0;
+    if (rawVal === null || rawVal === undefined) return 0;
+    const str = String(rawVal).trim();
+    if (!str) return 0;
+
+    // Extract numeric amount (safely ignores prefixes like "₱", "PHP", "Php.", etc.)
+    const match = str.match(/-?\d[\d,.]*/);
+    if (!match) return 0;
+
+    let cleaned = match[0].replace(/,/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      const last = parts.pop();
+      cleaned = parts.join('') + (last.length <= 2 ? '.' + last : last);
+    }
+
+    let num = parseFloat(cleaned);
+    if (!Number.isFinite(num)) return 0;
+
+    // Handle shorthand like "1.5M" or "1.5 Million"
+    const rest = str.slice(match.index + match[0].length);
+    if (num > 0 && num < 10000 && /^\s*(?:million|m)\b/i.test(rest)) {
+      num *= 1000000;
+    } else if (num > 0 && num < 10000 && /^\s*(?:thousand|k)\b/i.test(rest)) {
+      num *= 1000;
+    }
+
+    return num;
+  }
   function fmtAmt(n) {
     return '₱ ' + (n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }

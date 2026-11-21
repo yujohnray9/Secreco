@@ -498,7 +498,7 @@
 
   <!-- Section 2: Strategic R&D -->
   <script src="/assets/js/cmi/tables/t8a_rd_projects.js?v=20261012"></script>
-  <script src="/assets/js/cmi/tables/t8b_collaborative_rd.js?v=20261029"></script>
+  <script src="/assets/js/cmi/tables/t8b_collaborative_rd.js?v=20261121"></script>
   <script src="/assets/js/cmi/tables/t9_technologies_generated.js?v=20261012"></script>
 
   <!-- Section 3: Results Utilization -->

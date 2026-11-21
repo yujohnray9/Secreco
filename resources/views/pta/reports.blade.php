@@ -189,7 +189,7 @@
     <script src="/assets/js/pta/renderers/render-t7a.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t7b.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t8a.js?v=11"></script>
-    <script src="/assets/js/pta/renderers/render-t8b.js?v=11"></script>
+    <script src="/assets/js/pta/renderers/render-t8b.js?v=20261121"></script>
     <script src="/assets/js/pta/renderers/render-t9.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t10.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t11.js?v=20261012"></script>
@@ -203,7 +203,7 @@
     <script src="/assets/js/pta/renderers/render-t19.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t20a.js?v=11"></script>
     <script src="/assets/js/pta/renderers/render-t20b.js?v=12"></script>
-    <script src="/assets/js/pta/renderers/render-generic.js?v=20261030"></script>
+    <script src="/assets/js/pta/renderers/render-generic.js?v=20261121"></script>
     <!-- ── End renderers ── -->
 
     <script src="/assets/js/pta/reports-renderers.js?v=11"></script>
